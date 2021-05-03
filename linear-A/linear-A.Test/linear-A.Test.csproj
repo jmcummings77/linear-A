@@ -1,10 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net472</TargetFramework>
+        <TargetFramework>netcoreapp5.0</TargetFramework>
         <RootNamespace>linear_A.Test</RootNamespace>
 
         <IsPackable>false</IsPackable>
+
+        <LangVersion>8</LangVersion>
+
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
