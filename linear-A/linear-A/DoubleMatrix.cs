@@ -161,7 +161,11 @@ namespace linear_A
         /// <param name="matrixToCopy">Matrix to copy</param>
         public DoubleMatrix(DoubleMatrix matrixToCopy)
         {
-            if (matrixToCopy == null) return;
+            if (matrixToCopy == null)
+            {
+                _items = new double[0,0];
+                return;
+            }
 
             RowCount = matrixToCopy.RowCount;
             ColumnCount = matrixToCopy.ColumnCount;
@@ -174,6 +178,7 @@ namespace linear_A
         /// </summary>
         public DoubleMatrix()
         {
+            _items = new double[0,0];
         }
 
         /// <summary>
