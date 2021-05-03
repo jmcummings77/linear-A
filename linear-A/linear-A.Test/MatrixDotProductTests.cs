@@ -11,8 +11,6 @@
 
 #endregion
 
-using Matricks.Core;
-
 namespace linear_A.Test
 {
     using System.IO;
