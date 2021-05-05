@@ -19,7 +19,8 @@ There is no intended use case for this library beyond my own enjoyment, although
 - Continue to add features:
   - Eigenvalues
   - Rotations
-  - Finish migrating from statically typed matrix classes to generic class
+  - Finish migrating from statically typed matrix classes to generic class (delaying this until dotnet hashes this design out: <https://github.com/dotnet/designs/pull/205>)
+  - Add memoization
 
 ## Possible TODOS
 
