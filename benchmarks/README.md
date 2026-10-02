@@ -360,6 +360,14 @@ view. A reduced-motion preference keeps decorative effects still; an explicitly
 started matrix transformation remains available. Hidden tabs suspend animation
 work.
 
+Enable **Auto-orbit (360°)** for a continuous camera orbit, one turn every 30
+seconds. It starts off and moves only the view, leaving matrix values and
+calculation progress unchanged. It works with static or animated arrows and
+while matrix playback is paused. Dragging temporarily pauses the orbit; releasing
+resumes from the new view. Unchecking it holds the current angle. The setting
+survives new computations and **Reset view**. Hidden tabs and reduced-motion
+preferences pause auto-orbit; manual camera controls remain available.
+
 Play a 10, 20, or 30 second transformation, pause, or scrub to any point. Drag the
 plot to orbit and scroll to zoom; when the plot has keyboard focus, arrow keys
 rotate it and `+`/`-` zoom. The animation starts only when requested. The wire

@@ -16,12 +16,14 @@
   const fields = {m:[],n:[]}, cells = [], sourceLines = new Map();
   const visibility = {axes:get('geometry-show-axes'),box:get('geometry-show-box'),ellipse:get('geometry-show-ellipse'),grid:get('geometry-show-grid')};
   const appearance = {style:get('geometry-arrow-style'),color:get('geometry-arrow-color'),motion:get('geometry-arrow-motion'),width:get('geometry-arrow-width')};
+  const autoOrbit = get('geometry-auto-orbit');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const arrowColors = {cyan:[104,225,232],blue:[138,184,248],coral:[255,151,139],violet:[209,164,255],white:[235,243,244]};
   const axisInputs = Array.from(get('geometry-axis').querySelectorAll('input'));
   let scene = null, worker = null, workerUrl = null, timeout = null;
   let progress = 0, step = 0, playing = false, animation = null, previousTime = null;
   let arrowPhase = 0, arrowPreviousTime = null;
+  let orbitPreviousTime = null;
   let yaw = -.68, pitch = .43, zoom = 1, drag = null;
   const fmt = value => Math.abs(value) >= 1e4 || (value !== 0 && Math.abs(value) < 1e-4)
     ? value.toExponential(2) : Number(value.toFixed(4)).toString();
@@ -49,10 +51,11 @@
   }
 
   const arrowsMoving = () => appearance.motion.value !== 'static' && !reducedMotion.matches;
+  const orbitMoving = () => autoOrbit.checked && !reducedMotion.matches && !drag;
   function syncAnimation(){
-    const active = scene && !document.hidden && (playing || arrowsMoving());
+    const active = scene && !document.hidden && (playing || arrowsMoving() || orbitMoving());
     if(active && animation === null) animation=requestAnimationFrame(tick);
-    if(!active){cancelAnimationFrame(animation);animation=null;arrowPreviousTime=null;}
+    if(!active){cancelAnimationFrame(animation);animation=null;arrowPreviousTime=null;orbitPreviousTime=null;}
   }
   function stopAnimation(){playing=false;previousTime=null;syncAnimation();get('geometry-play').textContent=isSteps()?'Play calculation':'Play transformation';}
   function endWorker(){worker?.terminate();worker=null;if(workerUrl)URL.revokeObjectURL(workerUrl);workerUrl=null;clearTimeout(timeout);get('geometry-compute').textContent='Compute in WebAssembly';}
@@ -166,6 +169,9 @@
     get('geometry-arrow-note').textContent=reducedMotion.matches && appearance.motion.value!=='static'
       ? 'Your reduced-motion preference keeps arrow effects static. Play transformation and the progress sliders remain available.'
       : 'Effects decorate the fixed vectors, even while the matrix is paused. Faint teal arrows mark the input field; overlay colors stay fixed.';
+    get('geometry-orbit-note').textContent=reducedMotion.matches && autoOrbit.checked
+      ? 'Auto-orbit is paused by your reduced-motion preference. Drag or use arrow keys to orbit.'
+      : '30 seconds per orbit. Drag to pause; release to resume.';
     let extent=Math.max(2,scene?.rotation_extent||0);
     const visibleMatrices=scene?[scene.m,scene.result,...(isSteps()?scene.steps.map(s=>s.matrix):[])]:[];
     const rowBounds=matrix=>[0,1,2].map(r=>Math.abs(matrix[r*3])+Math.abs(matrix[r*3+1])+Math.abs(matrix[r*3+2]));
@@ -242,7 +248,7 @@
   }
   function tick(time){
     animation=null;
-    if(!scene||document.hidden){previousTime=null;arrowPreviousTime=null;return;}
+    if(!scene||document.hidden){previousTime=null;arrowPreviousTime=null;orbitPreviousTime=null;return;}
     const transforming=playing;
     if(playing){
       if(previousTime!==null){const delta=Math.min(100,time-previousTime)/(Number(get('geometry-duration').value)*1000);progress=Math.min(1,progress+delta);if(isSteps())step=Math.min(scene.steps.length,Math.floor(progress*scene.steps.length));}
@@ -252,6 +258,10 @@
       if(arrowPreviousTime!==null)arrowPhase=(arrowPhase+Math.min(100,time-arrowPreviousTime)/1800)%1;
       arrowPreviousTime=time;
     }else arrowPreviousTime=null;
+    if(orbitMoving()){
+      if(orbitPreviousTime!==null)yaw=(yaw+Math.min(100,time-orbitPreviousTime)*Math.PI*2/30000)%(Math.PI*2);
+      orbitPreviousTime=time;
+    }else orbitPreviousTime=null;
     render(transforming);
   }
   get('geometry-play').onclick=()=>{if(!scene)return;if(playing){stopAnimation();return;}if(progress>=1){progress=0;step=0;}playing=true;previousTime=null;get('geometry-play').textContent='Pause animation';syncAnimation();};
@@ -260,7 +270,7 @@
   get('geometry-step').oninput=()=>selectStep(Number(get('geometry-step').value));
   get('geometry-prev').onclick=()=>selectStep(step-1);get('geometry-next').onclick=()=>selectStep(step+1);
   get('geometry-mode').onchange=()=>{stopAnimation();progress=0;step=0;get('geometry-step-controls').hidden=!isSteps();get('geometry-progress').parentElement.hidden=isSteps();if(isSteps())get('geometry-trace-details').open=true;get('geometry-play').textContent=isSteps()?'Play calculation':'Play transformation';render();};
-  get('geometry-reset').onclick=()=>{stopAnimation();progress=0;step=0;yaw=-.68;pitch=.43;zoom=1;render();};
+  get('geometry-reset').onclick=()=>{stopAnimation();progress=0;step=0;yaw=-.68;pitch=.43;zoom=1;orbitPreviousTime=null;render();};
   get('geometry-preset').onchange=()=>{applyPreset();if(get('geometry-preset').value!=='custom')compute();};
   get('geometry-randomize').onclick=()=>{
     for(const inputs of Object.values(fields))for(const input of inputs)input.value=(Math.floor(Math.random()*17)-8)/4;
@@ -274,14 +284,15 @@
   get('geometry-compute').onclick=compute;
   for(const input of Object.values(visibility))input.onchange=()=>render();
   for(const input of Object.values(appearance))input.onchange=()=>{arrowPreviousTime=null;render();};
+  autoOrbit.onchange=()=>{orbitPreviousTime=null;render();};
   get('geometry-profile-link').onclick=()=>{stopAnimation();window.dispatchEvent(new Event('matrix-profile-focus'));};
-  canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);};
+  canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];orbitPreviousTime=null;canvas.setPointerCapture(e.pointerId);syncAnimation();};
   canvas.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.009;pitch=Math.max(-1.3,Math.min(1.3,pitch+(e.clientY-drag[1])*.009));drag=[e.clientX,e.clientY];render();};
-  canvas.onpointerup=canvas.onpointercancel=()=>{drag=null;};
+  canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=()=>{drag=null;orbitPreviousTime=null;syncAnimation();};
   canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.45,Math.min(2.5,zoom*Math.exp(-e.deltaY*.001)));render();},{passive:false});
   canvas.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowLeft')yaw-=.12;if(e.key==='ArrowRight')yaw+=.12;if(e.key==='ArrowUp')pitch=Math.min(1.3,pitch+.12);if(e.key==='ArrowDown')pitch=Math.max(-1.3,pitch-.12);if(e.key==='+')zoom=Math.min(2.5,zoom*1.1);if(e.key==='-')zoom=Math.max(.45,zoom/1.1);render();};
-  document.addEventListener('visibilitychange',()=>{arrowPreviousTime=null;if(document.hidden)stopAnimation();else render();});
-  reducedMotion.addEventListener('change',()=>{arrowPreviousTime=null;render();});
+  document.addEventListener('visibilitychange',()=>{arrowPreviousTime=null;orbitPreviousTime=null;if(document.hidden)stopAnimation();else render();});
+  reducedMotion.addEventListener('change',()=>{arrowPreviousTime=null;orbitPreviousTime=null;render();});
   new ResizeObserver(()=>render()).observe(canvas);
   applyPreset();
   if(!bundle.available||!bundle.geometry_worker_source||typeof Worker==='undefined'||typeof WebAssembly==='undefined')status(bundle.reason||'This report has no geometry worker. Regenerate it with a current WASM build.','unavailable');

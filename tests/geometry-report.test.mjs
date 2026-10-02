@@ -162,3 +162,73 @@ test('reduced motion suppresses arrow effects but keeps explicit transformation 
   page.click('geometry-play');assert.equal(page.frames.size,0);
   page.reduce(false);assert.equal(page.frames.size,1);page.reduce(true);assert.equal(page.frames.size,0);
 });
+
+function axisLabels(page){
+  const labels=page.ctx.labels.filter(label=>['x','y','z'].includes(label.text));
+  assert.equal(labels.length,3,'coordinate labels must remain visible');
+  return structuredClone(labels);
+}
+
+function assertSameCamera(actual,expected){
+  assert.deepEqual(actual.map(label=>label.text),expected.map(label=>label.text));
+  for(let index=0;index<actual.length;index++)for(const coordinate of ['x','y'])assert.ok(Math.abs(actual[index][coordinate]-expected[index][coordinate])<1e-7,`${actual[index].text} ${coordinate} changed from ${expected[index][coordinate]} to ${actual[index][coordinate]}`);
+}
+
+test('auto-orbit starts off and completes a full camera turn in thirty active seconds without changing the matrix',()=>{
+  const page=report();assert.equal(page.get('geometry-auto-orbit').checked,false);assert.equal(page.frames.size,0);
+  assert.ok(page.get('geometry-orbit-note').textContent.length>0);
+  page.input('geometry-progress','420');const state=page.snapshot(),initial=axisLabels(page),drawing=page.ctx.drawing();
+  const quadrants=new Set(),recordQuadrant=()=>{const labels=axisLabels(page);quadrants.add(['x','z'].map(axis=>Math.sign(labels.find(label=>label.text===axis).x-360)).join(','));};
+  recordQuadrant();page.check('geometry-auto-orbit',true);assert.equal(page.frames.size,1);page.frame(0);
+  for(let time=100;time<=30000;time+=100){page.frame(time);assert.equal(page.frames.size,1);if(time%7500===0&&time<30000){recordQuadrant();assert.notEqual(page.ctx.drawing(),drawing);}}
+  assert.equal(quadrants.size,4,'one turn must visit all four camera quadrants');
+  assertSameCamera(axisLabels(page),initial);assert.equal(page.snapshot(),state);assert.equal(page.workers.length,1);
+  page.check('geometry-auto-orbit',false);assert.equal(page.frames.size,0);
+});
+
+test('orbit preserves captured calculation steps and shares one frame loop with arrows and transformation playback',()=>{
+  const page=report();page.choose('geometry-mode','steps');page.input('geometry-step','2');
+  const state=page.snapshot(),camera=axisLabels(page);page.check('geometry-auto-orbit',true);page.frame(0);page.frame(100);
+  assert.notDeepEqual(axisLabels(page),camera);assert.equal(page.snapshot(),state);
+  page.choose('geometry-arrow-motion','flow');page.click('geometry-play');assert.equal(page.frames.size,1);
+  page.frame(200);page.frame(300);assert.equal(page.frames.size,1);
+  page.click('geometry-play');assert.equal(page.frames.size,1,'camera and arrows continue after playback pauses');
+  page.check('geometry-auto-orbit',false);assert.equal(page.frames.size,1,'arrow effects retain the shared frame loop');
+  page.choose('geometry-arrow-motion','static');assert.equal(page.frames.size,0);
+});
+
+test('orbit selection survives reset and recomputation, with no idle loop while the scene is unavailable',()=>{
+  const page=report();page.check('geometry-auto-orbit',true);page.frame(0);page.frame(100);
+  page.click('geometry-reset');assert.equal(page.get('geometry-auto-orbit').checked,true);assert.equal(page.frames.size,1);
+  page.click('geometry-compute');assert.equal(page.frames.size,0);assert.equal(page.get('geometry-auto-orbit').checked,true);
+  assert.equal(page.workers.length,2);page.workers[1].reply(sceneFixture());assert.equal(page.frames.size,1);
+  const input=page.get('geometry-m').children[0];input.value='2';input.dispatch('input');assert.equal(page.frames.size,0);assert.equal(page.get('geometry-auto-orbit').checked,true);
+  const unavailable=report({available:false});unavailable.check('geometry-auto-orbit',true);assert.equal(unavailable.frames.size,0);assert.equal(unavailable.workers.length,0);
+});
+
+test('hidden and reduced-motion states suppress orbit without accumulating skipped camera time',()=>{
+  const page=report();page.check('geometry-auto-orbit',true);page.frame(0);page.frame(100);const camera=axisLabels(page);
+  page.hidden(true);assert.equal(page.frames.size,0);page.hidden(false);assert.equal(page.frames.size,1);page.frame(100000);assertSameCamera(axisLabels(page),camera);
+  page.reduce(true);assert.equal(page.frames.size,0);page.click('geometry-play');assert.equal(page.frames.size,1);
+  const state=page.snapshot();page.frame(100100);page.frame(100200);assert.notEqual(page.snapshot(),state);assertSameCamera(axisLabels(page),camera);
+  page.click('geometry-play');assert.equal(page.frames.size,0);page.reduce(false);assert.equal(page.frames.size,1);page.frame(200000);assertSameCamera(axisLabels(page),camera);
+  page.frame(200100);assert.notDeepEqual(axisLabels(page),camera);
+  const initiallyReduced=report({reducedMotion:true});initiallyReduced.check('geometry-auto-orbit',true);assert.equal(initiallyReduced.frames.size,0);
+});
+
+test('manual drag pauses orbit and pointer release resumes from the dragged camera without a jump',()=>{
+  for(const endEvent of ['pointerup','pointercancel','lostpointercapture']){
+    const page=report(),canvas=page.get('geometry-canvas');page.check('geometry-auto-orbit',true);page.frame(0);page.frame(100);
+    const state=page.snapshot(),before=axisLabels(page);canvas.dispatch('pointerdown',{clientX:100,clientY:100,pointerId:1});assert.equal(page.frames.size,0,endEvent);
+    canvas.dispatch('pointermove',{clientX:140,clientY:115,pointerId:1});const dragged=axisLabels(page);assert.notDeepEqual(dragged,before);assert.equal(page.frames.size,0);
+    canvas.dispatch(endEvent,{pointerId:1});assert.equal(page.frames.size,1,endEvent);page.frame(100000);assertSameCamera(axisLabels(page),dragged);
+    page.frame(100100);assert.notDeepEqual(axisLabels(page),dragged);assert.equal(page.snapshot(),state);
+  }
+});
+
+test('unchecking and rechecking orbit keeps the current view and resets its animation clock',()=>{
+  const page=report();page.check('geometry-auto-orbit',true);page.frame(0);page.frame(100);const camera=axisLabels(page);
+  page.check('geometry-auto-orbit',false);assert.equal(page.frames.size,0);assertSameCamera(axisLabels(page),camera);
+  page.check('geometry-auto-orbit',true);assert.equal(page.frames.size,1);page.frame(100000);assertSameCamera(axisLabels(page),camera);
+  page.frame(100100);assert.notDeepEqual(axisLabels(page),camera);
+});
