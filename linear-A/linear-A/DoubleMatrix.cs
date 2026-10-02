@@ -16,12 +16,11 @@
 // ReSharper disable UnusedParameter.Global
 namespace linear_A
 {
-    
+
     #region Using Statements
 
     using System;
     using System.Collections;
-    using System.Collections.Generic;
 
     #endregion
 
@@ -39,11 +38,6 @@ namespace linear_A
         ///     The items stored in the matrix.
         /// </summary>
         private readonly double[,] _items;
-
-        /// <summary>
-        ///     Gets the count of items in the matrix.
-        /// </summary>
-        private int _count;
 
         /// <summary>
         ///     Gets the row count.
@@ -64,17 +58,13 @@ namespace linear_A
         ///     The column index.
         /// </param>
         /// <returns>
-        ///     The <see cref="int" />.
+        ///     The <see cref="double" />.
         /// </returns>
         /// </summary>
         public double this[int rowIndex, int columnIndex]
         {
             get => _items[rowIndex, columnIndex];
-            set
-            {
-                _valuesHaveChanged = true;
-                _items[rowIndex, columnIndex] = value;
-            }
+            set => _items[rowIndex, columnIndex] = value;
         }
 
         /// <summary>
@@ -86,13 +76,6 @@ namespace linear_A
         ///     The is read only.
         /// </summary>
         public bool IsReadOnly => false;
-
-        /// <summary>
-        ///     Flag indicating whether the matrix values have changed, requiring re-computation of cached characteristics values
-        /// </summary>
-#pragma warning disable 414
-        private bool _valuesHaveChanged;
-#pragma warning restore 414
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="DoubleMatrix" /> class.
@@ -114,7 +97,6 @@ namespace linear_A
 
             RowCount = squareDimensions;
             ColumnCount = squareDimensions;
-            _count = RowCount * ColumnCount;
             _items = new double[RowCount, ColumnCount];
 
             if (!initializeAsIdentity) return;
@@ -151,7 +133,6 @@ namespace linear_A
 
             RowCount = rowCount;
             ColumnCount = columnCount;
-            _count = RowCount * ColumnCount;
             _items = new double[RowCount, ColumnCount];
         }
 
@@ -159,18 +140,17 @@ namespace linear_A
         ///     Initializes a new instance of the <see cref="DoubleMatrix" /> class as a duplicate of the provided matrix.
         /// </summary>
         /// <param name="matrixToCopy">Matrix to copy</param>
-        public DoubleMatrix(DoubleMatrix matrixToCopy)
+        public DoubleMatrix(DoubleMatrix? matrixToCopy)
         {
             if (matrixToCopy == null)
             {
-                _items = new double[0,0];
+                _items = new double[0, 0];
                 return;
             }
 
             RowCount = matrixToCopy.RowCount;
             ColumnCount = matrixToCopy.ColumnCount;
-            _count = RowCount * ColumnCount;
-            _items = (double[,]) matrixToCopy._items.Clone();
+            _items = (double[,])matrixToCopy._items.Clone();
         }
 
         /// <summary>
@@ -178,12 +158,12 @@ namespace linear_A
         /// </summary>
         public DoubleMatrix()
         {
-            _items = new double[0,0];
+            _items = new double[0, 0];
         }
 
         /// <summary>
         ///     The TrySubtract method.
-        ///     Returns false and does not execute the subtraction if the dimensions do not match.
+        ///     Returns false without changing this matrix if the argument is null or the dimensions do not match.
         ///     Otherwise subtracts the provided matrix from this matrix.
         /// </summary>
         /// <param name="matrixToSubtract">
@@ -192,9 +172,9 @@ namespace linear_A
         /// <returns>
         ///     The <see cref="bool" />.
         /// </returns>
-        public bool TrySubtractMatrix(DoubleMatrix matrixToSubtract)
+        public bool TrySubtractMatrix(DoubleMatrix? matrixToSubtract)
         {
-            if (matrixToSubtract.RowCount != RowCount || matrixToSubtract.ColumnCount != ColumnCount) return false;
+            if (matrixToSubtract == null || matrixToSubtract.RowCount != RowCount || matrixToSubtract.ColumnCount != ColumnCount) return false;
 
             SubtractMatrix(matrixToSubtract);
 
@@ -209,13 +189,13 @@ namespace linear_A
         private void SubtractMatrix(DoubleMatrix matrixToSubtract)
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < ColumnCount; j++)
-                _items[i, j] -= matrixToSubtract[i, j];
+                for (var j = 0; j < ColumnCount; j++)
+                    _items[i, j] -= matrixToSubtract[i, j];
         }
 
         /// <summary>
         ///     The TryAdd method.
-        ///     Returns false and leaves this matrix unchanged if the matrix to add is not of the correct dimensions.
+        ///     Returns false and leaves this matrix unchanged if the argument is null or has different dimensions.
         ///     Otherwise returns true and adds the values from the provided matrix to this matrix.
         /// </summary>
         /// <param name="matrixToAdd">
@@ -224,9 +204,9 @@ namespace linear_A
         /// <returns>
         ///     The success status, which returns false when matrices are not the same size <see cref="bool" />.
         /// </returns>
-        public bool TryAddMatrix(DoubleMatrix matrixToAdd)
+        public bool TryAddMatrix(DoubleMatrix? matrixToAdd)
         {
-            if (matrixToAdd.RowCount != RowCount || matrixToAdd.ColumnCount != ColumnCount) return false;
+            if (matrixToAdd == null || matrixToAdd.RowCount != RowCount || matrixToAdd.ColumnCount != ColumnCount) return false;
 
             AddMatrix(matrixToAdd);
 
@@ -240,8 +220,8 @@ namespace linear_A
         private void AddMatrix(DoubleMatrix matrixToAdd)
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < ColumnCount; j++)
-                _items[i, j] += matrixToAdd[i, j];
+                for (var j = 0; j < ColumnCount; j++)
+                    _items[i, j] += matrixToAdd[i, j];
         }
 
         /// <summary>
@@ -252,10 +232,12 @@ namespace linear_A
         /// </returns>
         public DoubleMatrix Transpose()
         {
+            if (RowCount == 0) return new DoubleMatrix();
+
             var result = new DoubleMatrix(ColumnCount, RowCount);
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < ColumnCount; j++)
-                result[i, j] += _items[j, i];
+                for (var j = 0; j < ColumnCount; j++)
+                    result[j, i] = _items[i, j];
 
             return result;
         }
@@ -266,11 +248,17 @@ namespace linear_A
         /// <param name="scalar">
         ///     The scalar.
         /// </param>
-        public void Scale(int scalar)
+        public void Scale(int scalar) => Scale((double)scalar);
+
+        /// <summary>
+        ///     Multiplies each element by a double-precision scalar.
+        /// </summary>
+        /// <param name="scalar">The scalar.</param>
+        public void Scale(double scalar)
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < ColumnCount; j++)
-                _items[i, j] *= scalar;
+                for (var j = 0; j < ColumnCount; j++)
+                    _items[i, j] *= scalar;
         }
 
         /// <summary>
@@ -287,13 +275,18 @@ namespace linear_A
         /// </exception>
         public DoubleMatrix DotProduct(DoubleMatrix multiplicand)
         {
-            if (ColumnCount != multiplicand.RowCount) throw new ArgumentOutOfRangeException();
+            if (multiplicand == null) throw new ArgumentNullException(nameof(multiplicand));
+            if (ColumnCount != multiplicand.RowCount)
+                throw new ArgumentOutOfRangeException(nameof(multiplicand), "The left column count must equal the right row count.");
+
+            if (RowCount == 0) return new DoubleMatrix();
 
             var result = new DoubleMatrix(RowCount, multiplicand.ColumnCount);
 
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < multiplicand.ColumnCount; j++)
-                result[i, j] = VectorDotProduct(GetRow(i), multiplicand.GetColumn(j));
+                for (var j = 0; j < multiplicand.ColumnCount; j++)
+                    for (var k = 0; k < ColumnCount; k++)
+                        result._items[i, j] += _items[i, k] * multiplicand._items[k, j];
 
             return result;
         }
@@ -318,35 +311,6 @@ namespace linear_A
         public IEnumerator GetEnumerator() => _items.GetEnumerator();
 
         /// <summary>
-        ///     The vector dot product.
-        /// </summary>
-        /// <param name="vec1">
-        ///     The first vector.
-        /// </param>
-        /// <param name="vec2">
-        ///     The second vector.
-        /// </param>
-        /// <returns>
-        ///     The vector dot product <see cref="int" />.
-        /// </returns>
-        /// <exception cref="ArgumentNullException">
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// </exception>
-        private static double VectorDotProduct(IReadOnlyList<double> vec1, IReadOnlyList<double> vec2)
-        {
-            if (vec1 == null || vec2 == null) throw new ArgumentNullException();
-
-            var length = vec1.Count;
-            if (vec2.Count != length) throw new ArgumentOutOfRangeException();
-
-            var result = 0d;
-            for (var i = 0; i < length; i++) result += vec1[i] * vec2[i];
-
-            return result;
-        }
-
-        /// <summary>
         ///     The get row method.
         /// </summary>
         /// <param name="rowNumber">
@@ -357,6 +321,8 @@ namespace linear_A
         /// </returns>
         public double[] GetRow(int rowNumber)
         {
+            if (rowNumber < 0 || rowNumber >= RowCount) throw new ArgumentOutOfRangeException(nameof(rowNumber));
+
             var result = new double[ColumnCount];
             Buffer.BlockCopy(
                 _items,
@@ -378,6 +344,8 @@ namespace linear_A
         /// </returns>
         public double[] GetColumn(int columnNumber)
         {
+            if (columnNumber < 0 || columnNumber >= ColumnCount) throw new ArgumentOutOfRangeException(nameof(columnNumber));
+
             var result = new double[RowCount];
             for (var i = 0; i < RowCount; i++) result[i] = _items[i, columnNumber];
 
@@ -417,15 +385,20 @@ namespace linear_A
         public bool IsLowerTriangular() => IsSquare() && IsLowerTriangularUnsafe();
 
         /// <summary>
-        ///     The IsInvertible property.
+        ///     Tests whether partial-pivoting elimination produces nonzero finite pivots.
         /// </summary>
-        ///     A <see cref="bool" />  indicating whether the matrix is invertible.
-        /// <returns></returns>
+        /// <remarks>
+        ///     This floating-point test uses no tolerance and does not estimate conditioning.
+        ///     Rounding can affect the result for nearly singular matrices. Nonfinite inputs or
+        ///     elimination results return false. Determinant underflow does not imply singularity.
+        /// </remarks>
+        /// <returns>True when every computed pivot is finite and nonzero.</returns>
         public bool IsInvertible()
         {
             if (!IsSquare()) return false;
 
-            return Math.Abs(GetDeterminantUnsafe(_items)) < double.Epsilon;
+            GetDeterminantUnsafe(_items, out var isInvertible);
+            return isInvertible;
         }
 
         /// <summary>
@@ -437,9 +410,9 @@ namespace linear_A
         private bool IsLowerTriangularUnsafe()
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = i + 1; j < ColumnCount; j++)
-                if (Math.Abs(_items[i, j]) > double.Epsilon)
-                    return false;
+                for (var j = i + 1; j < ColumnCount; j++)
+                    if (_items[i, j] != 0d)
+                        return false;
 
             return true;
         }
@@ -453,9 +426,9 @@ namespace linear_A
         private bool IsUpperTriangularUnsafe()
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = i + 1; j < ColumnCount; j++)
-                if (Math.Abs(_items[j, i]) > double.Epsilon)
-                    return false;
+                for (var j = i + 1; j < ColumnCount; j++)
+                    if (_items[j, i] != 0d)
+                        return false;
 
             return true;
         }
@@ -464,7 +437,7 @@ namespace linear_A
         ///     The GetTrace method.
         /// </summary>
         /// <returns>
-        ///     An <see cref="int" /> corresponding to the matrix's trace.
+        ///     An <see cref="double" /> corresponding to the matrix's trace.
         /// </returns>
         public double GetTrace()
         {
@@ -477,7 +450,7 @@ namespace linear_A
         ///     Unsafe GetTrace method.
         /// </summary>
         /// <returns>
-        ///     An <see cref="int" /> corresponding to the matrix's trace.
+        ///     An <see cref="double" /> corresponding to the matrix's trace.
         /// </returns>
         private double GetTraceUnsafe()
         {
@@ -511,7 +484,7 @@ namespace linear_A
         ///     The get eigen values method.
         /// </summary>
         /// <returns>
-        ///     An array of <see cref="int" /> corresponding to the matrix eigenvalues.
+        ///     An array of <see cref="double" /> corresponding to the matrix eigenvalues.
         /// </returns>
         public double[] GetEigenValues()
         {
@@ -524,7 +497,7 @@ namespace linear_A
         ///     The unsafe get eigen values method.
         /// </summary>
         /// <returns>
-        ///     An array of <see cref="int" /> corresponding to the matrix eigenvalues.
+        ///     An array of <see cref="double" /> corresponding to the matrix eigenvalues.
         /// </returns>
         private static double[] GetEigenValuesUnsafe() => throw new NotImplementedException();
 
@@ -532,7 +505,7 @@ namespace linear_A
         ///     The get eigen vectors method.
         /// </summary>
         /// <returns>
-        ///     An array of <see cref="int" /> corresponding to the matrix eigen vectors.
+        ///     An array of <see cref="double" /> corresponding to the matrix eigen vectors.
         /// </returns>
         public double[] GetEigenVectors() => throw new NotImplementedException();
 
@@ -563,7 +536,8 @@ namespace linear_A
         ///     An out variable for the determinant.
         /// </param>
         /// <returns>
-        ///     Flag indicating whether the determinant could be calculated <see cref="bool" />.
+        ///     True if this matrix is square. The result may be NaN or infinite; the same
+        ///     floating-point limitations as <see cref="GetDeterminant" /> apply.
         /// </returns>
         public bool TryGetDeterminant(out double determinant)
         {
@@ -571,7 +545,7 @@ namespace linear_A
 
             if (!IsSquare()) return false;
 
-            determinant = GetDeterminantUnsafe(_items);
+            determinant = GetDeterminantUnsafe(_items, out _);
 
             return true;
         }
@@ -580,61 +554,141 @@ namespace linear_A
         ///     The GetDeterminant method.
         /// </summary>
         /// <returns>
-        ///     The determinant for the matrix <see cref="int" />.
+        ///     The determinant, with the determinant of the empty matrix defined as one.
         /// </returns>
+        /// <remarks>
+        ///     Uses partial-pivoting elimination with power-of-two row scaling where it preserves
+        ///     the entries. Results remain subject to floating-point rounding, overflow and underflow,
+        ///     especially for ill-conditioned matrices. Nonfinite input or elimination results produce NaN.
+        /// </remarks>
         public double GetDeterminant()
         {
             if (!IsSquare()) throw new NotSquareMatrixException();
 
-            return GetDeterminantUnsafe(_items);
+            return GetDeterminantUnsafe(_items, out _);
         }
 
         /// <summary>
-        ///     The unsafe GetDeterminant method.
-        ///     Recursively calculates the matrix determinant.
+        ///     Computes a determinant by Gaussian elimination with partial pivoting.
+        ///     The input is copied so inspecting a matrix never changes its entries.
         /// </summary>
-        /// <param name="subarray">
-        ///     The matrix or sub-matrix for which to calculate the determinant.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="int" /> matrix determinant.
-        /// </returns>
-        private double GetDeterminantUnsafe(double[,] subarray)
+        private static double GetDeterminantUnsafe(double[,] matrix, out bool isInvertible)
         {
-            if (!IsSquare()) throw new NotSquareMatrixException();
+            var size = matrix.GetLength(0);
+            var work = (double[,])matrix.Clone();
+            isInvertible = false;
 
-            if (subarray.GetLength(0) == 2) return subarray[0, 0] * subarray[1, 1] - subarray[0, 1] * subarray[1, 0];
+            for (var row = 0; row < size; row++)
+                for (var column = 0; column < size; column++)
+                    if (double.IsNaN(work[row, column]) || double.IsInfinity(work[row, column]))
+                        return double.NaN;
 
-            var rowLength = subarray.GetLength(0);
-            var subsubarray = new double[rowLength - 1, rowLength - 1];
-            var results = new double[rowLength];
-
-            for (var i = 0; i < rowLength; i++)
+            long rowScaleExponent = 0;
+            for (var row = 0; row < size; row++)
             {
-                for (var column = 0; column < rowLength; column++)
+                var largest = 0d;
+                for (var column = 0; column < size; column++)
+                    largest = Math.Max(largest, Math.Abs(work[row, column]));
+                if (largest == 0d) return 0d;
+
+                var encodedExponent = (int)((BitConverter.DoubleToInt64Bits(largest) >> 52) & 0x7ff);
+                if (encodedExponent == 0)
                 {
-                    if (column < i)
-                        for (var row = 1; row < rowLength; row++)
-                            subsubarray[row - 1, column] = subarray[row, column];
-
-                    if (column <= i) continue;
-
-                    for (var row = 1; row < rowLength; row++)
-                        subsubarray[row - 1, column - 1] = subarray[row, column];
+                    // Normalize subnormal rows before constructing their reciprocal scale.
+                    for (var column = 0; column < size; column++) work[row, column] *= 18014398509481984d;
+                    largest *= 18014398509481984d;
+                    encodedExponent = (int)((BitConverter.DoubleToInt64Bits(largest) >> 52) & 0x7ff);
+                    rowScaleExponent -= 54;
                 }
 
-                results[i] = subarray[0, i] * GetDeterminantUnsafe(subsubarray);
+                var exponent = encodedExponent - 1023;
+                var scale = Math.Pow(2d, -exponent);
+                var preservesEntries = true;
+                for (var column = 0; column < size && preservesEntries; column++)
+                    preservesEntries = work[row, column] * scale / scale == work[row, column];
+                if (!preservesEntries) continue;
+
+                for (var column = 0; column < size; column++) work[row, column] *= scale;
+                rowScaleExponent += exponent;
             }
 
-            var result = 0d;
             var sign = 1;
-            for (var i = 0; i < rowLength; i++)
+            for (var pivotColumn = 0; pivotColumn < size; pivotColumn++)
             {
-                result += sign * results[i];
-                sign *= -1;
+                var pivotRow = pivotColumn;
+                for (var row = pivotColumn + 1; row < size; row++)
+                    if (Math.Abs(work[row, pivotColumn]) > Math.Abs(work[pivotRow, pivotColumn]))
+                        pivotRow = row;
+
+                var pivot = work[pivotRow, pivotColumn];
+                if (double.IsNaN(pivot) || double.IsInfinity(pivot)) return double.NaN;
+                if (pivot == 0d) return 0d;
+
+                if (pivotRow != pivotColumn)
+                {
+                    for (var column = pivotColumn; column < size; column++)
+                    {
+                        var temporary = work[pivotColumn, column];
+                        work[pivotColumn, column] = work[pivotRow, column];
+                        work[pivotRow, column] = temporary;
+                    }
+                    sign = -sign;
+                }
+
+                for (var row = pivotColumn + 1; row < size; row++)
+                {
+                    var factor = work[row, pivotColumn] / pivot;
+                    work[row, pivotColumn] = 0d;
+                    for (var column = pivotColumn + 1; column < size; column++)
+                    {
+                        work[row, column] -= factor * work[pivotColumn, column];
+                        if (double.IsNaN(work[row, column]) || double.IsInfinity(work[row, column]))
+                            return double.NaN;
+                    }
+                }
             }
 
-            return result;
+            isInvertible = true;
+            return MultiplyDiagonal(work, sign, rowScaleExponent);
+        }
+
+        /// <summary>
+        ///     Multiplies the pivots with a separate binary exponent so mixed large and small
+        ///     pivots do not cause avoidable intermediate overflow or underflow.
+        /// </summary>
+        private static double MultiplyDiagonal(double[,] matrix, int sign, long exponent)
+        {
+            var mantissa = (double)sign;
+            for (var i = 0; i < matrix.GetLength(0); i++)
+            {
+                var value = matrix[i, i];
+                var bits = BitConverter.DoubleToInt64Bits(value);
+                var valueExponent = (int)((bits >> 52) & 0x7ff);
+                if (valueExponent == 0)
+                {
+                    // Scaling by 2^54 normalizes any nonzero subnormal double exactly.
+                    value *= 18014398509481984d;
+                    bits = BitConverter.DoubleToInt64Bits(value);
+                    valueExponent = (int)((bits >> 52) & 0x7ff);
+                    exponent -= 54;
+                }
+
+                exponent += valueExponent - 1023;
+                bits = (bits & unchecked((long)0x800fffffffffffffUL)) | (1023L << 52);
+                mantissa *= BitConverter.Int64BitsToDouble(bits);
+                if (Math.Abs(mantissa) >= 2d)
+                {
+                    mantissa *= 0.5d;
+                    exponent++;
+                }
+            }
+
+            if (exponent > 1023) return mantissa > 0d ? double.PositiveInfinity : double.NegativeInfinity;
+            if (exponent < -1075) return mantissa * 0d;
+            if (exponent < -1022)
+                return mantissa * Math.Pow(2d, exponent + 1022) * Math.Pow(2d, -1022);
+
+            return mantissa * BitConverter.Int64BitsToDouble((exponent + 1023) << 52);
         }
 
         /// <summary>
@@ -643,7 +697,13 @@ namespace linear_A
         /// <param name="a">The left side matrix</param>
         /// <param name="b">The right matrix</param>
         /// <returns>The dot product</returns>
-        public static DoubleMatrix operator *(DoubleMatrix a, DoubleMatrix b) => a.DotProduct(b);
+        public static DoubleMatrix operator *(DoubleMatrix a, DoubleMatrix b)
+        {
+            if (a == null) throw new ArgumentNullException(nameof(a));
+            if (b == null) throw new ArgumentNullException(nameof(b));
+
+            return a.DotProduct(b);
+        }
 
         /// <summary>
         ///     Overloads + operator for addition
@@ -653,7 +713,8 @@ namespace linear_A
         /// <returns></returns>
         public static DoubleMatrix operator +(DoubleMatrix a, DoubleMatrix b)
         {
-            if (a == null || b == null) throw new ArgumentNullException();
+            if (a == null) throw new ArgumentNullException(nameof(a));
+            if (b == null) throw new ArgumentNullException(nameof(b));
 
             var result = new DoubleMatrix(a);
             if (result.TryAddMatrix(b)) return result;
@@ -669,7 +730,8 @@ namespace linear_A
         /// <returns></returns>
         public static DoubleMatrix operator -(DoubleMatrix a, DoubleMatrix b)
         {
-            if (a == null || b == null) throw new ArgumentNullException();
+            if (a == null) throw new ArgumentNullException(nameof(a));
+            if (b == null) throw new ArgumentNullException(nameof(b));
 
             var result = new DoubleMatrix(a);
             if (result.TrySubtractMatrix(b)) return result;

@@ -28,11 +28,11 @@ namespace linear_A.Test
         {
             var testMatrix1 = new IntegerMatrix(1, false);
             var testMatrix2 = new IntegerMatrix(1, false);
-            
+
             var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-            
-            Assert.IsTrue(success);
-            Assert.AreEqual(0, testMatrix1[0, 0]);
+
+            Assert.That(success, Is.True);
+            Assert.That(testMatrix1[0, 0], Is.EqualTo(0));
         }
 
         /// <summary>
@@ -44,11 +44,11 @@ namespace linear_A.Test
             var testMatrix1 = new IntegerMatrix(1, true);
             var testMatrix2 = new IntegerMatrix(1, true);
             testMatrix1[0, 0]++;
-            
+
             var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-            
-            Assert.IsTrue(success);
-            Assert.AreEqual(1, testMatrix1[0, 0]);
+
+            Assert.That(success, Is.True);
+            Assert.That(testMatrix1[0, 0], Is.EqualTo(1));
         }
 
         /// <summary>
@@ -59,11 +59,11 @@ namespace linear_A.Test
         {
             var testMatrix1 = new IntegerMatrix(1, false);
             var testMatrix2 = new IntegerMatrix(2, true);
-            
+
             var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-            
-            Assert.IsFalse(success);
-            Assert.AreEqual(0, testMatrix1[0, 0]);
+
+            Assert.That(success, Is.False);
+            Assert.That(testMatrix1[0, 0], Is.EqualTo(0));
         }
 
         /// <summary>
@@ -89,19 +89,19 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreNotEqual(0, testMatrix1[i, j]);
-                    Assert.AreNotEqual(0, testMatrix2[j, i]);
+                    Assert.That(testMatrix1[i, j], Is.Not.EqualTo(0));
+                    Assert.That(testMatrix2[j, i], Is.Not.EqualTo(0));
                 }
             }
 
             var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-            Assert.IsTrue(success);
+            Assert.That(success, Is.True);
             for (var i = 0; i < 3; i++)
             {
                 for (var j = 0; j < 3; j++)
                 {
                     var expectedValue = (i + j + 1) * 2;
-                    Assert.AreEqual(expectedValue, testMatrix1[i, j], 0);
+                    Assert.That(testMatrix1[i, j], Is.EqualTo(expectedValue).Within(0));
                 }
             }
         }
@@ -133,19 +133,19 @@ namespace linear_A.Test
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
-                            Assert.AreNotEqual(0, testMatrix1[i, j]);
-                            Assert.AreNotEqual(0, testMatrix2[i, j]);
+                            Assert.That(testMatrix1[i, j], Is.Not.EqualTo(0));
+                            Assert.That(testMatrix2[i, j], Is.Not.EqualTo(0));
                         }
                     }
 
                     var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-                    Assert.IsTrue(success);
+                    Assert.That(success, Is.True);
                     for (var i = 0; i < rowCount; i++)
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
                             var expectedValue = (i + j + 1) * 2;
-                            Assert.AreEqual(expectedValue, testMatrix1[i, j]);
+                            Assert.That(testMatrix1[i, j], Is.EqualTo(expectedValue));
                         }
                     }
                 }
@@ -187,17 +187,17 @@ namespace linear_A.Test
 
             testMatrix1.TrySubtractMatrix(testMatrix2);
 
-            Assert.AreEqual(-3, testMatrix1[0, 0]);
-            Assert.AreEqual(-3, testMatrix1[0, 1]);
-            Assert.AreEqual(-3, testMatrix1[0, 2]);
-            Assert.AreEqual(-5, testMatrix1[1, 0]);
-            Assert.AreEqual(-5, testMatrix1[1, 1]);
-            Assert.AreEqual(-5, testMatrix1[1, 2]);
-            Assert.AreEqual(-3, testMatrix1[2, 0]);
-            Assert.AreEqual(-4, testMatrix1[2, 1]);
-            Assert.AreEqual(1,  testMatrix1[2, 2]);
+            Assert.That(testMatrix1[0, 0], Is.EqualTo(-3));
+            Assert.That(testMatrix1[0, 1], Is.EqualTo(-3));
+            Assert.That(testMatrix1[0, 2], Is.EqualTo(-3));
+            Assert.That(testMatrix1[1, 0], Is.EqualTo(-5));
+            Assert.That(testMatrix1[1, 1], Is.EqualTo(-5));
+            Assert.That(testMatrix1[1, 2], Is.EqualTo(-5));
+            Assert.That(testMatrix1[2, 0], Is.EqualTo(-3));
+            Assert.That(testMatrix1[2, 1], Is.EqualTo(-4));
+            Assert.That(testMatrix1[2, 2], Is.EqualTo(1));
         }
-        
+
         /// <summary>
         ///     The TrySubtractZeros_1X1MatricesResultSuccessAndIsZero test.
         /// </summary>
@@ -206,11 +206,11 @@ namespace linear_A.Test
         {
             var testMatrix1 = new DoubleMatrix(1, false);
             var testMatrix2 = new DoubleMatrix(1, false);
-            
+
             var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-            
-            Assert.IsTrue(success);
-            Assert.AreEqual(0, testMatrix1[0, 0]);
+
+            Assert.That(success, Is.True);
+            Assert.That(testMatrix1[0, 0], Is.EqualTo(0));
         }
 
         /// <summary>
@@ -222,11 +222,11 @@ namespace linear_A.Test
             var testMatrix1 = new DoubleMatrix(1, true);
             var testMatrix2 = new DoubleMatrix(1, true);
             testMatrix1[0, 0]++;
-            
+
             var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-            
-            Assert.IsTrue(success);
-            Assert.AreEqual(1, testMatrix1[0, 0]);
+
+            Assert.That(success, Is.True);
+            Assert.That(testMatrix1[0, 0], Is.EqualTo(1));
         }
 
         /// <summary>
@@ -237,11 +237,11 @@ namespace linear_A.Test
         {
             var testMatrix1 = new DoubleMatrix(1, false);
             var testMatrix2 = new DoubleMatrix(2, true);
-            
+
             var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-            
-            Assert.IsFalse(success);
-            Assert.AreEqual(0, testMatrix1[0, 0]);
+
+            Assert.That(success, Is.False);
+            Assert.That(testMatrix1[0, 0], Is.EqualTo(0));
         }
 
         /// <summary>
@@ -267,19 +267,19 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreNotEqual(0, testMatrix1[i, j]);
-                    Assert.AreNotEqual(0, testMatrix2[j, i]);
+                    Assert.That(testMatrix1[i, j], Is.Not.EqualTo(0));
+                    Assert.That(testMatrix2[j, i], Is.Not.EqualTo(0));
                 }
             }
 
             var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-            Assert.IsTrue(success);
+            Assert.That(success, Is.True);
             for (var i = 0; i < 3; i++)
             {
                 for (var j = 0; j < 3; j++)
                 {
                     var expectedValue = (i + j + 1) * 2;
-                    Assert.AreEqual(expectedValue, testMatrix1[i, j], 0);
+                    Assert.That(testMatrix1[i, j], Is.EqualTo(expectedValue).Within(0));
                 }
             }
         }
@@ -311,19 +311,19 @@ namespace linear_A.Test
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
-                            Assert.AreNotEqual(0, testMatrix1[i, j]);
-                            Assert.AreNotEqual(0, testMatrix2[i, j]);
+                            Assert.That(testMatrix1[i, j], Is.Not.EqualTo(0));
+                            Assert.That(testMatrix2[i, j], Is.Not.EqualTo(0));
                         }
                     }
 
                     var success = testMatrix1.TrySubtractMatrix(testMatrix2);
-                    Assert.IsTrue(success);
+                    Assert.That(success, Is.True);
                     for (var i = 0; i < rowCount; i++)
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
                             var expectedValue = (i + j + 1) * 2;
-                            Assert.AreEqual(expectedValue, testMatrix1[i, j]);
+                            Assert.That(testMatrix1[i, j], Is.EqualTo(expectedValue));
                         }
                     }
                 }
@@ -365,15 +365,15 @@ namespace linear_A.Test
 
             testMatrix1.TrySubtractMatrix(testMatrix2);
 
-            Assert.AreEqual(-3, testMatrix1[0, 0]);
-            Assert.AreEqual(-3, testMatrix1[0, 1]);
-            Assert.AreEqual(-3, testMatrix1[0, 2]);
-            Assert.AreEqual(-5, testMatrix1[1, 0]);
-            Assert.AreEqual(-5, testMatrix1[1, 1]);
-            Assert.AreEqual(-5, testMatrix1[1, 2]);
-            Assert.AreEqual(-3, testMatrix1[2, 0]);
-            Assert.AreEqual(-4, testMatrix1[2, 1]);
-            Assert.AreEqual(1,  testMatrix1[2, 2]);
+            Assert.That(testMatrix1[0, 0], Is.EqualTo(-3));
+            Assert.That(testMatrix1[0, 1], Is.EqualTo(-3));
+            Assert.That(testMatrix1[0, 2], Is.EqualTo(-3));
+            Assert.That(testMatrix1[1, 0], Is.EqualTo(-5));
+            Assert.That(testMatrix1[1, 1], Is.EqualTo(-5));
+            Assert.That(testMatrix1[1, 2], Is.EqualTo(-5));
+            Assert.That(testMatrix1[2, 0], Is.EqualTo(-3));
+            Assert.That(testMatrix1[2, 1], Is.EqualTo(-4));
+            Assert.That(testMatrix1[2, 2], Is.EqualTo(1));
         }
     }
 }

@@ -22,12 +22,19 @@ namespace linear_A
     public static class CacheExtension
     {
         /// <summary>
-        ///     A delegate for memoizing function results
+        ///     Creates a delegate that caches results by input for the lifetime of the delegate.
         /// </summary>
+        /// <remarks>Concurrent calls for the same uncached input may evaluate the function more than once.</remarks>
         /// <param name="f"></param>
         /// <typeparam name="T"></typeparam>
         /// <typeparam name="TResult"></typeparam>
         /// <returns></returns>
-        public static Func<T, TResult> Memoize<T, TResult>(this Func<T, TResult> f) => a => new ConcurrentDictionary<T, TResult>().GetOrAdd(a, f);
+        public static Func<T, TResult> Memoize<T, TResult>(this Func<T, TResult> f) where T : notnull
+        {
+            if (f == null) throw new ArgumentNullException(nameof(f));
+
+            var cache = new ConcurrentDictionary<T, TResult>();
+            return value => cache.GetOrAdd(value, f);
+        }
     }
 }

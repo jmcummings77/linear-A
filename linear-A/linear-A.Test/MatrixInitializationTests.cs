@@ -1,4 +1,4 @@
-﻿#region Copyright
+#region Copyright
 
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MatrixInitializationTests.cs" company="John-Michael Cummings">
@@ -32,7 +32,7 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 10; j++)
                 {
-                    Assert.AreEqual(i == j ? 1 : 0, testMatrix[i, j]);
+                    Assert.That(testMatrix[i, j], Is.EqualTo(i == j ? 1 : 0));
                 }
             }
         }
@@ -44,15 +44,15 @@ namespace linear_A.Test
         public void Constructs_3X3Identity()
         {
             var testMatrix = new IntegerMatrix(3, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
-            Assert.AreEqual(0, testMatrix[0, 1]);
-            Assert.AreEqual(0, testMatrix[0, 2]);
-            Assert.AreEqual(0, testMatrix[1, 0]);
-            Assert.AreEqual(1, testMatrix[1, 1]);
-            Assert.AreEqual(0, testMatrix[1, 2]);
-            Assert.AreEqual(0, testMatrix[2, 0]);
-            Assert.AreEqual(0, testMatrix[2, 1]);
-            Assert.AreEqual(1, testMatrix[2, 2]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
+            Assert.That(testMatrix[0, 1], Is.EqualTo(0));
+            Assert.That(testMatrix[0, 2], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 0], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 1], Is.EqualTo(1));
+            Assert.That(testMatrix[1, 2], Is.EqualTo(0));
+            Assert.That(testMatrix[2, 0], Is.EqualTo(0));
+            Assert.That(testMatrix[2, 1], Is.EqualTo(0));
+            Assert.That(testMatrix[2, 2], Is.EqualTo(1));
         }
 
         /// <summary>
@@ -62,10 +62,10 @@ namespace linear_A.Test
         public void Constructs_2X2IdentityNoExtraRows()
         {
             var testMatrix = new IntegerMatrix(2, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
-            Assert.AreEqual(0, testMatrix[0, 1]);
-            Assert.AreEqual(0, testMatrix[1, 0]);
-            Assert.AreEqual(1, testMatrix[1, 1]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
+            Assert.That(testMatrix[0, 1], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 0], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 1], Is.EqualTo(1));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -80,10 +80,10 @@ namespace linear_A.Test
         public void Constructs_2X2IdentityNoExtraColumns()
         {
             var testMatrix = new IntegerMatrix(2, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
-            Assert.AreEqual(0, testMatrix[0, 1]);
-            Assert.AreEqual(0, testMatrix[1, 0]);
-            Assert.AreEqual(1, testMatrix[1, 1]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
+            Assert.That(testMatrix[0, 1], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 0], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 1], Is.EqualTo(1));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -98,7 +98,7 @@ namespace linear_A.Test
         public void Constructs_1X1IdentityNoExtraRows()
         {
             var testMatrix = new IntegerMatrix(1, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -113,7 +113,7 @@ namespace linear_A.Test
         public void Constructs_1X1IdentityNoExtraColumns()
         {
             var testMatrix = new IntegerMatrix(1, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -128,7 +128,7 @@ namespace linear_A.Test
         public void Constructs_1X1MatrixWithZerosNoExtraRows()
         {
             var testMatrix = new IntegerMatrix(1, 1);
-            Assert.AreEqual(0, testMatrix[0, 0]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(0));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -143,7 +143,7 @@ namespace linear_A.Test
         public void Constructs_1X1MatrixWithZerosNoExtraColumns()
         {
             var testMatrix = new IntegerMatrix(1, 1);
-            Assert.AreEqual(0, testMatrix[0, 0]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(0));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -162,7 +162,7 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreEqual(0, testMatrix[i, j]);
+                    Assert.That(testMatrix[i, j], Is.EqualTo(0));
                 }
             }
         }
@@ -270,7 +270,7 @@ namespace linear_A.Test
                 var testMatrix = new IntegerMatrix(-1, -1);
             });
         }
-        
+
         /// <summary>
         ///     The Constructs10X10Identity test.
         /// </summary>
@@ -282,7 +282,7 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 10; j++)
                 {
-                    Assert.AreEqual(i == j ? 1 : 0, testMatrix[i, j]);
+                    Assert.That(testMatrix[i, j], Is.EqualTo(i == j ? 1 : 0));
                 }
             }
         }
@@ -294,15 +294,15 @@ namespace linear_A.Test
         public void Constructs_3X3DoubleIdentity()
         {
             var testMatrix = new DoubleMatrix(3, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
-            Assert.AreEqual(0, testMatrix[0, 1]);
-            Assert.AreEqual(0, testMatrix[0, 2]);
-            Assert.AreEqual(0, testMatrix[1, 0]);
-            Assert.AreEqual(1, testMatrix[1, 1]);
-            Assert.AreEqual(0, testMatrix[1, 2]);
-            Assert.AreEqual(0, testMatrix[2, 0]);
-            Assert.AreEqual(0, testMatrix[2, 1]);
-            Assert.AreEqual(1, testMatrix[2, 2]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
+            Assert.That(testMatrix[0, 1], Is.EqualTo(0));
+            Assert.That(testMatrix[0, 2], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 0], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 1], Is.EqualTo(1));
+            Assert.That(testMatrix[1, 2], Is.EqualTo(0));
+            Assert.That(testMatrix[2, 0], Is.EqualTo(0));
+            Assert.That(testMatrix[2, 1], Is.EqualTo(0));
+            Assert.That(testMatrix[2, 2], Is.EqualTo(1));
         }
 
         /// <summary>
@@ -312,10 +312,10 @@ namespace linear_A.Test
         public void Constructs_2X2DoubleIdentityNoExtraRows()
         {
             var testMatrix = new DoubleMatrix(2, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
-            Assert.AreEqual(0, testMatrix[0, 1]);
-            Assert.AreEqual(0, testMatrix[1, 0]);
-            Assert.AreEqual(1, testMatrix[1, 1]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
+            Assert.That(testMatrix[0, 1], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 0], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 1], Is.EqualTo(1));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -330,10 +330,10 @@ namespace linear_A.Test
         public void Constructs_2X2DoubleIdentityNoExtraColumns()
         {
             var testMatrix = new DoubleMatrix(2, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
-            Assert.AreEqual(0, testMatrix[0, 1]);
-            Assert.AreEqual(0, testMatrix[1, 0]);
-            Assert.AreEqual(1, testMatrix[1, 1]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
+            Assert.That(testMatrix[0, 1], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 0], Is.EqualTo(0));
+            Assert.That(testMatrix[1, 1], Is.EqualTo(1));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -348,7 +348,7 @@ namespace linear_A.Test
         public void Constructs_1X1DoubleIdentityNoExtraRows()
         {
             var testMatrix = new DoubleMatrix(1, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -363,7 +363,7 @@ namespace linear_A.Test
         public void Constructs_1X1DoubleIdentityNoExtraColumns()
         {
             var testMatrix = new DoubleMatrix(1, true);
-            Assert.AreEqual(1, testMatrix[0, 0]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(1));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -378,7 +378,7 @@ namespace linear_A.Test
         public void Constructs_1X1DoubleMatrixWithZerosNoExtraRows()
         {
             var testMatrix = new DoubleMatrix(1, 1);
-            Assert.AreEqual(0, testMatrix[0, 0]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(0));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -393,7 +393,7 @@ namespace linear_A.Test
         public void Constructs_1X1DoubleMatrixWithZerosNoExtraColumns()
         {
             var testMatrix = new DoubleMatrix(1, 1);
-            Assert.AreEqual(0, testMatrix[0, 0]);
+            Assert.That(testMatrix[0, 0], Is.EqualTo(0));
             // ReSharper disable once UnusedVariable
             Assert.Throws<IndexOutOfRangeException>(() =>
             {
@@ -412,7 +412,7 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreEqual(0, testMatrix[i, j]);
+                    Assert.That(testMatrix[i, j], Is.EqualTo(0));
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿#region Copyright
+#region Copyright
 
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="NotSquareMatrixException.cs" company="John-Michael Cummings">

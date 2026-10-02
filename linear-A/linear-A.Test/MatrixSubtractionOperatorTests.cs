@@ -1,4 +1,4 @@
-﻿#region Copyright
+#region Copyright
 
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MatrixSubtractionOperatorTests.cs" company="John-Michael Cummings">
@@ -29,10 +29,10 @@ namespace linear_A.Test
         {
             var testMatrix1 = new IntegerMatrix(1, false);
             var testMatrix2 = new IntegerMatrix(1, false);
-            
+
             var testMatrix3 = testMatrix1 - testMatrix2;
-            
-            Assert.AreEqual(0, testMatrix3[0, 0]);
+
+            Assert.That(testMatrix3[0, 0], Is.EqualTo(0));
         }
 
         /// <summary>
@@ -44,10 +44,10 @@ namespace linear_A.Test
             var testMatrix1 = new IntegerMatrix(1, true);
             var testMatrix2 = new IntegerMatrix(1, true);
             testMatrix1[0, 0]++;
-            
+
             var testMatrix3 = testMatrix1 - testMatrix2;
-            
-            Assert.AreEqual(1, testMatrix3[0, 0]);
+
+            Assert.That(testMatrix3[0, 0], Is.EqualTo(1));
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace linear_A.Test
         {
             var testMatrix1 = new IntegerMatrix(1, false);
             var testMatrix2 = new IntegerMatrix(2, true);
-            
+
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
                 // ReSharper disable once UnusedVariable
@@ -89,8 +89,8 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreNotEqual(0, testMatrix1[i, j]);
-                    Assert.AreNotEqual(0, testMatrix2[j, i]);
+                    Assert.That(testMatrix1[i, j], Is.Not.EqualTo(0));
+                    Assert.That(testMatrix2[j, i], Is.Not.EqualTo(0));
                 }
             }
 
@@ -100,7 +100,7 @@ namespace linear_A.Test
                 for (var j = 0; j < 3; j++)
                 {
                     var expectedValue = (i + j + 1) * 2;
-                    Assert.AreEqual(expectedValue, testMatrix3[i, j], 0);
+                    Assert.That(testMatrix3[i, j], Is.EqualTo(expectedValue).Within(0));
                 }
             }
         }
@@ -132,8 +132,8 @@ namespace linear_A.Test
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
-                            Assert.AreNotEqual(0, testMatrix1[i, j]);
-                            Assert.AreNotEqual(0, testMatrix2[i, j]);
+                            Assert.That(testMatrix1[i, j], Is.Not.EqualTo(0));
+                            Assert.That(testMatrix2[i, j], Is.Not.EqualTo(0));
                         }
                     }
 
@@ -143,7 +143,7 @@ namespace linear_A.Test
                         for (var j = 0; j < columnCount; j++)
                         {
                             var expectedValue = (i + j + 1) * 2;
-                            Assert.AreEqual(expectedValue, testMatrix3[i, j]);
+                            Assert.That(testMatrix3[i, j], Is.EqualTo(expectedValue));
                         }
                     }
                 }
@@ -185,17 +185,17 @@ namespace linear_A.Test
 
             var testMatrix3 = testMatrix1 - testMatrix2;
 
-            Assert.AreEqual(-3, testMatrix3[0, 0]);
-            Assert.AreEqual(-3, testMatrix3[0, 1]);
-            Assert.AreEqual(-3, testMatrix3[0, 2]);
-            Assert.AreEqual(-5, testMatrix3[1, 0]);
-            Assert.AreEqual(-5, testMatrix3[1, 1]);
-            Assert.AreEqual(-5, testMatrix3[1, 2]);
-            Assert.AreEqual(-3, testMatrix3[2, 0]);
-            Assert.AreEqual(-4, testMatrix3[2, 1]);
-            Assert.AreEqual(1, testMatrix3[2, 2]);
+            Assert.That(testMatrix3[0, 0], Is.EqualTo(-3));
+            Assert.That(testMatrix3[0, 1], Is.EqualTo(-3));
+            Assert.That(testMatrix3[0, 2], Is.EqualTo(-3));
+            Assert.That(testMatrix3[1, 0], Is.EqualTo(-5));
+            Assert.That(testMatrix3[1, 1], Is.EqualTo(-5));
+            Assert.That(testMatrix3[1, 2], Is.EqualTo(-5));
+            Assert.That(testMatrix3[2, 0], Is.EqualTo(-3));
+            Assert.That(testMatrix3[2, 1], Is.EqualTo(-4));
+            Assert.That(testMatrix3[2, 2], Is.EqualTo(1));
         }
-        
+
         /// <summary>
         ///     The SubtractZeros_1X1MatricesWithOperatorAndIsZero test.
         /// </summary>
@@ -204,10 +204,10 @@ namespace linear_A.Test
         {
             var testMatrix1 = new DoubleMatrix(1, false);
             var testMatrix2 = new DoubleMatrix(1, false);
-            
+
             var testMatrix3 = testMatrix1 - testMatrix2;
-            
-            Assert.AreEqual(0, testMatrix3[0, 0]);
+
+            Assert.That(testMatrix3[0, 0], Is.EqualTo(0));
         }
 
         /// <summary>
@@ -219,10 +219,10 @@ namespace linear_A.Test
             var testMatrix1 = new DoubleMatrix(1, true);
             var testMatrix2 = new DoubleMatrix(1, true);
             testMatrix1[0, 0]++;
-            
+
             var testMatrix3 = testMatrix1 - testMatrix2;
-            
-            Assert.AreEqual(1, testMatrix3[0, 0]);
+
+            Assert.That(testMatrix3[0, 0], Is.EqualTo(1));
         }
 
         /// <summary>
@@ -263,8 +263,8 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreNotEqual(0, testMatrix1[i, j]);
-                    Assert.AreNotEqual(0, testMatrix2[j, i]);
+                    Assert.That(testMatrix1[i, j], Is.Not.EqualTo(0));
+                    Assert.That(testMatrix2[j, i], Is.Not.EqualTo(0));
                 }
             }
 
@@ -274,7 +274,7 @@ namespace linear_A.Test
                 for (var j = 0; j < 3; j++)
                 {
                     var expectedValue = (i + j + 1) * 2;
-                    Assert.AreEqual(expectedValue, testMatrix3[i, j], 0);
+                    Assert.That(testMatrix3[i, j], Is.EqualTo(expectedValue).Within(0));
                 }
             }
         }
@@ -306,8 +306,8 @@ namespace linear_A.Test
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
-                            Assert.AreNotEqual(0, testMatrix1[i, j]);
-                            Assert.AreNotEqual(0, testMatrix2[i, j]);
+                            Assert.That(testMatrix1[i, j], Is.Not.EqualTo(0));
+                            Assert.That(testMatrix2[i, j], Is.Not.EqualTo(0));
                         }
                     }
 
@@ -317,7 +317,7 @@ namespace linear_A.Test
                         for (var j = 0; j < columnCount; j++)
                         {
                             var expectedValue = (i + j + 1) * 2;
-                            Assert.AreEqual(expectedValue, testMatrix3[i, j]);
+                            Assert.That(testMatrix3[i, j], Is.EqualTo(expectedValue));
                         }
                     }
                 }
@@ -359,15 +359,15 @@ namespace linear_A.Test
 
             var testMatrix3 = testMatrix1 - testMatrix2;
 
-            Assert.AreEqual(-3, testMatrix3[0, 0]);
-            Assert.AreEqual(-3, testMatrix3[0, 1]);
-            Assert.AreEqual(-3, testMatrix3[0, 2]);
-            Assert.AreEqual(-5, testMatrix3[1, 0]);
-            Assert.AreEqual(-5, testMatrix3[1, 1]);
-            Assert.AreEqual(-5, testMatrix3[1, 2]);
-            Assert.AreEqual(-3, testMatrix3[2, 0]);
-            Assert.AreEqual(-4, testMatrix3[2, 1]);
-            Assert.AreEqual(1, testMatrix3[2, 2]);
+            Assert.That(testMatrix3[0, 0], Is.EqualTo(-3));
+            Assert.That(testMatrix3[0, 1], Is.EqualTo(-3));
+            Assert.That(testMatrix3[0, 2], Is.EqualTo(-3));
+            Assert.That(testMatrix3[1, 0], Is.EqualTo(-5));
+            Assert.That(testMatrix3[1, 1], Is.EqualTo(-5));
+            Assert.That(testMatrix3[1, 2], Is.EqualTo(-5));
+            Assert.That(testMatrix3[2, 0], Is.EqualTo(-3));
+            Assert.That(testMatrix3[2, 1], Is.EqualTo(-4));
+            Assert.That(testMatrix3[2, 2], Is.EqualTo(1));
         }
     }
 }

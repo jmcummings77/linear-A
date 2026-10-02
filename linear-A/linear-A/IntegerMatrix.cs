@@ -1,4 +1,4 @@
-﻿#region Copyright
+#region Copyright
 
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="IntegerMatrix.cs" company="John-Michael Cummings">
@@ -14,20 +14,24 @@
 namespace linear_A
 {
 
-#region Using Statements
+    #region Using Statements
 
     using System;
     using System.Collections;
-    using System.Collections.Generic;
+    using System.Numerics;
     // ReSharper disable NotAccessedField.Local
     // ReSharper disable UnusedMember.Global
     // ReSharper disable UnusedParameter.Global
 
-#endregion
+    #endregion
 
     /// <summary>
     ///     A matrix of integers with basic matrix operations.
     /// </summary>
+    /// <remarks>
+    ///     Addition, subtraction, scaling, multiplication and trace retain unchecked 32-bit
+    ///     arithmetic. Determinants use exact intermediates and report an out-of-range result.
+    /// </remarks>
     public class IntegerMatrix
     {
         /// <summary>
@@ -39,11 +43,6 @@ namespace linear_A
         ///     The items stored in the matrix.
         /// </summary>
         private readonly int[,] _items;
-
-        /// <summary>
-        ///     Gets the count of items in the matrix.
-        /// </summary>
-        private int _count;
 
         /// <summary>
         ///     Gets the row count.
@@ -70,11 +69,7 @@ namespace linear_A
         public int this[int rowIndex, int columnIndex]
         {
             get => _items[rowIndex, columnIndex];
-            set
-            {
-                _valuesHaveChanged = true;
-                _items[rowIndex, columnIndex] = value;
-            }
+            set => _items[rowIndex, columnIndex] = value;
         }
 
         /// <summary>
@@ -86,13 +81,6 @@ namespace linear_A
         ///     The is read only.
         /// </summary>
         public bool IsReadOnly => false;
-
-        /// <summary>
-        ///     Flag indicating whether the matrix values have changed, requiring re-computation of cached characteristics values
-        /// </summary>
-#pragma warning disable 414
-        private bool _valuesHaveChanged;
-#pragma warning restore 414
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="IntegerMatrix" /> class.
@@ -114,7 +102,6 @@ namespace linear_A
 
             RowCount = squareDimensions;
             ColumnCount = squareDimensions;
-            _count = RowCount * ColumnCount;
             _items = new int[RowCount, ColumnCount];
 
             if (!initializeAsIdentity) return;
@@ -151,7 +138,6 @@ namespace linear_A
 
             RowCount = rowCount;
             ColumnCount = columnCount;
-            _count = RowCount * ColumnCount;
             _items = new int[RowCount, ColumnCount];
         }
 
@@ -159,18 +145,17 @@ namespace linear_A
         ///     Initializes a new instance of the <see cref="IntegerMatrix" /> class as a duplicate of the provided matrix.
         /// </summary>
         /// <param name="matrixToCopy">Matrix to copy</param>
-        public IntegerMatrix(IntegerMatrix matrixToCopy)
+        public IntegerMatrix(IntegerMatrix? matrixToCopy)
         {
             if (matrixToCopy == null)
             {
-                _items = new int[0,0];
+                _items = new int[0, 0];
                 return;
             }
 
             RowCount = matrixToCopy.RowCount;
             ColumnCount = matrixToCopy.ColumnCount;
-            _count = RowCount * ColumnCount;
-            _items = (int[,]) matrixToCopy._items.Clone();
+            _items = (int[,])matrixToCopy._items.Clone();
         }
 
         /// <summary>
@@ -178,12 +163,12 @@ namespace linear_A
         /// </summary>
         public IntegerMatrix()
         {
-            _items = new int[0,0];
+            _items = new int[0, 0];
         }
 
         /// <summary>
         ///     The TrySubtract method.
-        ///     Returns false and does not execute the subtraction if the dimensions do not match.
+        ///     Returns false without changing this matrix if the argument is null or the dimensions do not match.
         ///     Otherwise subtracts the provided matrix from this matrix.
         /// </summary>
         /// <param name="matrixToSubtract">
@@ -192,9 +177,9 @@ namespace linear_A
         /// <returns>
         ///     The <see cref="bool" />.
         /// </returns>
-        public bool TrySubtractMatrix(IntegerMatrix matrixToSubtract)
+        public bool TrySubtractMatrix(IntegerMatrix? matrixToSubtract)
         {
-            if (matrixToSubtract.RowCount != RowCount || matrixToSubtract.ColumnCount != ColumnCount) return false;
+            if (matrixToSubtract == null || matrixToSubtract.RowCount != RowCount || matrixToSubtract.ColumnCount != ColumnCount) return false;
 
             SubtractMatrix(matrixToSubtract);
 
@@ -209,13 +194,13 @@ namespace linear_A
         private void SubtractMatrix(IntegerMatrix matrixToSubtract)
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < ColumnCount; j++)
-                _items[i, j] -= matrixToSubtract[i, j];
+                for (var j = 0; j < ColumnCount; j++)
+                    _items[i, j] -= matrixToSubtract[i, j];
         }
 
         /// <summary>
         ///     The TryAdd method.
-        ///     Returns false and leaves this matrix unchanged if the matrix to add is not of the correct dimensions.
+        ///     Returns false and leaves this matrix unchanged if the argument is null or has different dimensions.
         ///     Otherwise returns true and adds the values from the provided matrix to this matrix.
         /// </summary>
         /// <param name="matrixToAdd">
@@ -224,9 +209,9 @@ namespace linear_A
         /// <returns>
         ///     The success status, which returns false when matrices are not the same size <see cref="bool" />.
         /// </returns>
-        public bool TryAddMatrix(IntegerMatrix matrixToAdd)
+        public bool TryAddMatrix(IntegerMatrix? matrixToAdd)
         {
-            if (matrixToAdd.RowCount != RowCount || matrixToAdd.ColumnCount != ColumnCount) return false;
+            if (matrixToAdd == null || matrixToAdd.RowCount != RowCount || matrixToAdd.ColumnCount != ColumnCount) return false;
 
             AddMatrix(matrixToAdd);
 
@@ -240,8 +225,8 @@ namespace linear_A
         private void AddMatrix(IntegerMatrix matrixToAdd)
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < ColumnCount; j++)
-                _items[i, j] += matrixToAdd[i, j];
+                for (var j = 0; j < ColumnCount; j++)
+                    _items[i, j] += matrixToAdd[i, j];
         }
 
         /// <summary>
@@ -252,10 +237,12 @@ namespace linear_A
         /// </returns>
         public IntegerMatrix Transpose()
         {
+            if (RowCount == 0) return new IntegerMatrix();
+
             var result = new IntegerMatrix(ColumnCount, RowCount);
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < ColumnCount; j++)
-                result[i, j] += _items[j, i];
+                for (var j = 0; j < ColumnCount; j++)
+                    result[j, i] = _items[i, j];
 
             return result;
         }
@@ -269,8 +256,8 @@ namespace linear_A
         public void Scale(int scalar)
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < ColumnCount; j++)
-                _items[i, j] *= scalar;
+                for (var j = 0; j < ColumnCount; j++)
+                    _items[i, j] *= scalar;
         }
 
         /// <summary>
@@ -287,13 +274,18 @@ namespace linear_A
         /// </exception>
         public IntegerMatrix DotProduct(IntegerMatrix multiplicand)
         {
-            if (ColumnCount != multiplicand.RowCount) throw new ArgumentOutOfRangeException();
+            if (multiplicand == null) throw new ArgumentNullException(nameof(multiplicand));
+            if (ColumnCount != multiplicand.RowCount)
+                throw new ArgumentOutOfRangeException(nameof(multiplicand), "The left column count must equal the right row count.");
+
+            if (RowCount == 0) return new IntegerMatrix();
 
             var result = new IntegerMatrix(RowCount, multiplicand.ColumnCount);
 
             for (var i = 0; i < RowCount; i++)
-            for (var j = 0; j < multiplicand.ColumnCount; j++)
-                result[i, j] = VectorDotProduct(GetRow(i), multiplicand.GetColumn(j));
+                for (var j = 0; j < multiplicand.ColumnCount; j++)
+                    for (var k = 0; k < ColumnCount; k++)
+                        result._items[i, j] += _items[i, k] * multiplicand._items[k, j];
 
             return result;
         }
@@ -318,35 +310,6 @@ namespace linear_A
         public IEnumerator GetEnumerator() => _items.GetEnumerator();
 
         /// <summary>
-        ///     The vector dot product.
-        /// </summary>
-        /// <param name="vec1">
-        ///     The first vector.
-        /// </param>
-        /// <param name="vec2">
-        ///     The second vector.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="int" />.
-        /// </returns>
-        /// <exception cref="ArgumentNullException">
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// </exception>
-        private static int VectorDotProduct(IReadOnlyList<int> vec1, IReadOnlyList<int> vec2)
-        {
-            if (vec1 == null || vec2 == null) throw new ArgumentNullException();
-
-            var length = vec1.Count;
-            if (vec2.Count != length) throw new ArgumentOutOfRangeException();
-
-            var result = 0;
-            for (var i = 0; i < length; i++) result += vec1[i] * vec2[i];
-
-            return result;
-        }
-
-        /// <summary>
         ///     The get row method.
         /// </summary>
         /// <param name="rowNumber">
@@ -357,6 +320,8 @@ namespace linear_A
         /// </returns>
         public int[] GetRow(int rowNumber)
         {
+            if (rowNumber < 0 || rowNumber >= RowCount) throw new ArgumentOutOfRangeException(nameof(rowNumber));
+
             var result = new int[ColumnCount];
             Buffer.BlockCopy(
                 _items,
@@ -378,6 +343,8 @@ namespace linear_A
         /// </returns>
         public int[] GetColumn(int columnNumber)
         {
+            if (columnNumber < 0 || columnNumber >= ColumnCount) throw new ArgumentOutOfRangeException(nameof(columnNumber));
+
             var result = new int[RowCount];
             for (var i = 0; i < RowCount; i++) result[i] = _items[i, columnNumber];
 
@@ -417,15 +384,15 @@ namespace linear_A
         public bool IsLowerTriangular() => IsSquare() && IsLowerTriangularUnsafe();
 
         /// <summary>
-        ///     The IsInvertible property.
+        ///     Determines whether this matrix has an inverse over the rational or real numbers.
+        ///     The inverse need not have integer entries.
         /// </summary>
-        ///     A <see cref="bool" />  indicating whether the matrix is invertible.
-        /// <returns></returns>
+        /// <returns>True for a square matrix with a nonzero exact determinant.</returns>
         public bool IsInvertible()
         {
             if (!IsSquare()) return false;
 
-            return GetDeterminantUnsafe(_items) == 0;
+            return !GetDeterminantUnsafe(_items).IsZero;
         }
 
         /// <summary>
@@ -437,9 +404,9 @@ namespace linear_A
         private bool IsLowerTriangularUnsafe()
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = i + 1; j < ColumnCount; j++)
-                if (_items[i, j] != 0)
-                    return false;
+                for (var j = i + 1; j < ColumnCount; j++)
+                    if (_items[i, j] != 0)
+                        return false;
 
             return true;
         }
@@ -453,9 +420,9 @@ namespace linear_A
         private bool IsUpperTriangularUnsafe()
         {
             for (var i = 0; i < RowCount; i++)
-            for (var j = i + 1; j < ColumnCount; j++)
-                if (_items[j, i] != 0)
-                    return false;
+                for (var j = i + 1; j < ColumnCount; j++)
+                    if (_items[j, i] != 0)
+                        return false;
 
             return true;
         }
@@ -563,7 +530,8 @@ namespace linear_A
         ///     An out variable for the determinant.
         /// </param>
         /// <returns>
-        ///     Flag indicating whether the determinant could be calculated <see cref="bool" />.
+        ///     True if this matrix is square and its exact determinant fits in an <see cref="int" />.
+        ///     Otherwise returns false and sets <paramref name="determinant" /> to zero.
         /// </returns>
         public bool TryGetDeterminant(out int determinant)
         {
@@ -571,8 +539,10 @@ namespace linear_A
 
             if (!IsSquare()) return false;
 
-            determinant = GetDeterminantUnsafe(_items);
+            var exactDeterminant = GetDeterminantUnsafe(_items);
+            if (exactDeterminant < int.MinValue || exactDeterminant > int.MaxValue) return false;
 
+            determinant = (int)exactDeterminant;
             return true;
         }
 
@@ -580,61 +550,63 @@ namespace linear_A
         ///     The GetDeterminant method.
         /// </summary>
         /// <returns>
-        ///     The determinant for the matrix <see cref="int" />.
+        ///     The exact determinant, with the determinant of the empty matrix defined as one.
         /// </returns>
+        /// <exception cref="OverflowException">The determinant is outside the range of <see cref="int" />.</exception>
         public int GetDeterminant()
         {
             if (!IsSquare()) throw new NotSquareMatrixException();
 
-            return GetDeterminantUnsafe(_items);
+            return (int)GetDeterminantUnsafe(_items);
         }
 
         /// <summary>
-        ///     The unsafe GetDeterminant method.
-        ///     Recursively calculates the matrix determinant.
+        ///     Computes an exact determinant using fraction-free Bareiss elimination.
+        ///     Arbitrary-precision intermediates prevent overflow even when large terms cancel.
         /// </summary>
-        /// <param name="subarray">
-        ///     The matrix or sub-matrix for which to calculate the determinant.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="int" /> matrix determinant.
-        /// </returns>
-        private int GetDeterminantUnsafe(int[,] subarray)
+        private static BigInteger GetDeterminantUnsafe(int[,] matrix)
         {
-            if (!IsSquare()) throw new NotSquareMatrixException();
+            var size = matrix.GetLength(0);
+            if (size == 0) return BigInteger.One;
+            if (size == 1) return matrix[0, 0];
 
-            if (subarray.GetLength(0) == 2) return subarray[0, 0] * subarray[1, 1] - subarray[0, 1] * subarray[1, 0];
+            var work = new BigInteger[size, size];
+            for (var row = 0; row < size; row++)
+                for (var column = 0; column < size; column++)
+                    work[row, column] = matrix[row, column];
 
-            var rowLength = subarray.GetLength(0);
-            var subsubarray = new int[rowLength - 1, rowLength - 1];
-            var results = new int[rowLength];
-
-            for (var i = 0; i < rowLength; i++)
+            var previousPivot = BigInteger.One;
+            var sign = 1;
+            for (var pivotColumn = 0; pivotColumn < size - 1; pivotColumn++)
             {
-                for (var column = 0; column < rowLength; column++)
+                var pivotRow = pivotColumn;
+                while (pivotRow < size && work[pivotRow, pivotColumn].IsZero) pivotRow++;
+                if (pivotRow == size) return BigInteger.Zero;
+
+                if (pivotRow != pivotColumn)
                 {
-                    if (column < i)
-                        for (var row = 1; row < rowLength; row++)
-                            subsubarray[row - 1, column] = subarray[row, column];
-
-                    if (column <= i) continue;
-
-                    for (var row = 1; row < rowLength; row++)
-                        subsubarray[row - 1, column - 1] = subarray[row, column];
+                    for (var column = pivotColumn; column < size; column++)
+                    {
+                        var temporary = work[pivotColumn, column];
+                        work[pivotColumn, column] = work[pivotRow, column];
+                        work[pivotRow, column] = temporary;
+                    }
+                    sign = -sign;
                 }
 
-                results[i] = subarray[0, i] * GetDeterminantUnsafe(subsubarray);
+                var pivot = work[pivotColumn, pivotColumn];
+                for (var row = pivotColumn + 1; row < size; row++)
+                {
+                    for (var column = pivotColumn + 1; column < size; column++)
+                        work[row, column] =
+                            (pivot * work[row, column] - work[row, pivotColumn] * work[pivotColumn, column]) /
+                            previousPivot;
+                    work[row, pivotColumn] = BigInteger.Zero;
+                }
+                previousPivot = pivot;
             }
 
-            var result = 0;
-            var sign = 1;
-            for (var i = 0; i < rowLength; i++)
-            {
-                result += sign * results[i];
-                sign *= -1;
-            }
-
-            return result;
+            return sign * work[size - 1, size - 1];
         }
 
         /// <summary>
@@ -643,7 +615,13 @@ namespace linear_A
         /// <param name="a">The left side matrix</param>
         /// <param name="b">The right matrix</param>
         /// <returns>The dot product</returns>
-        public static IntegerMatrix operator *(IntegerMatrix a, IntegerMatrix b) => a.DotProduct(b);
+        public static IntegerMatrix operator *(IntegerMatrix a, IntegerMatrix b)
+        {
+            if (a == null) throw new ArgumentNullException(nameof(a));
+            if (b == null) throw new ArgumentNullException(nameof(b));
+
+            return a.DotProduct(b);
+        }
 
         /// <summary>
         ///     Overloads + operator for addition
@@ -653,7 +631,8 @@ namespace linear_A
         /// <returns></returns>
         public static IntegerMatrix operator +(IntegerMatrix a, IntegerMatrix b)
         {
-            if (a == null || b == null) throw new ArgumentNullException();
+            if (a == null) throw new ArgumentNullException(nameof(a));
+            if (b == null) throw new ArgumentNullException(nameof(b));
 
             var result = new IntegerMatrix(a);
             if (result.TryAddMatrix(b)) return result;
@@ -669,7 +648,8 @@ namespace linear_A
         /// <returns></returns>
         public static IntegerMatrix operator -(IntegerMatrix a, IntegerMatrix b)
         {
-            if (a == null || b == null) throw new ArgumentNullException();
+            if (a == null) throw new ArgumentNullException(nameof(a));
+            if (b == null) throw new ArgumentNullException(nameof(b));
 
             var result = new IntegerMatrix(a);
             if (result.TrySubtractMatrix(b)) return result;

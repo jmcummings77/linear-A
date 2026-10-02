@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="linear-A/linear-A/linear-A.csproj" />
+  <Project Path="linear-A/linear-A.Test/linear-A.Test.csproj" />
+</Solution>

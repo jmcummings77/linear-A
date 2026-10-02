@@ -1,4 +1,4 @@
-﻿#region Copyright
+#region Copyright
 
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MatrixAdditionTests.cs" company="John-Michael Cummings">
@@ -13,8 +13,8 @@
 
 namespace linear_A.Test
 {
-    using NUnit.Framework;
     using System;
+    using NUnit.Framework;
 
     /// <summary>
     ///     Test class for the Matrix addition overloaded operator "+" 
@@ -30,7 +30,7 @@ namespace linear_A.Test
             var testMatrix1 = new IntegerMatrix(1, false);
             var testMatrix2 = new IntegerMatrix(1, false);
             var testMatrix3 = testMatrix1 + testMatrix2;
-            Assert.AreEqual(testMatrix3[0, 0], 0);
+            Assert.That(0, Is.EqualTo(testMatrix3[0, 0]));
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace linear_A.Test
             var testMatrix1 = new IntegerMatrix(1, true);
             var testMatrix2 = new IntegerMatrix(1, true);
             var testMatrix3 = testMatrix1 + testMatrix2;
-            Assert.AreEqual(testMatrix3[0, 0], 2);
+            Assert.That(2, Is.EqualTo(testMatrix3[0, 0]));
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace linear_A.Test
             var testMatrix1 = new IntegerMatrix(1, false);
             var testMatrix2 = new IntegerMatrix(2, true);
             // ReSharper disable once UnusedVariable
-            Assert.Throws<ArgumentOutOfRangeException>(() => {var m = testMatrix1 + testMatrix2;});
+            Assert.Throws<ArgumentOutOfRangeException>(() => { var m = testMatrix1 + testMatrix2; });
         }
 
         /// <summary>
@@ -80,8 +80,8 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreNotEqual(testMatrix1[i, j], 0);
-                    Assert.AreNotEqual(testMatrix2[j, i], 0);
+                    Assert.That(0, Is.Not.EqualTo(testMatrix1[i, j]));
+                    Assert.That(0, Is.Not.EqualTo(testMatrix2[j, i]));
                 }
             }
 
@@ -90,7 +90,7 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreEqual(testMatrix3[i, j], 0);
+                    Assert.That(0, Is.EqualTo(testMatrix3[i, j]));
                 }
             }
         }
@@ -122,8 +122,8 @@ namespace linear_A.Test
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
-                            Assert.AreNotEqual(testMatrix1[i, j], 0);
-                            Assert.AreNotEqual(testMatrix2[i, j], 0);
+                            Assert.That(0, Is.Not.EqualTo(testMatrix1[i, j]));
+                            Assert.That(0, Is.Not.EqualTo(testMatrix2[i, j]));
                         }
                     }
 
@@ -132,7 +132,7 @@ namespace linear_A.Test
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
-                            Assert.AreEqual(testMatrix3[i, j], 0);
+                            Assert.That(0, Is.EqualTo(testMatrix3[i, j]));
                         }
                     }
                 }
@@ -172,17 +172,17 @@ namespace linear_A.Test
 
             var testMatrix3 = testMatrix1 + testMatrix2;
 
-            Assert.AreEqual(5, testMatrix3[0, 0]);
-            Assert.AreEqual(7, testMatrix3[0, 1]);
-            Assert.AreEqual(9, testMatrix3[0, 2]);
-            Assert.AreEqual(9, testMatrix3[1, 0]);
-            Assert.AreEqual(11, testMatrix3[1, 1]);
-            Assert.AreEqual(13, testMatrix3[1, 2]);
-            Assert.AreEqual(5, testMatrix3[2, 0]);
-            Assert.AreEqual(6, testMatrix3[2, 1]);
-            Assert.AreEqual(8, testMatrix3[2, 2]);
+            Assert.That(testMatrix3[0, 0], Is.EqualTo(5));
+            Assert.That(testMatrix3[0, 1], Is.EqualTo(7));
+            Assert.That(testMatrix3[0, 2], Is.EqualTo(9));
+            Assert.That(testMatrix3[1, 0], Is.EqualTo(9));
+            Assert.That(testMatrix3[1, 1], Is.EqualTo(11));
+            Assert.That(testMatrix3[1, 2], Is.EqualTo(13));
+            Assert.That(testMatrix3[2, 0], Is.EqualTo(5));
+            Assert.That(testMatrix3[2, 1], Is.EqualTo(6));
+            Assert.That(testMatrix3[2, 2], Is.EqualTo(8));
         }
-        
+
         /// <summary>
         ///     The AddZeros_1X1MatricesWithOperatorResultIsZero test.
         /// </summary>
@@ -192,7 +192,7 @@ namespace linear_A.Test
             var testMatrix1 = new DoubleMatrix(1, false);
             var testMatrix2 = new DoubleMatrix(1, false);
             var testMatrix3 = testMatrix1 + testMatrix2;
-            Assert.AreEqual(testMatrix3[0, 0], 0);
+            Assert.That(0, Is.EqualTo(testMatrix3[0, 0]));
         }
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace linear_A.Test
             var testMatrix1 = new DoubleMatrix(1, true);
             var testMatrix2 = new DoubleMatrix(1, true);
             var testMatrix3 = testMatrix1 + testMatrix2;
-            Assert.AreEqual(testMatrix3[0, 0], 2);
+            Assert.That(2, Is.EqualTo(testMatrix3[0, 0]));
         }
 
         /// <summary>
@@ -216,7 +216,7 @@ namespace linear_A.Test
             var testMatrix1 = new DoubleMatrix(1, false);
             var testMatrix2 = new DoubleMatrix(2, true);
             // ReSharper disable once UnusedVariable
-            Assert.Throws<ArgumentOutOfRangeException>(() => {var m = testMatrix1 + testMatrix2;});
+            Assert.Throws<ArgumentOutOfRangeException>(() => { var m = testMatrix1 + testMatrix2; });
         }
 
         /// <summary>
@@ -242,8 +242,8 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreNotEqual(testMatrix1[i, j], 0);
-                    Assert.AreNotEqual(testMatrix2[j, i], 0);
+                    Assert.That(0, Is.Not.EqualTo(testMatrix1[i, j]));
+                    Assert.That(0, Is.Not.EqualTo(testMatrix2[j, i]));
                 }
             }
 
@@ -252,7 +252,7 @@ namespace linear_A.Test
             {
                 for (var j = 0; j < 3; j++)
                 {
-                    Assert.AreEqual(testMatrix3[i, j], 0);
+                    Assert.That(0, Is.EqualTo(testMatrix3[i, j]));
                 }
             }
         }
@@ -284,8 +284,8 @@ namespace linear_A.Test
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
-                            Assert.AreNotEqual(testMatrix1[i, j], 0);
-                            Assert.AreNotEqual(testMatrix2[i, j], 0);
+                            Assert.That(0, Is.Not.EqualTo(testMatrix1[i, j]));
+                            Assert.That(0, Is.Not.EqualTo(testMatrix2[i, j]));
                         }
                     }
 
@@ -294,7 +294,7 @@ namespace linear_A.Test
                     {
                         for (var j = 0; j < columnCount; j++)
                         {
-                            Assert.AreEqual(testMatrix3[i, j], 0);
+                            Assert.That(0, Is.EqualTo(testMatrix3[i, j]));
                         }
                     }
                 }
@@ -334,15 +334,15 @@ namespace linear_A.Test
 
             var testMatrix3 = testMatrix1 + testMatrix2;
 
-            Assert.AreEqual(5, testMatrix3[0, 0]);
-            Assert.AreEqual(7, testMatrix3[0, 1]);
-            Assert.AreEqual(9, testMatrix3[0, 2]);
-            Assert.AreEqual(9, testMatrix3[1, 0]);
-            Assert.AreEqual(11, testMatrix3[1, 1]);
-            Assert.AreEqual(13, testMatrix3[1, 2]);
-            Assert.AreEqual(5, testMatrix3[2, 0]);
-            Assert.AreEqual(6, testMatrix3[2, 1]);
-            Assert.AreEqual(8, testMatrix3[2, 2]);
+            Assert.That(testMatrix3[0, 0], Is.EqualTo(5));
+            Assert.That(testMatrix3[0, 1], Is.EqualTo(7));
+            Assert.That(testMatrix3[0, 2], Is.EqualTo(9));
+            Assert.That(testMatrix3[1, 0], Is.EqualTo(9));
+            Assert.That(testMatrix3[1, 1], Is.EqualTo(11));
+            Assert.That(testMatrix3[1, 2], Is.EqualTo(13));
+            Assert.That(testMatrix3[2, 0], Is.EqualTo(5));
+            Assert.That(testMatrix3[2, 1], Is.EqualTo(6));
+            Assert.That(testMatrix3[2, 2], Is.EqualTo(8));
         }
     }
 }

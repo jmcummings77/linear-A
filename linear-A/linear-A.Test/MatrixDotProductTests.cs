@@ -1,4 +1,4 @@
-﻿#region Copyright
+#region Copyright
 
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MatrixDotProductTests.cs" company="John-Michael Cummings">
@@ -31,25 +31,25 @@ namespace linear_A.Test
             const int columnCount = 2;
             var testMatrix1 = new IntegerMatrix(rowCount, columnCount)
             {
-                [0, 0] = 1, 
-                [0, 1] = 2, 
+                [0, 0] = 1,
+                [0, 1] = 2,
                 [1, 0] = 2,
                 [1, 1] = 3
             };
             var testMatrix2 = new IntegerMatrix(rowCount, columnCount)
             {
                 [0, 0] = 4,
-                [0, 1] = 5, 
-                [1, 0] = 7, 
+                [0, 1] = 5,
+                [1, 0] = 7,
                 [1, 1] = 8
             };
 
             var result = testMatrix1.DotProduct(testMatrix2);
 
-            Assert.AreEqual(18, result[0, 0]);
-            Assert.AreEqual(21, result[0, 1]);
-            Assert.AreEqual(29, result[1, 0]);
-            Assert.AreEqual(34, result[1, 1]);
+            Assert.That(result[0, 0], Is.EqualTo(18));
+            Assert.That(result[0, 1], Is.EqualTo(21));
+            Assert.That(result[1, 0], Is.EqualTo(29));
+            Assert.That(result[1, 1], Is.EqualTo(34));
         }
 
         /// <summary>
@@ -87,15 +87,15 @@ namespace linear_A.Test
 
             var result = testMatrix1.DotProduct(testMatrix2);
 
-            Assert.AreEqual(30, result[0, 0]);
-            Assert.AreEqual(36, result[0, 1]);
-            Assert.AreEqual(45, result[0, 2]);
-            Assert.AreEqual(45, result[1, 0]);
-            Assert.AreEqual(54, result[1, 1]);
-            Assert.AreEqual(67, result[1, 2]);
-            Assert.AreEqual(15, result[2, 0]);
-            Assert.AreEqual(18, result[2, 1]);
-            Assert.AreEqual(22, result[2, 2]);
+            Assert.That(result[0, 0], Is.EqualTo(30));
+            Assert.That(result[0, 1], Is.EqualTo(36));
+            Assert.That(result[0, 2], Is.EqualTo(45));
+            Assert.That(result[1, 0], Is.EqualTo(45));
+            Assert.That(result[1, 1], Is.EqualTo(54));
+            Assert.That(result[1, 2], Is.EqualTo(67));
+            Assert.That(result[2, 0], Is.EqualTo(15));
+            Assert.That(result[2, 1], Is.EqualTo(18));
+            Assert.That(result[2, 2], Is.EqualTo(22));
         }
 
         /// <summary>
@@ -136,15 +136,15 @@ namespace linear_A.Test
                 testMatrix2 = testMatrix2.DotProduct(testMatrix1);
             }
 
-            Assert.AreEqual(1,   testMatrix2[0, 0]);
-            Assert.AreEqual(100, testMatrix2[0, 1]);
-            Assert.AreEqual(0,   testMatrix2[0, 2]);
-            Assert.AreEqual(0,   testMatrix2[1, 0]);
-            Assert.AreEqual(1,   testMatrix2[1, 1]);
-            Assert.AreEqual(0,   testMatrix2[1, 2]);
-            Assert.AreEqual(0,   testMatrix2[2, 0]);
-            Assert.AreEqual(0,   testMatrix2[2, 1]);
-            Assert.AreEqual(1,   testMatrix2[2, 2]);
+            Assert.That(testMatrix2[0, 0], Is.EqualTo(1));
+            Assert.That(testMatrix2[0, 1], Is.EqualTo(100));
+            Assert.That(testMatrix2[0, 2], Is.EqualTo(0));
+            Assert.That(testMatrix2[1, 0], Is.EqualTo(0));
+            Assert.That(testMatrix2[1, 1], Is.EqualTo(1));
+            Assert.That(testMatrix2[1, 2], Is.EqualTo(0));
+            Assert.That(testMatrix2[2, 0], Is.EqualTo(0));
+            Assert.That(testMatrix2[2, 1], Is.EqualTo(0));
+            Assert.That(testMatrix2[2, 2], Is.EqualTo(1));
         }
 
         /// <summary>
@@ -177,17 +177,17 @@ namespace linear_A.Test
             var firstSuccess = matrixASquared.TryAddMatrix(matrixA);
             var secondSuccess = matrixASquared.TryAddMatrix(matrixI);
 
-            Assert.IsTrue(firstSuccess);
-            Assert.IsTrue(secondSuccess);
-            Assert.AreEqual(0, matrixASquared[0, 0]);
-            Assert.AreEqual(0, matrixASquared[0, 1]);
-            Assert.AreEqual(0, matrixASquared[0, 2]);
-            Assert.AreEqual(0, matrixASquared[1, 0]);
-            Assert.AreEqual(0, matrixASquared[1, 1]);
-            Assert.AreEqual(0, matrixASquared[1, 2]);
-            Assert.AreEqual(0, matrixASquared[2, 0]);
-            Assert.AreEqual(0, matrixASquared[2, 1]);
-            Assert.AreEqual(0, matrixASquared[2, 2]);
+            Assert.That(firstSuccess, Is.True);
+            Assert.That(secondSuccess, Is.True);
+            Assert.That(matrixASquared[0, 0], Is.EqualTo(0));
+            Assert.That(matrixASquared[0, 1], Is.EqualTo(0));
+            Assert.That(matrixASquared[0, 2], Is.EqualTo(0));
+            Assert.That(matrixASquared[1, 0], Is.EqualTo(0));
+            Assert.That(matrixASquared[1, 1], Is.EqualTo(0));
+            Assert.That(matrixASquared[1, 2], Is.EqualTo(0));
+            Assert.That(matrixASquared[2, 0], Is.EqualTo(0));
+            Assert.That(matrixASquared[2, 1], Is.EqualTo(0));
+            Assert.That(matrixASquared[2, 2], Is.EqualTo(0));
         }
 
         /// <summary>
@@ -200,9 +200,9 @@ namespace linear_A.Test
             const int columnCount = 2;
             var testMatrix1 = new IntegerMatrix(rowCount, columnCount)
             {
-                [0, 0] = -2, 
-                [0, 1] = -9, 
-                [1, 0] = 1, 
+                [0, 0] = -2,
+                [0, 1] = -9,
+                [1, 0] = 1,
                 [1, 1] = 4
             };
 
@@ -212,10 +212,10 @@ namespace linear_A.Test
                 testMatrix2 = testMatrix2.DotProduct(testMatrix1);
             }
 
-            Assert.AreEqual(-2999, testMatrix2[0, 0]);
-            Assert.AreEqual(-9000, testMatrix2[0, 1]);
-            Assert.AreEqual(1000,  testMatrix2[1, 0]);
-            Assert.AreEqual(3001,  testMatrix2[1, 1]);
+            Assert.That(testMatrix2[0, 0], Is.EqualTo(-2999));
+            Assert.That(testMatrix2[0, 1], Is.EqualTo(-9000));
+            Assert.That(testMatrix2[1, 0], Is.EqualTo(1000));
+            Assert.That(testMatrix2[1, 1], Is.EqualTo(3001));
         }
 
         /// <summary>
@@ -256,8 +256,8 @@ namespace linear_A.Test
 
             var success = matrixA.TryGetDeterminant(out var result);
 
-            Assert.IsTrue(success);
-            Assert.AreEqual(-114, result);
+            Assert.That(success, Is.True);
+            Assert.That(result, Is.EqualTo(-114));
         }
 
         /// <summary>
@@ -297,12 +297,12 @@ namespace linear_A.Test
             };
 
             var success = matrixA.TryGetDeterminant(out var result);
-            
-            Assert.IsTrue(success);
-            Assert.AreEqual(-114, result);
+
+            Assert.That(success, Is.True);
+            Assert.That(result, Is.EqualTo(-114));
         }
-        
-         /// <summary>
+
+        /// <summary>
         ///     The hacker rank test case 3.
         /// </summary>
         [Test]
@@ -312,25 +312,25 @@ namespace linear_A.Test
             const int columnCount = 2;
             var testMatrix1 = new DoubleMatrix(rowCount, columnCount)
             {
-                [0, 0] = 1, 
-                [0, 1] = 2, 
+                [0, 0] = 1,
+                [0, 1] = 2,
                 [1, 0] = 2,
                 [1, 1] = 3
             };
             var testMatrix2 = new DoubleMatrix(rowCount, columnCount)
             {
-                [0, 0] = 4, 
-                [0, 1] = 5, 
+                [0, 0] = 4,
+                [0, 1] = 5,
                 [1, 0] = 7,
                 [1, 1] = 8
             };
 
             var result = testMatrix1.DotProduct(testMatrix2);
 
-            Assert.AreEqual(18, result[0, 0]);
-            Assert.AreEqual(21, result[0, 1]);
-            Assert.AreEqual(29, result[1, 0]);
-            Assert.AreEqual(34, result[1, 1]);
+            Assert.That(result[0, 0], Is.EqualTo(18));
+            Assert.That(result[0, 1], Is.EqualTo(21));
+            Assert.That(result[1, 0], Is.EqualTo(29));
+            Assert.That(result[1, 1], Is.EqualTo(34));
         }
 
         /// <summary>
@@ -369,15 +369,15 @@ namespace linear_A.Test
 
             var result = testMatrix1.DotProduct(testMatrix2);
 
-            Assert.AreEqual(30, result[0, 0]);
-            Assert.AreEqual(36, result[0, 1]);
-            Assert.AreEqual(45, result[0, 2]);
-            Assert.AreEqual(45, result[1, 0]);
-            Assert.AreEqual(54, result[1, 1]);
-            Assert.AreEqual(67, result[1, 2]);
-            Assert.AreEqual(15, result[2, 0]);
-            Assert.AreEqual(18, result[2, 1]);
-            Assert.AreEqual(22, result[2, 2]);
+            Assert.That(result[0, 0], Is.EqualTo(30));
+            Assert.That(result[0, 1], Is.EqualTo(36));
+            Assert.That(result[0, 2], Is.EqualTo(45));
+            Assert.That(result[1, 0], Is.EqualTo(45));
+            Assert.That(result[1, 1], Is.EqualTo(54));
+            Assert.That(result[1, 2], Is.EqualTo(67));
+            Assert.That(result[2, 0], Is.EqualTo(15));
+            Assert.That(result[2, 1], Is.EqualTo(18));
+            Assert.That(result[2, 2], Is.EqualTo(22));
         }
 
         /// <summary>
@@ -401,7 +401,7 @@ namespace linear_A.Test
                 [2, 1] = 0,
                 [2, 2] = 1
             };
-            
+
             var testMatrix2 = new DoubleMatrix(rowCount, columnCount)
             {
                 [0, 0] = 1,
@@ -420,15 +420,15 @@ namespace linear_A.Test
                 testMatrix2 = testMatrix2.DotProduct(testMatrix1);
             }
 
-            Assert.AreEqual(1,   testMatrix2[0, 0]);
-            Assert.AreEqual(100, testMatrix2[0, 1]);
-            Assert.AreEqual(0,   testMatrix2[0, 2]);
-            Assert.AreEqual(0,   testMatrix2[1, 0]);
-            Assert.AreEqual(1,   testMatrix2[1, 1]);
-            Assert.AreEqual(0,   testMatrix2[1, 2]);
-            Assert.AreEqual(0,   testMatrix2[2, 0]);
-            Assert.AreEqual(0,   testMatrix2[2, 1]);
-            Assert.AreEqual(1,   testMatrix2[2, 2]);
+            Assert.That(testMatrix2[0, 0], Is.EqualTo(1));
+            Assert.That(testMatrix2[0, 1], Is.EqualTo(100));
+            Assert.That(testMatrix2[0, 2], Is.EqualTo(0));
+            Assert.That(testMatrix2[1, 0], Is.EqualTo(0));
+            Assert.That(testMatrix2[1, 1], Is.EqualTo(1));
+            Assert.That(testMatrix2[1, 2], Is.EqualTo(0));
+            Assert.That(testMatrix2[2, 0], Is.EqualTo(0));
+            Assert.That(testMatrix2[2, 1], Is.EqualTo(0));
+            Assert.That(testMatrix2[2, 2], Is.EqualTo(1));
         }
 
         /// <summary>
@@ -441,7 +441,7 @@ namespace linear_A.Test
             const int columnCount = 3;
             const int x = -2;
             const int y = 1;
-            
+
             var matrixI = new DoubleMatrix(rowCount, true);
             var matrixA = new DoubleMatrix(rowCount, columnCount)
             {
@@ -461,20 +461,20 @@ namespace linear_A.Test
             matrixI.Scale(y);
 
             var success = matrixASquared.TryAddMatrix(matrixA);
-            
-            Assert.IsTrue(success);
-         
+
+            Assert.That(success, Is.True);
+
             success = matrixASquared.TryAddMatrix(matrixI);
-            Assert.IsTrue(success);
-            Assert.AreEqual(0, matrixASquared[0, 0]);
-            Assert.AreEqual(0, matrixASquared[0, 1]);
-            Assert.AreEqual(0, matrixASquared[0, 2]);
-            Assert.AreEqual(0, matrixASquared[1, 0]);
-            Assert.AreEqual(0, matrixASquared[1, 1]);
-            Assert.AreEqual(0, matrixASquared[1, 2]);
-            Assert.AreEqual(0, matrixASquared[2, 0]);
-            Assert.AreEqual(0, matrixASquared[2, 1]);
-            Assert.AreEqual(0, matrixASquared[2, 2]);
+            Assert.That(success, Is.True);
+            Assert.That(matrixASquared[0, 0], Is.EqualTo(0));
+            Assert.That(matrixASquared[0, 1], Is.EqualTo(0));
+            Assert.That(matrixASquared[0, 2], Is.EqualTo(0));
+            Assert.That(matrixASquared[1, 0], Is.EqualTo(0));
+            Assert.That(matrixASquared[1, 1], Is.EqualTo(0));
+            Assert.That(matrixASquared[1, 2], Is.EqualTo(0));
+            Assert.That(matrixASquared[2, 0], Is.EqualTo(0));
+            Assert.That(matrixASquared[2, 1], Is.EqualTo(0));
+            Assert.That(matrixASquared[2, 2], Is.EqualTo(0));
         }
 
         /// <summary>
@@ -485,12 +485,12 @@ namespace linear_A.Test
         {
             const int rowCount = 2;
             const int columnCount = 2;
-            
+
             var testMatrix1 = new DoubleMatrix(rowCount, columnCount)
             {
-                [0, 0] = -2, 
-                [0, 1] = -9, 
-                [1, 0] = 1, 
+                [0, 0] = -2,
+                [0, 1] = -9,
+                [1, 0] = 1,
                 [1, 1] = 4
             };
 
@@ -502,10 +502,10 @@ namespace linear_A.Test
                 testMatrix2 = testMatrix2.DotProduct(testMatrix1);
             }
 
-            Assert.AreEqual(-2999, testMatrix2[0, 0]);
-            Assert.AreEqual(-9000, testMatrix2[0, 1]);
-            Assert.AreEqual(1000,  testMatrix2[1, 0]);
-            Assert.AreEqual(3001,  testMatrix2[1, 1]);
+            Assert.That(testMatrix2[0, 0], Is.EqualTo(-2999));
+            Assert.That(testMatrix2[0, 1], Is.EqualTo(-9000));
+            Assert.That(testMatrix2[1, 0], Is.EqualTo(1000));
+            Assert.That(testMatrix2[1, 1], Is.EqualTo(3001));
         }
 
         /// <summary>
@@ -545,9 +545,10 @@ namespace linear_A.Test
             };
 
             var success = matrixA.TryGetDeterminant(out var result);
-           
-            Assert.IsTrue(success);
-            Assert.AreEqual(-114, result);
+
+            Assert.That(success, Is.True);
+            // Pivoted floating-point elimination can round the exact determinant -114.
+            Assert.That(result, Is.EqualTo(-114).Within(1e-12));
         }
 
         /// <summary>
@@ -587,9 +588,10 @@ namespace linear_A.Test
             };
 
             var success = matrixA.TryGetDeterminant(out var result);
-            
-            Assert.IsTrue(success);
-            Assert.AreEqual(-114, result);
+
+            Assert.That(success, Is.True);
+            // Pivoted floating-point elimination can round the exact determinant -114.
+            Assert.That(result, Is.EqualTo(-114).Within(1e-12));
         }
 
         /// <summary>
