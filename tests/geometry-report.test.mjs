@@ -25,6 +25,8 @@ class Element {
   querySelectorAll(tag){return this.children.filter(child=>child.tagName===tag.toUpperCase());}
   getBoundingClientRect(){return {width:720,height:430};}
   setPointerCapture(){}
+  showModal(){this.open=true;}
+  close(){this.open=false;}
 }
 
 /** Record drawing operations and reject invalid coordinates like a canvas would. */
@@ -59,7 +61,7 @@ function sceneFixture(){
 
 function report({available=true,reducedMotion=false,scene=sceneFixture()}={}){
   const nodes=new Map(),listeners=new Map(),mediaListeners=[],frames=new Map(),timers=new Map(),workers=[];
-  const ctx=new CanvasContext();let sequence=0;
+  const ctx=new CanvasContext();let sequence=0,now=0;
   const attributes=text=>Object.fromEntries([...text.matchAll(/([\w-]+)(?:="([^"]*)")?/g)].map(match=>[match[1],match[2]??'']));
   for(const match of template.matchAll(/<([a-z][\w-]*)\b([^>]*\bid="([^"]+)"[^>]*)>/g)){
     const [,tag,raw,id]=match,node=new Element(tag),attrs=attributes(raw);nodes.set(id,node);
@@ -87,10 +89,11 @@ function report({available=true,reducedMotion=false,scene=sceneFixture()}={}){
     terminate(){this.terminated=true;}
     reply(result){this.onmessage({data:{type:'geometry',result}});}
   }
-  vm.runInNewContext(source,{document,window,matchMedia,Worker,WebAssembly:{},Blob:class {},URL:{createObjectURL:()=>`blob:geometry-${++sequence}`,revokeObjectURL(){}},Event:class {},ResizeObserver:class {observe(){}},devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame:callback=>{const id=++sequence;frames.set(id,callback);return id;},cancelAnimationFrame:id=>frames.delete(id),setTimeout:callback=>{const id=++sequence;timers.set(id,callback);return id;},clearTimeout:id=>timers.delete(id)});
+  vm.runInNewContext(source,{document,window,matchMedia,Worker,WebAssembly:{},Blob:class {},URL:{createObjectURL:()=>`blob:geometry-${++sequence}`,revokeObjectURL(){}},Event:class {},ResizeObserver:class {observe(){}},devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame:callback=>{const id=++sequence;frames.set(id,callback);return id;},cancelAnimationFrame:id=>frames.delete(id),setTimeout:(callback,delay=0)=>{const id=++sequence;timers.set(id,{callback,due:now+delay});return id;},clearTimeout:id=>timers.delete(id)});
   if(available){assert.equal(workers.length,1,'initial computation should start once');workers[0].reply(scene);}
   const snapshot=()=>JSON.stringify({matrix:get('geometry-matrix').children.map(cell=>cell.textContent),m:get('geometry-m').children.map(input=>input.value),n:get('geometry-n').children.map(input=>input.value),progress:get('geometry-progress').value,step:get('geometry-step').value,mode:get('geometry-mode').value,term:get('geometry-term').textContent,volume:get('geometry-volume').textContent});
-  return {get,ctx,workers,frames,scene,snapshot,
+  return {get,ctx,workers,frames,scene,snapshot,timers,
+    advance(milliseconds){const end=now+milliseconds;while(true){const next=[...timers].filter(([,timer])=>timer.due<=end).sort((a,b)=>a[1].due-b[1].due)[0];if(!next)break;now=next[1].due;timers.delete(next[0]);next[1].callback();}now=end;},
     choose(id,value){get(id).value=value;get(id).dispatch('change');},
     input(id,value){get(id).value=value;get(id).dispatch('input');},
     check(id,checked){get(id).checked=checked;get(id).dispatch('change');},
@@ -106,6 +109,91 @@ test('geometry controls start with the grid visible and static arrows without an
   for(const [id,values]of [['geometry-arrow-style',styles],['geometry-arrow-color',colors],['geometry-arrow-motion',motions],['geometry-arrow-width',widths]])assert.deepEqual(page.get(id).options.map(option=>option.value),values);
   assert.equal(page.get('geometry-arrow-motion').value,'static');assert.equal(page.frames.size,0);
   assert.ok(page.get('geometry-arrow-note').textContent.length>0);
+});
+
+test('rapid matrix and sample edits recompute once after 300 ms of quiet using the latest values',()=>{
+  const page=report(),input=page.get('geometry-m').children[0];
+  assert.doesNotMatch(template,/id="geometry-compute"/);
+  input.value='2';input.dispatch('input');page.advance(200);
+  input.value='3';input.dispatch('input');page.advance(200);
+  page.input('geometry-grid-x','7');page.input('geometry-grid-y','3');page.input('geometry-grid-z','1');
+  page.advance(299);assert.equal(page.workers.length,1);
+  page.advance(1);assert.equal(page.workers.length,2);
+  const config=page.workers[1].messages[0].config;
+  assert.equal(config.m[0],3);assert.deepEqual(Array.from(config.grid),[7,3,1]);
+  const scene=sceneFixture();scene.points=Array.from({length:21},()=>[0,0,0]);scene.input_vectors=scene.points;scene.output_vectors=scene.points;
+  page.workers[1].reply(scene);
+  assert.equal(page.get('geometry-vector-count').textContent,'21');
+  assert.match(page.get('geometry-status').textContent,/21 field vectors/);
+  page.advance(30000);assert.equal(page.workers.length,2);assert.equal(page.timers.size,0);
+});
+
+test('new inputs cancel obsolete workers and late replies cannot replace the new field',()=>{
+  const page=report();page.input('geometry-grid-x','3');page.advance(300);
+  const stale=page.workers[1];page.input('geometry-grid-x','4');assert.equal(stale.terminated,true);
+  stale.reply(sceneFixture());assert.equal(page.get('geometry-play').disabled,true);
+  page.advance(300);const current=page.workers[2];current.reply(sceneFixture());
+  const state=page.snapshot(),status=page.get('geometry-status').textContent;
+  stale.reply({...sceneFixture(),result:Array(9).fill(99)});
+  stale.onmessage({data:{type:'error',message:'obsolete error'}});
+  stale.onerror({preventDefault(){}});
+  assert.equal(page.snapshot(),state);assert.equal(page.get('geometry-status').textContent,status);
+  assert.equal(page.get('geometry-canvas').attributes['aria-busy'],'false');
+});
+
+test('every mathematical input schedules a field update while display controls do not',()=>{
+  const page=report();
+  const changes=[()=>page.choose('geometry-preset','reflection'),()=>page.click('geometry-randomize'),
+    ()=>page.choose('geometry-operation','scale'),()=>page.input('geometry-scalar','2'),
+    ()=>page.choose('geometry-operation','rotate'),()=>page.input('geometry-angle','45'),
+    ()=>{const axis=page.get('geometry-axis').children[0];axis.value='1';axis.dispatch('input');},
+    ()=>{const n=page.get('geometry-n').children[0];n.value='2';n.dispatch('input');}];
+  for(const change of changes){const count=page.workers.length;change();page.advance(299);assert.equal(page.workers.length,count);page.advance(1);assert.equal(page.workers.length,count+1);page.workers.at(-1).reply(sceneFixture());}
+  const count=page.workers.length;
+  page.check('geometry-show-box',false);page.choose('geometry-arrow-color','blue');page.check('geometry-loop',true);
+  page.advance(1000);assert.equal(page.workers.length,count);
+});
+
+test('invalid inputs explain the problem and automatically recover when corrected',()=>{
+  const page=report(),input=page.get('geometry-m').children[0];
+  input.value='';input.dispatch('input');page.advance(300);
+  assert.equal(page.workers.length,1);assert.match(page.get('geometry-status').textContent,/Every matrix cell needs a number/);
+  input.value='2';input.dispatch('input');page.input('geometry-grid-x','16');page.advance(300);
+  assert.equal(page.workers.length,1);assert.match(page.get('geometry-status').textContent,/sample counts from 1 to 15/);
+  page.input('geometry-grid-x','1');page.advance(300);assert.equal(page.workers.length,2);
+  page.workers[1].reply(sceneFixture());assert.equal(page.get('geometry-play').disabled,false);
+  const unavailable=report({available:false});unavailable.click('geometry-randomize');unavailable.advance(1000);
+  assert.equal(unavailable.workers.length,0);assert.equal(unavailable.timers.size,0);
+  assert.match(unavailable.get('geometry-status').textContent,/No geometry module/);
+});
+
+test('looping wraps transformation and calculation playback, then stops when disabled',()=>{
+  for(const mode of ['morph','steps']){
+    const page=report();page.choose('geometry-mode',mode);page.choose('geometry-duration','10');
+    assert.equal(page.get('geometry-loop').checked,false);page.check('geometry-loop',true);
+    page.click('geometry-play');page.frame(0);
+    for(let time=100;time<=10100;time+=100)page.frame(time);
+    assert.equal(page.frames.size,1);assert.ok(Number(page.get('geometry-progress').value)<50);
+    if(mode==='steps')assert.equal(page.get('geometry-step').value,'0');
+    page.click('geometry-play');assert.equal(page.frames.size,0);
+    page.click('geometry-play');page.frame(10200);page.check('geometry-loop',false);
+    for(let time=10300;time<=21000;time+=100)page.frame(time);
+    assert.equal(page.get('geometry-progress').value,'1000');assert.equal(page.frames.size,0);
+    page.check('geometry-loop',true);page.click('geometry-reset');
+    assert.equal(page.get('geometry-loop').checked,true);assert.equal(page.frames.size,0);
+  }
+});
+
+test('settings dialog contains overlays and appearance and preserves the calculation',()=>{
+  const page=report(),state=page.snapshot(),dialog=page.get('geometry-settings');
+  assert.ok(!dialog.open);page.click('geometry-settings-open');assert.equal(dialog.open,true);
+  page.check('geometry-show-box',false);page.choose('geometry-arrow-style','solid');
+  page.click('geometry-settings-close');assert.equal(dialog.open,false);assert.equal(page.snapshot(),state);
+  page.click('geometry-settings-open');assert.equal(page.get('geometry-show-box').checked,false);
+  assert.equal(page.get('geometry-arrow-style').value,'solid');
+  const content=template.match(/<dialog\b[^>]*id="geometry-settings"[^>]*>([\s\S]*?)<\/dialog>/)[1];
+  assert.match(content,/id="geometry-show-axes"/);assert.match(content,/id="geometry-arrow-style"/);
+  assert.match(template,/<footer[\s\S]*© 2026 J\.M\. Cummings\.[\s\S]*<\/footer>/);
 });
 
 test('grid toggle changes only its eighteen strokes and preserves computation and scrub position',()=>{
@@ -258,7 +346,7 @@ test('orbit preserves captured calculation steps and shares one frame loop with 
 test('orbit selection survives reset and recomputation, with no idle loop while the scene is unavailable',()=>{
   const page=report();page.check('geometry-auto-orbit',true);page.frame(0);page.frame(100);
   page.click('geometry-reset');assert.equal(page.get('geometry-auto-orbit').checked,true);assert.equal(page.frames.size,1);
-  page.click('geometry-compute');assert.equal(page.frames.size,0);assert.equal(page.get('geometry-auto-orbit').checked,true);
+  page.input('geometry-grid-x','3');page.advance(300);assert.equal(page.frames.size,0);assert.equal(page.get('geometry-auto-orbit').checked,true);
   assert.equal(page.workers.length,2);page.workers[1].reply(sceneFixture());assert.equal(page.frames.size,1);
   const input=page.get('geometry-m').children[0];input.value='2';input.dispatch('input');assert.equal(page.frames.size,0);assert.equal(page.get('geometry-auto-orbit').checked,true);
   const unavailable=report({available:false});unavailable.check('geometry-auto-orbit',true);assert.equal(unavailable.frames.size,0);assert.equal(unavailable.workers.length,0);

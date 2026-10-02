@@ -17,10 +17,14 @@
   const visibility = {axes:get('geometry-show-axes'),box:get('geometry-show-box'),ellipse:get('geometry-show-ellipse'),grid:get('geometry-show-grid')};
   const appearance = {style:get('geometry-arrow-style'),color:get('geometry-arrow-color'),motion:get('geometry-arrow-motion'),width:get('geometry-arrow-width')};
   const autoOrbit = get('geometry-auto-orbit');
+  const loop = get('geometry-loop'), settings = get('geometry-settings');
+  const gridInputs = ['x','y','z'].map(axis=>get(`geometry-grid-${axis}`));
+  const canCompute = bundle.available && bundle.geometry_worker_source && typeof Worker!=='undefined' && typeof WebAssembly!=='undefined';
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const arrowColors = {cyan:[104,225,232],blue:[138,184,248],coral:[255,151,139],violet:[209,164,255],white:[235,243,244]};
   const axisInputs = Array.from(get('geometry-axis').querySelectorAll('input'));
   let scene = null, worker = null, workerUrl = null, timeout = null;
+  let recomputeTimeout = null;
   let progress = 0, step = 0, playing = false, animation = null, previousTime = null;
   let arrowPhase = 0, arrowPreviousTime = null;
   let orbitPreviousTime = null;
@@ -60,8 +64,18 @@
     if(!active){cancelAnimationFrame(animation);animation=null;arrowPreviousTime=null;orbitPreviousTime=null;}
   }
   function stopAnimation(){playing=false;previousTime=null;syncAnimation();get('geometry-play').textContent=isSteps()?'Play calculation':'Play transformation';}
-  function endWorker(){worker?.terminate();worker=null;if(workerUrl)URL.revokeObjectURL(workerUrl);workerUrl=null;clearTimeout(timeout);get('geometry-compute').textContent='Compute in WebAssembly';}
-  function invalidate(){endWorker();stopAnimation();scene=null;progress=0;step=0;get('geometry-play').disabled=true;get('geometry-progress').disabled=true;get('geometry-mode').value='morph';get('geometry-mode').options[1].disabled=true;get('geometry-step-controls').hidden=true;get('geometry-progress').parentElement.hidden=false;get('geometry-badge').textContent='INPUTS CHANGED';status('Compute to apply these inputs.');render();}
+  function endWorker(){worker?.terminate();worker=null;if(workerUrl)URL.revokeObjectURL(workerUrl);workerUrl=null;clearTimeout(timeout);canvas.setAttribute('aria-busy','false');}
+  function invalidate(){
+    clearTimeout(recomputeTimeout);recomputeTimeout=null;endWorker();scene=null;stopAnimation();progress=0;step=0;
+    get('geometry-play').disabled=true;get('geometry-progress').disabled=true;get('geometry-reset').disabled=true;
+    get('geometry-profile-link').disabled=true;get('geometry-vector-count').textContent='—';
+    get('geometry-mode').value='morph';get('geometry-mode').options[1].disabled=true;get('geometry-play').textContent='Play transformation';
+    get('geometry-step-controls').hidden=true;get('geometry-progress').parentElement.hidden=false;
+    get('geometry-badge').textContent='INPUTS CHANGED';
+    if(canCompute){status('Waiting for input changes to finish…');recomputeTimeout=setTimeout(compute,300);}
+    else status(bundle.reason||'This report has no geometry worker. Regenerate it with a current WASM build.','unavailable');
+    render();
+  }
   function applyPreset(){
     const preset=get('geometry-preset').value,pair=presets[preset];if(!pair)return;
     pair.forEach((values,j)=>values.forEach((v,i)=>{fields[j?'n':'m'][i].value=v;}));
@@ -85,7 +99,9 @@
     const read=inputs=>inputs.map(input=>{if(input.value.trim()==='')throw new Error('Every matrix cell needs a number.');const n=Number(input.value);if(!Number.isFinite(n)||Math.abs(n)>10)throw new Error('Use finite matrix entries between −10 and 10.');return n;});
     const operation=get('geometry-operation').value,scalar=operation==='scale'?Number(get('geometry-scalar').value):1.25;
     if((operation==='scale'&&get('geometry-scalar').value.trim()==='')||!Number.isFinite(scalar)||Math.abs(scalar)>10)throw new Error('Use a scalar between −10 and 10.');
-    const config={operation,m:read(fields.m),n:['multiply','add','subtract'].includes(operation)?read(fields.n):identity.slice(),scalar};
+    const grid=gridInputs.map(input=>Number(input.value));
+    if(!grid.every(count=>Number.isInteger(count)&&count>=1&&count<=15))throw new Error('Use whole-number sample counts from 1 to 15 on each axis.');
+    const config={operation,m:read(fields.m),n:['multiply','add','subtract'].includes(operation)?read(fields.n):identity.slice(),scalar,grid};
     if(operation==='rotate'||operation==='cross')config.axis=read(axisInputs);
     if(operation==='rotate'){
       const input=get('geometry-angle'),degrees=Number(input.value);
@@ -96,13 +112,14 @@
     return config;
   }
   function compute(){
-    if(worker){endWorker();status('Computation cancelled.');return;}
+    clearTimeout(recomputeTimeout);recomputeTimeout=null;endWorker();
+    if(!canCompute)return;
     let config;try{config=configuration();}catch(error){status(error.message,'failed');return;}
     stopAnimation();scene=null;render();status('Loading WASM and verifying the shared math cases…');
     try{
       workerUrl=URL.createObjectURL(new Blob([bundle.geometry_worker_source],{type:'text/javascript'}));
       const current=new Worker(workerUrl,{type:'module',name:'matrix-geometry'});worker=current;
-      get('geometry-compute').textContent='Cancel computation';get('geometry-play').disabled=true;get('geometry-progress').disabled=true;
+      canvas.setAttribute('aria-busy','true');get('geometry-play').disabled=true;get('geometry-progress').disabled=true;
       current.onmessage=({data:message})=>{
         if(worker!==current)return;
         if(message.type==='progress'){status(message.message);return;}
@@ -113,7 +130,8 @@
         get('geometry-play').disabled=false;get('geometry-progress').disabled=false;get('geometry-reset').disabled=false;
         get('geometry-step').max=scene.steps.length;get('geometry-step-controls').hidden=true;get('geometry-progress').parentElement.hidden=false;
         get('geometry-badge').textContent='VERIFIED · WASM';
-        status(`${scene.shared_checks.passed}/${scene.shared_checks.total} shared checks passed. Matrix and 125 field vectors independently verified.`,'pass');
+        get('geometry-vector-count').textContent=String(scene.points.length);
+        status(`${scene.shared_checks.passed}/${scene.shared_checks.total} shared checks passed. Matrix and ${scene.points.length} field vectors independently verified.`,'pass');
         get('geometry-trace-note').textContent=scene.trace_available
           ? `${scene.steps.length} arithmetic updates captured inside the instrumented C kernel. Snapshots follow row, column, then inner-product index. Playback duration is illustrative.`
           : scene.operation==='multiply' ? (scene.trace_reason || bundle.trace_reason || 'This bundle has no step instrumentation. Build the optional trace WASM module to enable it.') : 'Calculation steps currently cover multiplication. This operation still uses verified WASM results.';
@@ -121,7 +139,7 @@
         endWorker();render();
       };
       current.onerror=event=>{if(worker!==current)return;event.preventDefault();status('The browser could not initialize the geometry worker.','failed');endWorker();};
-      timeout=setTimeout(()=>{if(worker===current){endWorker();status('Stopped after 30 seconds. Try computing again.','failed');}},30000);
+      timeout=setTimeout(()=>{if(worker===current){endWorker();status('Stopped after 30 seconds. Change an input to try again.','failed');}},30000);
       current.postMessage({type:'geometry',bundle,config});
     }catch(error){endWorker();status(`Geometry could not start: ${error.message}`,'failed');}
   }
@@ -141,12 +159,12 @@
     get('geometry-step-label').textContent=`${step} / ${scene?.steps.length||0} multiply-adds`;
     get('geometry-prev').disabled=!scene||step===0;get('geometry-next').disabled=!scene||step===scene.steps.length;
     get('geometry-term').textContent=frame?`R[${frame.row+1},${frame.col+1}] += M[${frame.row+1},${frame.k+1}] × N[${frame.k+1},${frame.col+1}]\n${fmt(frame.left)} × ${fmt(frame.right)} = ${fmt(frame.product)}; accumulator = ${fmt(frame.sum)}\nC indices: row=${frame.row}, col=${frame.col}, k=${frame.k}`
-      :scene&&isSteps()?'The result starts at zero. Step forward to accumulate its first dot product.':scene?`det(M) = ${fmt(scene.determinant_m)} · det(R) = ${fmt(scene.determinant_result)}\nArrows use one fixed display scale throughout the morph.`:'Compute a verified field to begin.';
+      :scene&&isSteps()?'The result starts at zero. Step forward to accumulate its first dot product.':scene?`det(M) = ${fmt(scene.determinant_m)} · det(R) = ${fmt(scene.determinant_result)}\nArrows use one fixed display scale throughout the morph.`:'Edit the inputs to compute a verified field.';
     const eigen = scene?.eigen_m;
     const complexText=(re,im)=>im===0?fmt(re):`${fmt(re)} ${im<0?'−':'+'} ${fmt(Math.abs(im))}i`;
     get('geometry-eigen-values').textContent = eigen ? eigen.values.map((value,col)=>
       `λ${col+1} = ${complexText(value,eigen.imag_values[col])}; v${col+1} = (${[0,1,2].map(row=>complexText(eigen.vectors[row*3+col],eigen.imag_vectors[row*3+col])).join(', ')})`).join('\n')
-      :'Compute an input matrix to inspect its real or complex eigenpairs.';
+      :'The input matrix’s eigenpairs will appear after verification.';
     const legend=[];
     if(eigen&&visibility.axes.checked&&eigen.imag_values.some(value=>value===0))legend.push('Purple arrows: real eigenvectors of M.');
     if(eigen&&visibility.ellipse.checked&&eigen.imag_values.some(value=>value>0))legend.push('Gold ellipse: complex invariant plane.');
@@ -250,7 +268,7 @@
       ctx.restore();
     });
     if(showAxes){ctx.font='11px ui-monospace,monospace';basis.forEach((b,i)=>{const p=project(scale(b,1.94));ctx.fillStyle=colors[i];ctx.fillText(['x','y','z'][i],p[0],p[1]);});}
-    if(!scene){ctx.fillStyle='#a8c1c9';ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('Compute a matrix field to explore it here',w/2,h*.82);ctx.textAlign='left';}
+    if(!scene){ctx.fillStyle='#a8c1c9';ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('The field updates automatically when inputs change',w/2,h*.82);ctx.textAlign='left';}
     syncAnimation();
   }
   function tick(time){
@@ -258,8 +276,8 @@
     if(!scene||document.hidden){previousTime=null;arrowPreviousTime=null;orbitPreviousTime=null;return;}
     const transforming=playing;
     if(playing){
-      if(previousTime!==null){const delta=Math.min(100,time-previousTime)/(Number(get('geometry-duration').value)*1000);progress=Math.min(1,progress+delta);if(isSteps())step=Math.min(scene.steps.length,Math.floor(progress*scene.steps.length));}
-      previousTime=time;if(progress>=1)stopAnimation();
+      if(previousTime!==null){const delta=Math.min(100,time-previousTime)/(Number(get('geometry-duration').value)*1000),next=progress+delta;progress=loop.checked&&next>1?next%1:Math.min(1,next);if(isSteps())step=Math.min(scene.steps.length,Math.floor(progress*scene.steps.length));}
+      previousTime=time;if(progress>=1&&!loop.checked)stopAnimation();
     }
     if(arrowsMoving()){
       if(arrowPreviousTime!==null)arrowPhase=(arrowPhase+Math.min(100,time-arrowPreviousTime)/1800)%1;
@@ -278,17 +296,18 @@
   get('geometry-prev').onclick=()=>selectStep(step-1);get('geometry-next').onclick=()=>selectStep(step+1);
   get('geometry-mode').onchange=()=>{stopAnimation();progress=0;step=0;get('geometry-step-controls').hidden=!isSteps();get('geometry-progress').parentElement.hidden=isSteps();if(isSteps())get('geometry-trace-details').open=true;get('geometry-play').textContent=isSteps()?'Play calculation':'Play transformation';render();};
   get('geometry-reset').onclick=()=>{stopAnimation();progress=0;step=0;yaw=-.68;pitch=.43;zoom=1;orbitPreviousTime=null;render();};
-  get('geometry-preset').onchange=()=>{applyPreset();if(get('geometry-preset').value!=='custom')compute();};
+  get('geometry-preset').onchange=()=>{if(get('geometry-preset').value==='custom')invalidate();else applyPreset();};
   get('geometry-randomize').onclick=()=>{
     for(const inputs of Object.values(fields))for(const input of inputs)input.value=(Math.floor(Math.random()*17)-8)/4;
     get('geometry-preset').value='custom';
     invalidate();
-    if(!get('geometry-compute').disabled)compute();
-    else status('Matrices randomized. WebAssembly is unavailable in this report.','unavailable');
   };
   get('geometry-operation').onchange=operationChanged;get('geometry-scalar').oninput=invalidate;
   for(const input of [...axisInputs,get('geometry-angle')])input.oninput=()=>{get('geometry-preset').value='custom';invalidate();};
-  get('geometry-compute').onclick=compute;
+  for(const input of gridInputs)input.oninput=invalidate;
+  get('geometry-settings-open').onclick=()=>settings.showModal();
+  get('geometry-settings-close').onclick=()=>settings.close();
+  settings.onclick=event=>{if(event.target!==settings)return;const r=settings.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)settings.close();};
   for(const input of Object.values(visibility))input.onchange=()=>render();
   for(const input of Object.values(appearance))input.onchange=()=>{arrowPreviousTime=null;render();};
   autoOrbit.onchange=()=>{orbitPreviousTime=null;render();};
@@ -302,6 +321,5 @@
   reducedMotion.addEventListener('change',()=>{arrowPreviousTime=null;orbitPreviousTime=null;render();});
   new ResizeObserver(()=>render()).observe(canvas);
   applyPreset();
-  if(!bundle.available||!bundle.geometry_worker_source||typeof Worker==='undefined'||typeof WebAssembly==='undefined')status(bundle.reason||'This report has no geometry worker. Regenerate it with a current WASM build.','unavailable');
-  else {get('geometry-compute').disabled=false;compute();}
+  if(canCompute)compute();
 })();

@@ -70,11 +70,12 @@ function applyReference(matrix, point) {
   return [0, 1, 2].map(row => matrix[row * 3] * point[0] + matrix[row * 3 + 1] * point[1] + matrix[row * 3 + 2] * point[2]);
 }
 
-function grid() {
+function grid(dimensions) {
   const points = [];
-  for (const x of [-1, -0.5, 0, 0.5, 1]) {
-    for (const y of [-1, -0.5, 0, 0.5, 1]) {
-      for (const z of [-1, -0.5, 0, 0.5, 1]) points.push([x, y, z]);
+  const coordinates = dimensions.map(count => Array.from({length:count}, (_, i) => count === 1 ? 0 : 2*i/(count-1)-1));
+  for (const x of coordinates[0]) {
+    for (const y of coordinates[1]) {
+      for (const z of coordinates[2]) points.push([x, y, z]);
     }
   }
   return points;
@@ -91,6 +92,11 @@ export async function computeGeometry(Matrix, config, { TraceMatrix, onProgress 
   const operation = config.operation;
   if (!OPERATIONS.has(operation)) throw new RangeError("unsupported geometry operation");
   const m = entries(config.m, "M"), n = entries(config.n, "N");
+  const dimensions = config.grid === undefined ? [5,5,5] : Array.isArray(config.grid) ? Array.from(config.grid) : null;
+  if (!Array.isArray(dimensions) || dimensions.length !== 3
+    || !dimensions.every(count => Number.isInteger(count) && count >= 1 && count <= 15)) {
+    throw new RangeError("grid dimensions must contain three integers from 1 to 15");
+  }
   const scalar = config.scalar === undefined ? 1.25 : config.scalar;
   if (!finite(scalar) || Math.abs(scalar) > LIMIT) throw new RangeError("scalar must be a finite number in [-10, 10]");
   let axis = null, radians = 0;
@@ -218,8 +224,8 @@ export async function computeGeometry(Matrix, config, { TraceMatrix, onProgress 
       eigenM={values:vr,imag_values:vi,vectors:qr,imag_vectors:qi};
     }
 
-    onProgress({ message: "Verifying 125 field vectors from actual WASM matrix products" });
-    const points = grid();
+    const points = grid(dimensions);
+    onProgress({ message: `Verifying ${points.length} field vectors from actual WASM matrix products` });
     const pointMatrix = own(new Matrix(3, points.length, [0, 1, 2].flatMap(axis => points.map(point => point[axis]))));
     const inputProduct = own(a.multiply(pointMatrix)), outputProduct = own(result.multiply(pointMatrix));
     const inputFlat = values(inputProduct, 3, points.length, "M times grid");

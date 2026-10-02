@@ -344,15 +344,28 @@ WASM geometry view.
 
 ## Animated geometry and calculation steps
 
-The report includes an interactive 3D view of 125 vectors evaluated by the live
-WebAssembly library. Edit two 3×3 matrices or choose rotation, shear, reflection,
+The report includes an interactive 3D vector field evaluated by the live
+WebAssembly library. **Vector grid dimensions** sets the X, Y, and Z sample
+counts independently, from 1 to 15 each. The default 5×5×5 grid has 125 vectors;
+the largest has 3,375. Setting one axis to 1 gives a plane through the origin,
+two give a line, and all three give the origin. Samples span −1 to 1 on each
+noncollapsed axis. These counts resize the 3×N matrix of sampled vectors; the
+operators remain 3×3 because they act in 3D space.
+
+Edit two 3×3 matrices or choose rotation, shear, reflection,
 collapse, axis-rotation, and cross-direction presets. Multiplication, addition,
 subtraction, transpose, scaling, rotation, and crossing with a direction produce
 a new operator; the input and output vector fields are checked
 against independent references before they are displayed.
+All mathematical inputs automatically recompute after 300 ms without another
+edit. Further edits restart that delay and cancel obsolete work; only the latest
+inputs can replace the field. Invalid values show a validation message and
+recover automatically when corrected. No compute button is needed.
 
 **Randomize matrices** fills both M and N with values from −2 to 2 in quarter
 steps and computes a new field, keeping the selected operation and its settings.
+Open the gear button's **Visualization settings** dialog to access **Show overlays**
+and **Field arrow appearance**. Close it with **Done**, Escape, or the backdrop.
 Use **Show overlays** to toggle the plane grid, axes, bounding box, and eigenvector
 ellipse independently. Visibility changes apply immediately during playback and
 keep the current calculation progress. The ellipse appears for complex eigenvalue
@@ -378,7 +391,10 @@ survives new computations and **Reset view**. Hidden tabs and reduced-motion
 preferences pause auto-orbit; manual camera controls remain available.
 
 Play a 10, 20, or 30 second transformation, pause, or scrub to any point. Drag the
-plot to orbit and scroll to zoom; when the plot has keyboard focus, arrow keys
+plot to orbit. Enable **Loop animation** to repeat transformation or calculation
+playback until paused; disabling it lets the current pass finish. Looping starts
+off and does not start playback by itself. Its selection survives input changes
+and **Reset view**. Scroll to zoom; when the plot has keyboard focus, arrow keys
 rotate it and `+`/`-` zoom. Zoom reaches 25× the fitted view, allowing close-ups
 that crop the scene. Hide **Axes** and **Bounding box** to fit the normalized
 vector field without the transformed overlays keeping it small. **Reset view**

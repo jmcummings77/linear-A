@@ -68,6 +68,34 @@ test("column-vector composition preserves multiplication order and vector-field 
   assert.deepEqual(unchanged.output_vectors[index], [1, 1, 1]); // The field is x, not displacement zero.
 });
 
+test("configurable sample dimensions produce verified volumes, planes, lines, and a point", async () => {
+  for (const dimensions of [[2,3,4],[5,5,1],[1,7,1],[1,1,1],[15,15,15]]) {
+    const progress=[];
+    const geometry = await computeGeometry(Matrix, {...config,m:identity,n:identity,grid:dimensions}, {onProgress:event=>progress.push(event.message)});
+    const count = dimensions.reduce((a,b)=>a*b,1);
+    assert.ok(progress.some(message=>message.includes(`Verifying ${count} field vectors`)));
+    assert.equal(geometry.points.length,count);
+    assert.equal(new Set(geometry.points.map(point=>point.join(','))).size,count);
+    assert.deepEqual(geometry.input_vectors,geometry.points);
+    assert.deepEqual(geometry.output_vectors,geometry.points);
+    for (let axis=0;axis<3;axis++) {
+      const coordinates = new Set(geometry.points.map(point=>point[axis]));
+      assert.equal(coordinates.size,dimensions[axis]);
+      assert.equal(Math.min(...coordinates),dimensions[axis]===1?0:-1);
+      assert.equal(Math.max(...coordinates),dimensions[axis]===1?0:1);
+    }
+  }
+});
+
+test("invalid sample dimensions fail before allocating WASM matrices", async () => {
+  let allocated=0;
+  class NoAllocation {constructor(){allocated++;throw new Error('unexpected allocation');}}
+  for (const grid of [null,[],[2,3],[2,3,4,5],[0,5,5],[16,1,1],[1.5,3,3],['5',5,5],[true,5,5],[NaN,5,5],[Infinity,5,5],Array(3)]) {
+    await assert.rejects(computeGeometry(NoAllocation,{...config,grid}),/grid dimensions/);
+  }
+  assert.equal(allocated,0);
+});
+
 test("reflection and rank collapse retain determinant signs and correct field values", async () => {
   for (const [m, determinant, corner] of [
     [[-1, 0, 0, 0, 1, 0, 0, 0, 1], -1, [-1, 1, 1]],
