@@ -14,10 +14,14 @@
   };
   const symbols = {multiply:'MN',add:'M + N',subtract:'M − N',transpose:'Mᵀ',scale:'sM'};
   const fields = {m:[],n:[]}, cells = [], sourceLines = new Map();
-  const visibility = {axes:get('geometry-show-axes'),box:get('geometry-show-box'),ellipse:get('geometry-show-ellipse')};
+  const visibility = {axes:get('geometry-show-axes'),box:get('geometry-show-box'),ellipse:get('geometry-show-ellipse'),grid:get('geometry-show-grid')};
+  const appearance = {style:get('geometry-arrow-style'),color:get('geometry-arrow-color'),motion:get('geometry-arrow-motion'),width:get('geometry-arrow-width')};
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const arrowColors = {cyan:[104,225,232],blue:[138,184,248],coral:[255,151,139],violet:[209,164,255],white:[235,243,244]};
   const axisInputs = Array.from(get('geometry-axis').querySelectorAll('input'));
   let scene = null, worker = null, workerUrl = null, timeout = null;
   let progress = 0, step = 0, playing = false, animation = null, previousTime = null;
+  let arrowPhase = 0, arrowPreviousTime = null;
   let yaw = -.68, pitch = .43, zoom = 1, drag = null;
   const fmt = value => Math.abs(value) >= 1e4 || (value !== 0 && Math.abs(value) < 1e-4)
     ? value.toExponential(2) : Number(value.toFixed(4)).toString();
@@ -44,7 +48,13 @@
     });
   }
 
-  function stopAnimation(){playing=false;previousTime=null;cancelAnimationFrame(animation);animation=null;get('geometry-play').textContent=isSteps()?'Play calculation':'Play transformation';}
+  const arrowsMoving = () => appearance.motion.value !== 'static' && !reducedMotion.matches;
+  function syncAnimation(){
+    const active = scene && !document.hidden && (playing || arrowsMoving());
+    if(active && animation === null) animation=requestAnimationFrame(tick);
+    if(!active){cancelAnimationFrame(animation);animation=null;arrowPreviousTime=null;}
+  }
+  function stopAnimation(){playing=false;previousTime=null;syncAnimation();get('geometry-play').textContent=isSteps()?'Play calculation':'Play transformation';}
   function endWorker(){worker?.terminate();worker=null;if(workerUrl)URL.revokeObjectURL(workerUrl);workerUrl=null;clearTimeout(timeout);get('geometry-compute').textContent='Compute in WebAssembly';}
   function invalidate(){endWorker();stopAnimation();scene=null;progress=0;step=0;get('geometry-play').disabled=true;get('geometry-progress').disabled=true;get('geometry-mode').value='morph';get('geometry-mode').options[1].disabled=true;get('geometry-step-controls').hidden=true;get('geometry-progress').parentElement.hidden=false;get('geometry-badge').textContent='INPUTS CHANGED';status('Compute to apply these inputs.');render();}
   function applyPreset(){
@@ -144,12 +154,18 @@
       const active=frame&&sourceLines.get(frame.source_line);if(active){const pre=get('geometry-source');pre.scrollTop=Math.max(0,active.offsetTop-pre.offsetTop-pre.clientHeight/2);}
     }
   }
-  function render(){
-    const showAxes=visibility.axes.checked,showBox=visibility.box.checked,showEllipse=visibility.ellipse.checked;
+  function render(updateInspector=true){
+    const showAxes=visibility.axes.checked,showBox=visibility.box.checked,showEllipse=visibility.ellipse.checked,showGrid=visibility.grid.checked;
     const bounds=canvas.getBoundingClientRect(),w=Math.max(1,bounds.width),h=Math.max(1,bounds.height),dpr=Math.min(devicePixelRatio||1,2);
     if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-    const a=operator();inspector(a);
+    const a=operator();if(updateInspector)inspector(a);
+    const rgb=arrowColors[appearance.color.value]||[Math.round(100+145*progress),Math.round(207-28*progress),Math.round(189-71*progress)];
+    const fieldColor=`rgb(${rgb.join(',')})`,fieldWidth=Number(appearance.width.value);
+    get('geometry-field-swatch').style.background=fieldColor;
+    get('geometry-arrow-note').textContent=reducedMotion.matches && appearance.motion.value!=='static'
+      ? 'Your reduced-motion preference keeps arrow effects static. Play transformation and the progress sliders remain available.'
+      : 'Effects decorate the fixed vectors, even while the matrix is paused. Faint teal arrows mark the input field; overlay colors stay fixed.';
     let extent=Math.max(2,scene?.rotation_extent||0);
     const visibleMatrices=scene?[scene.m,scene.result,...(isSteps()?scene.steps.map(s=>s.matrix):[])]:[];
     const rowBounds=matrix=>[0,1,2].map(r=>Math.abs(matrix[r*3])+Math.abs(matrix[r*3+1])+Math.abs(matrix[r*3+2]));
@@ -157,8 +173,8 @@
     const fit=Math.min(w,h)*.34/extent*zoom;
     const project=v=>{const x=v[0]*Math.cos(yaw)+v[2]*Math.sin(yaw),z=-v[0]*Math.sin(yaw)+v[2]*Math.cos(yaw),y=v[1]*Math.cos(pitch)-z*Math.sin(pitch),depth=v[1]*Math.sin(pitch)+z*Math.cos(pitch),p=1/(1+depth/(extent*7));return [w/2+x*fit*p,h/2-y*fit*p,depth];};
     const lines=[];
-    const line=(from,to,color,width=1,arrow=false)=>{const p=project(from),q=project(to);lines.push({p,q,color,width,arrow,depth:(p[2]+q[2])/2});};
-    for(let i=-2;i<=2;i+=.5){line([-2,-1.1,i],[2,-1.1,i],'rgba(121,166,179,.13)');line([i,-1.1,-2],[i,-1.1,2],'rgba(121,166,179,.13)');}
+    const line=(from,to,color,width=1,arrow=false,field=false)=>{const p=project(from),q=project(to);lines.push({p,q,color,width,arrow,field,depth:(p[2]+q[2])/2});};
+    if(showGrid)for(let i=-2;i<=2;i+=.5){line([-2,-1.1,i],[2,-1.1,i],'rgba(121,166,179,.13)');line([i,-1.1,-2],[i,-1.1,2],'rgba(121,166,179,.13)');}
     const basis=[[1,0,0],[0,1,0],[0,0,1]],colors=['#fa8e88','#a0d790','#8ab8f8'];
     if(showAxes)basis.forEach(b=>line(scale(b,-1.55),scale(b,1.8),'rgba(179,204,210,.24)',1,true));
     if(scene){
@@ -167,8 +183,8 @@
       scene.points.forEach((p,i)=>{
         const initial=scene.input_vectors[i],v=isSteps()||scene.rotation_frames.length?transform(a,p):initial.map((x,j)=>x*(1-progress)+scene.output_vectors[i][j]*progress);
         if(Math.hypot(...initial)>1e-10)line(p,add(p,scale(initial,arrowScale)),'rgba(100,207,189,.14)',.8,true);
-        if(Math.hypot(...v)>1e-10)line(p,add(p,scale(v,arrowScale)),`rgba(${Math.round(100+145*progress)},${Math.round(207-28*progress)},${Math.round(189-71*progress)},.85)`,1.3,true);
-        else {const q=project(p);lines.push({p:q,q:[q[0]+1,q[1]+1,q[2]],color:'#d3d8c4',width:2,depth:q[2]});}
+        if(Math.hypot(...v)>1e-10)line(p,add(p,scale(v,arrowScale)),fieldColor,fieldWidth,true,true);
+        else {const q=project(p);lines.push({p:q,q:[q[0]+1,q[1]+1,q[2]],color:fieldColor,width:fieldWidth+1,depth:q[2]});}
       });
       if(showBox){
         const cube=Array.from({length:8},(_,i)=>[(i&1)?.5:-.5,(i&2)?.5:-.5,(i&4)?.5:-.5]);
@@ -189,20 +205,56 @@
         }
       }
     }
-    lines.sort((a,b)=>b.depth-a.depth).forEach(({p,q,color,width,arrow})=>{
-      ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();
+    lines.sort((a,b)=>b.depth-a.depth).forEach(({p,q,color,width,arrow,field})=>{
       const dx=q[0]-p[0],dy=q[1]-p[1],length=Math.hypot(dx,dy);
-      if(arrow&&length>2){const n=Math.min(5,length*.35),ux=dx/length,uy=dy/length;ctx.beginPath();ctx.moveTo(q[0]-n*ux+n*.5*uy,q[1]-n*uy-n*.5*ux);ctx.lineTo(q[0],q[1]);ctx.lineTo(q[0]-n*ux-n*.5*uy,q[1]-n*uy+n*.5*ux);ctx.stroke();}
+      const style=field?appearance.style.value:'open',motion=field&&arrowsMoving()?appearance.motion.value:'static';
+      ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';
+      // Pulse changes opacity only. Every style keeps the same base and tip.
+      if(field)ctx.globalAlpha=motion==='pulse'?.55+.4*(.5+.5*Math.sin(arrowPhase*Math.PI*2)):.85;
+      const shaft=()=>{ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();};
+      if(!arrow||length<=2)shaft();
+      else {
+        const n=Math.min(field?5+width:5,length*.35),ux=dx/length,uy=dy/length;
+        const at=(back,side)=>[q[0]-back*ux-side*uy,q[1]-back*uy+side*ux];
+        if(style==='tapered'){
+          ctx.beginPath();ctx.moveTo(p[0],p[1]);
+          ctx.lineTo(...at(n,n*.22));ctx.lineTo(...at(n,n*.6));ctx.lineTo(q[0],q[1]);
+          ctx.lineTo(...at(n,-n*.6));ctx.lineTo(...at(n,-n*.22));ctx.closePath();ctx.fill();
+        }else{
+          shaft();ctx.beginPath();ctx.moveTo(...at(n,n*.5));ctx.lineTo(q[0],q[1]);ctx.lineTo(...at(n,-n*.5));
+          if(style==='solid'){ctx.closePath();ctx.fill();}else ctx.stroke();
+          if(style==='chevron'){
+            ctx.beginPath();ctx.moveTo(...at(n*1.8,n*.5));ctx.lineTo(...at(n*.8,0));ctx.lineTo(...at(n*1.8,-n*.5));ctx.stroke();
+          }
+        }
+        if(motion==='flow'){
+          // Travel along the shaft without moving the vector endpoint or length.
+          const radius=Math.min(width+.65,length*.08),distance=radius+(length-2*radius)*arrowPhase;
+          ctx.globalAlpha=.95;ctx.fillStyle='#ffffff';ctx.beginPath();
+          ctx.arc(p[0]+ux*distance,p[1]+uy*distance,radius,0,Math.PI*2);ctx.fill();
+        }
+      }
+      ctx.restore();
     });
     if(showAxes){ctx.font='11px ui-monospace,monospace';basis.forEach((b,i)=>{const p=project(scale(b,1.94));ctx.fillStyle=colors[i];ctx.fillText(['x','y','z'][i],p[0],p[1]);});}
     if(!scene){ctx.fillStyle='#a8c1c9';ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('Compute a matrix field to explore it here',w/2,h*.82);ctx.textAlign='left';}
+    syncAnimation();
   }
   function tick(time){
-    if(!playing||!scene)return;
-    if(previousTime!==null){const delta=(time-previousTime)/(Number(get('geometry-duration').value)*1000);progress=Math.min(1,progress+delta);if(isSteps())step=Math.min(scene.steps.length,Math.floor(progress*scene.steps.length));}
-    previousTime=time;render();if(progress>=1)stopAnimation();else animation=requestAnimationFrame(tick);
+    animation=null;
+    if(!scene||document.hidden){previousTime=null;arrowPreviousTime=null;return;}
+    const transforming=playing;
+    if(playing){
+      if(previousTime!==null){const delta=Math.min(100,time-previousTime)/(Number(get('geometry-duration').value)*1000);progress=Math.min(1,progress+delta);if(isSteps())step=Math.min(scene.steps.length,Math.floor(progress*scene.steps.length));}
+      previousTime=time;if(progress>=1)stopAnimation();
+    }
+    if(arrowsMoving()){
+      if(arrowPreviousTime!==null)arrowPhase=(arrowPhase+Math.min(100,time-arrowPreviousTime)/1800)%1;
+      arrowPreviousTime=time;
+    }else arrowPreviousTime=null;
+    render(transforming);
   }
-  get('geometry-play').onclick=()=>{if(!scene)return;if(playing){stopAnimation();return;}if(progress>=1){progress=0;step=0;}playing=true;previousTime=null;get('geometry-play').textContent='Pause animation';animation=requestAnimationFrame(tick);};
+  get('geometry-play').onclick=()=>{if(!scene)return;if(playing){stopAnimation();return;}if(progress>=1){progress=0;step=0;}playing=true;previousTime=null;get('geometry-play').textContent='Pause animation';syncAnimation();};
   get('geometry-progress').oninput=()=>{stopAnimation();progress=Number(get('geometry-progress').value)/1000;render();};
   function selectStep(value){stopAnimation();step=Math.max(0,Math.min(scene?.steps.length||0,value));progress=scene?.steps.length?step/scene.steps.length:0;render();}
   get('geometry-step').oninput=()=>selectStep(Number(get('geometry-step').value));
@@ -221,13 +273,15 @@
   for(const input of [...axisInputs,get('geometry-angle')])input.oninput=()=>{get('geometry-preset').value='custom';invalidate();};
   get('geometry-compute').onclick=compute;
   for(const input of Object.values(visibility))input.onchange=()=>render();
+  for(const input of Object.values(appearance))input.onchange=()=>{arrowPreviousTime=null;render();};
   get('geometry-profile-link').onclick=()=>{stopAnimation();window.dispatchEvent(new Event('matrix-profile-focus'));};
   canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);};
   canvas.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.009;pitch=Math.max(-1.3,Math.min(1.3,pitch+(e.clientY-drag[1])*.009));drag=[e.clientX,e.clientY];render();};
   canvas.onpointerup=canvas.onpointercancel=()=>{drag=null;};
   canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.45,Math.min(2.5,zoom*Math.exp(-e.deltaY*.001)));render();},{passive:false});
   canvas.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowLeft')yaw-=.12;if(e.key==='ArrowRight')yaw+=.12;if(e.key==='ArrowUp')pitch=Math.min(1.3,pitch+.12);if(e.key==='ArrowDown')pitch=Math.max(-1.3,pitch-.12);if(e.key==='+')zoom=Math.min(2.5,zoom*1.1);if(e.key==='-')zoom=Math.max(.45,zoom/1.1);render();};
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAnimation();});
+  document.addEventListener('visibilitychange',()=>{arrowPreviousTime=null;if(document.hidden)stopAnimation();else render();});
+  reducedMotion.addEventListener('change',()=>{arrowPreviousTime=null;render();});
   new ResizeObserver(()=>render()).observe(canvas);
   applyPreset();
   if(!bundle.available||!bundle.geometry_worker_source||typeof Worker==='undefined'||typeof WebAssembly==='undefined')status(bundle.reason||'This report has no geometry worker. Regenerate it with a current WASM build.','unavailable');

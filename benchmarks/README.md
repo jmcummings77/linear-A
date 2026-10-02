@@ -344,9 +344,21 @@ against independent references before they are displayed.
 
 **Randomize matrices** fills both M and N with values from −2 to 2 in quarter
 steps and computes a new field, keeping the selected operation and its settings.
-Use **Show overlays** to toggle the axes, bounding box, and eigenvector ellipse
-independently. Visibility changes apply immediately during playback and keep the
-current calculation progress. The ellipse appears for complex eigenvalue pairs.
+Use **Show overlays** to toggle the plane grid, axes, bounding box, and eigenvector
+ellipse independently. Visibility changes apply immediately during playback and
+keep the current calculation progress. The ellipse appears for complex eigenvalue
+pairs.
+
+**Field arrow appearance** offers open arrows, filled heads, double chevrons, and
+tapered shapes; teal-to-gold, cyan, blue, coral, violet, and white colors; and fine,
+medium, or bold weights. Choose **Static** (the default), **Flowing dots**, or
+**Pulse** motion. Flowing dots and pulses decorate the arrows
+even while the matrix transformation is paused; they do not change vector
+endpoints, matrix values, or recorded measurements. Overlay and arrow settings
+remain selected when computing new inputs, choosing a preset, or resetting the
+view. A reduced-motion preference keeps decorative effects still; an explicitly
+started matrix transformation remains available. Hidden tabs suspend animation
+work.
 
 Play a 10, 20, or 30 second transformation, pause, or scrub to any point. Drag the
 plot to orbit and scroll to zoom; when the plot has keyboard focus, arrow keys
