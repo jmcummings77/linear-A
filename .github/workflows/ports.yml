@@ -96,6 +96,8 @@ jobs:
           .build/unit/cpp-tests
           clang -std=c11 -O3 -g -ffp-contract=off -DMATRIX_USE_ASM ports/c/matrix.c ports/assembly/tests.c ports/assembly/kernels.S -lm -o .build/unit/assembly-tests
           .build/unit/assembly-tests
+      - name: Verify multiplication locality kernels with sanitizers
+        run: python3 experiments/matmul-locality/run.py --verify-only --sanitize
       - name: Build and verify all eleven runners
         run: python3 benchmarks/run.py --verify-only --require-all --output benchmarks/reports/verification
       - name: Verify determinant algorithms on general and SPD inputs

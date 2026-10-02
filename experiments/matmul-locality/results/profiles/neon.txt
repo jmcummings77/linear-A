@@ -1,0 +1,17 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1526 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1526 start  (in dyld) + 6992  [0x18068be00]
+        1526 main  (in runner) + 2060  [0x104104d24]  runner.c:80
+          967 multiply_neon  (in runner) + 500,508,...  [0x1041054b8,0x1041054c0,...]  kernels.c:56
+          395 multiply_neon  (in runner) + 480  [0x1041054a4]  kernels.c:57
+          68 multiply_neon  (in runner) + 488,496,...  [0x1041054ac,0x1041054b4,...]  kernels.c:59
+          36 multiply_neon  (in runner) + 520  [0x1041054cc]  kernels.c:61
+          21 multiply_neon  (in runner) + 448  [0x104105484]  kernels.c:52
+          18 multiply_neon  (in runner) + 464  [0x104105494]  kernels.c:53
+          14 multiply_neon  (in runner) + 412  [0x104105460]  kernels.c:51
+          4 multiply_neon  (in runner) + 428,468  [0x104105470,0x104105498]  kernels.c:0
+          2 multiply_neon  (in runner) + 228  [0x1041053a8]  kernels.c:50
+          1 multiply_neon  (in runner) + 72  [0x10410530c]  kernels.c:47
+            1 __bzero  (in libsystem_platform.dylib) + 68  [0x180a53074]

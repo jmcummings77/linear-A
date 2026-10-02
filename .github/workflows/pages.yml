@@ -8,6 +8,7 @@ on:
       - 'benchmarks/pages/**'
       - 'benchmarks/reports/**'
       - 'experiments/machine-code-dot/results/**'
+      - 'experiments/matmul-locality/results/**'
   workflow_dispatch:
 
 permissions:
@@ -38,6 +39,7 @@ jobs:
           cp -R benchmarks/reports/. .build/pages/
           cp benchmarks/pages/index.html .build/pages/index.html
           cp -R experiments/machine-code-dot/results .build/pages/machine-code-dot
+          cp -R experiments/matmul-locality/results .build/pages/matmul-locality
           rm -f .build/pages/.gitkeep .build/pages/machine-code-dot/.gitkeep
       - uses: actions/upload-pages-artifact@v5
         with:

@@ -1,0 +1,8 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1529 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1529 start  (in dyld) + 6992  [0x18068be00]
+        1529 main  (in runner) + 2060  [0x100ee0d24]  runner.c:80
+          1497 multiply_ijk  (in runner) + 60,56,...  [0x100ee102c,0x100ee1028,...]  kernels.c:19
+          32 multiply_ijk  (in runner) + 84  [0x100ee1044]  kernels.c:20

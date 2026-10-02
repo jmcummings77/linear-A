@@ -137,7 +137,10 @@ versions, timestamp, and Git provenance. The
 Committed report changes on `main` publish automatically to
 [GitHub Pages](https://jmcummings77.github.io/linear-A/), without rerunning
 benchmarks. The [machine-code dot-product experiment](experiments/machine-code-dot/README.md)
-is a separate comparison of a small scalar kernel.
+is a separate comparison of a small scalar kernel. The
+[multiplication locality study](experiments/matmul-locality/README.md) isolates
+loop order, cache blocking, and explicit ARM64 SIMD with independent correctness
+checks, allocation accounting, and native stack profiles.
 
 Contributions to any implementation, the shared math checks, reports, and docs
 are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.

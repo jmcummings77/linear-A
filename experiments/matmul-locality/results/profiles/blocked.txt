@@ -1,0 +1,12 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1508 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1508 start  (in dyld) + 6992  [0x18068be00]
+        1508 main  (in runner) + 2060  [0x104958d24]  runner.c:80
+          1446 multiply_blocked  (in runner) + 320,300,...  [0x10495927c,0x104959268,...]  kernels.c:41
+          33 multiply_blocked  (in runner) + 328,332  [0x104959284,0x104959288]  kernels.c:39
+          19 multiply_blocked  (in runner) + 284  [0x104959258]  kernels.c:40
+          9 multiply_blocked  (in runner) + 344  [0x104959294]  kernels.c:38
+          1 multiply_blocked  (in runner) + 68  [0x104959180]  kernels.c:34
+            1 __bzero  (in libsystem_platform.dylib) + 68  [0x180a53074]
