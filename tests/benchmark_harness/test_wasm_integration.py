@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "benchmarks"))
 import profiles
 import report
 import run
+from publication import PublicSanitizer
 
 
 class WasmIntegrationTests(unittest.TestCase):
@@ -61,8 +62,10 @@ class WasmIntegrationTests(unittest.TestCase):
                 "elapsed_ns": 1000, "iterations": iterations, "checksum": checksum * iterations,
             }), stderr="")
 
+        sanitizer = PublicSanitizer(root="/fixture", home="/home/profile-test-user")
         with tempfile.TemporaryDirectory() as directory:
-            with patch.object(profiles.platform, "system", return_value="Linux"), \
+            with patch("publication.PublicSanitizer", return_value=sanitizer), \
+                 patch.object(profiles.platform, "system", return_value="Linux"), \
                  patch.object(profiles, "_calibrate", return_value=(iterations, checksum)), \
                  patch.object(profiles.subprocess, "run", side_effect=node_process) as process, \
                  patch.object(profiles, "_native") as native:
