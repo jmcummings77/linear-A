@@ -262,3 +262,22 @@ __pycache__/
 
 # Mac ds store files
 *.DS_Store
+# Cross-language builds
+.build/
+ports/rust/target/
+ports/typescript/dist/
+ports/julia/Manifest.toml
+*.prof
+*.cpuprofile
+
+# Selected public report snapshots; new run directories remain ignored.
+benchmarks/reports/*
+!benchmarks/reports/.gitkeep
+!benchmarks/reports/latest/
+!benchmarks/reports/determinants/
+!benchmarks/reports/eigen/
+!benchmarks/reports/vectors/
+!benchmarks/reports/validation/
+!benchmarks/reports/wasm-profile-check/
+!benchmarks/reports/wasm-verification/
+!benchmarks/reports/*/profiles/**/*.cpuprofile

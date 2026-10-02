@@ -1,0 +1,3653 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-02T11:49:44.633058+00:00",
+  "revision": "56d3f7ff6d30553a08a9fc6b118d86c635b0ea6d",
+  "dirty": true,
+  "source_sha256": "94a4b8d4d283bb9c57230311328956f7b5b18c6e68f357816b7d5a73d84ff9b3",
+  "suite": "quick",
+  "seed": 17,
+  "total_seconds": 111.265800584,
+  "machine": {
+    "os": "Darwin",
+    "release": "25.5.0",
+    "architecture": "arm64",
+    "logical_cpus": 8
+  },
+  "methodology": {
+    "numeric_type": "IEEE 754 binary64 (double precision)",
+    "matrix_layout": "Row-major protocol; implementation storage documented separately",
+    "timing": "In-process monotonic timer; allocation and checksum included; startup, input creation, compilation and JSON excluded",
+    "warmup": "max(5, min(iterations, 100)) operations before each timing sample; two calibration batches excluded",
+    "sampling": "Serial runs, deterministic randomized implementation order each sample round; median and MAD reported",
+    "profiles": "Separate instrumented or sampled runs; never used for comparative timings",
+    "limitations": "Symmetric eigenpairs use cyclic Jacobi at relative Frobenius tolerance 1e-12 and 50 sweeps; vectors are columns and nonsymmetric inputs are rejected. Eigen benchmark inputs have an analytic Toeplitz spectrum and their complete eigenbasis is checked outside timing. These compare implementations and algorithms, not languages in isolation. Runtime/JIT/GC, compiler age, OS scheduling, thermals and allocation affect results. Small quick workloads are a smoke test, not a universal ranking."
+  },
+  "implementations": [
+    {
+      "id": "csharp",
+      "name": "C#",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Matrix<double>; type-aware determinant with pivoting and scaling; rectangular array storage",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "benchmarks/dotnet/Runner.csproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/csharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "fsharp",
+      "name": "F#",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "F# float64 matrix; managed flat storage; partial-pivot determinant",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "ports/fsharp/Runner.fsproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/fsharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "rust",
+      "name": "Rust",
+      "status": "passed",
+      "toolchain": "rustc 1.69.0 (84c898d65 2023-04-16)",
+      "detail": "Rust f64 matrix; contiguous storage; optimized release build",
+      "build_commands": [
+        [
+          "cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--manifest-path",
+          "ports/rust/Cargo.toml",
+          "--target-dir",
+          ".build/rust"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "go",
+      "name": "Go",
+      "status": "passed",
+      "toolchain": "go version go1.24.1 darwin/arm64",
+      "detail": "Go float64 matrix; contiguous storage; default optimizing compiler",
+      "build_commands": [
+        [
+          "go",
+          "build",
+          "-o",
+          ".build/go/runner",
+          "./cmd/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "status": "passed",
+      "toolchain": "v25.9.0; TypeScript 7.0.2",
+      "detail": "TypeScript compiled to JavaScript; Float64Array; Node.js JIT",
+      "build_commands": [
+        [
+          "npm",
+          "ci",
+          "--ignore-scripts"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "status": "passed",
+      "toolchain": "Python 3.9.6",
+      "detail": "Python float matrix; interpreted loops; no NumPy",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "cpp",
+      "name": "C++",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "C++ double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang++",
+          "-std=c++17",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/cpp/runner.cpp",
+          "-lm",
+          "-o",
+          ".build/cpp/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "name": "C",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "C double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "-lm",
+          "-o",
+          ".build/c/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "assembly",
+      "name": "ARM64 Assembly",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "ARM64 arithmetic kernels with C allocation, validation, pivot control, and symmetric eigensolver",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "-DMATRIX_USE_ASM",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "ports/assembly/kernels.S",
+          "-lm",
+          "-o",
+          ".build/assembly/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "julia",
+      "name": "Julia",
+      "status": "passed",
+      "toolchain": "julia version 1.13.1",
+      "detail": "Julia Float64 matrix; handwritten loops; JIT; no BLAS calls",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "wasm",
+      "name": "WebAssembly",
+      "status": "passed",
+      "toolchain": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.10 (d6c521a7f05449857c76bd99e396895583cf2083); Node.js v25.9.0",
+      "detail": "C double matrix compiled with Emscripten; Node.js WebAssembly runtime; JS/WASM dispatch, allocation, checksum reads, and disposal included",
+      "build_commands": [
+        [
+          "python3",
+          "ports/wasm/build.py",
+          "--emcc",
+          "emcc",
+          "--output",
+          ".build/wasm"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "fractional rectangular add",
+          "passed": true
+        },
+        {
+          "name": "invalid shape add",
+          "passed": true
+        },
+        {
+          "name": "fractional rectangular subtract",
+          "passed": true
+        },
+        {
+          "name": "invalid shape subtract",
+          "passed": true
+        },
+        {
+          "name": "fractional scale",
+          "passed": true
+        },
+        {
+          "name": "wide transpose",
+          "passed": true
+        },
+        {
+          "name": "tall transpose",
+          "passed": true
+        },
+        {
+          "name": "rectangular multiply",
+          "passed": true
+        },
+        {
+          "name": "invalid multiply",
+          "passed": true
+        },
+        {
+          "name": "dense trace",
+          "passed": true
+        },
+        {
+          "name": "nonsquare trace",
+          "passed": true
+        },
+        {
+          "name": "empty trace",
+          "passed": true
+        },
+        {
+          "name": "scalar trace",
+          "passed": true
+        },
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        },
+        {
+          "name": "upper triangular",
+          "passed": true
+        },
+        {
+          "name": "lower triangular",
+          "passed": true
+        },
+        {
+          "name": "dense triangular",
+          "passed": true
+        },
+        {
+          "name": "rectangle triangular",
+          "passed": true
+        },
+        {
+          "name": "empty triangular",
+          "passed": true
+        },
+        {
+          "name": "tiny off diagonal triangular",
+          "passed": true
+        },
+        {
+          "name": "empty transpose",
+          "passed": true
+        },
+        {
+          "name": "empty inner product",
+          "passed": true
+        },
+        {
+          "name": "empty outer product",
+          "passed": true
+        },
+        {
+          "name": "empty addition",
+          "passed": true
+        },
+        {
+          "name": "empty symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "scalar symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "zero symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "unsorted repeated diagonal spectrum",
+          "passed": true
+        },
+        {
+          "name": "equal diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "negative off diagonal rotation",
+          "passed": true
+        },
+        {
+          "name": "indefinite symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "fractional symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "singular symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nearly equal diagonal entries",
+          "passed": true
+        },
+        {
+          "name": "dense repeated eigenspace",
+          "passed": true
+        },
+        {
+          "name": "dense mixed spectrum",
+          "passed": true
+        },
+        {
+          "name": "tiny symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "huge symmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "mixed scale exact diagonal",
+          "passed": true
+        },
+        {
+          "name": "subnormal scalar eigensystem",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 3",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 5",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 8",
+          "passed": true
+        },
+        {
+          "name": "analytic Toeplitz spectrum 16",
+          "passed": true
+        },
+        {
+          "name": "nonsquare eigensystem",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric eigensystem",
+          "passed": true
+        },
+        {
+          "name": "tiny asymmetry is rejected",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "implementation": "c",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1719,
+      "median_ns": 9962.96335078534,
+      "min_ns": 9943.01454333915,
+      "max_ns": 9981.966259453171,
+      "mad_ns": 19.002908667831434,
+      "samples": [
+        {
+          "elapsed_ns": 17126334,
+          "iterations": 1719,
+          "checksum": 179056.94902386586,
+          "ns_per_op": 9962.96335078534
+        },
+        {
+          "elapsed_ns": 17159000,
+          "iterations": 1719,
+          "checksum": 179056.94902386586,
+          "ns_per_op": 9981.966259453171
+        },
+        {
+          "elapsed_ns": 17092042,
+          "iterations": 1719,
+          "checksum": 179056.94902386586,
+          "ns_per_op": 9943.01454333915
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2091,
+      "median_ns": 9142.475848876136,
+      "min_ns": 8904.053084648494,
+      "max_ns": 9168.998087039694,
+      "mad_ns": 26.52223816355763,
+      "samples": [
+        {
+          "elapsed_ns": 19172375,
+          "iterations": 2091,
+          "checksum": 217805.74776550208,
+          "ns_per_op": 9168.998087039694
+        },
+        {
+          "elapsed_ns": 18618375,
+          "iterations": 2091,
+          "checksum": 217805.74776550208,
+          "ns_per_op": 8904.053084648494
+        },
+        {
+          "elapsed_ns": 19116917,
+          "iterations": 2091,
+          "checksum": 217805.74776550208,
+          "ns_per_op": 9142.475848876136
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 440,
+      "median_ns": 37380.681818181816,
+      "min_ns": 36612.954545454544,
+      "max_ns": 37442.954545454544,
+      "mad_ns": 62.272727272727934,
+      "samples": [
+        {
+          "elapsed_ns": 16474900,
+          "iterations": 440,
+          "checksum": 45831.91249011147,
+          "ns_per_op": 37442.954545454544
+        },
+        {
+          "elapsed_ns": 16109700,
+          "iterations": 440,
+          "checksum": 45831.91249011147,
+          "ns_per_op": 36612.954545454544
+        },
+        {
+          "elapsed_ns": 16447500,
+          "iterations": 440,
+          "checksum": 45831.91249011147,
+          "ns_per_op": 37380.681818181816
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1135,
+      "median_ns": 17476.395594713656,
+      "min_ns": 17403.193832599118,
+      "max_ns": 19247.83436123348,
+      "mad_ns": 73.20176211453872,
+      "samples": [
+        {
+          "elapsed_ns": 19752625,
+          "iterations": 1135,
+          "checksum": 118225.50153699431,
+          "ns_per_op": 17403.193832599118
+        },
+        {
+          "elapsed_ns": 19835709,
+          "iterations": 1135,
+          "checksum": 118225.50153699431,
+          "ns_per_op": 17476.395594713656
+        },
+        {
+          "elapsed_ns": 21846292,
+          "iterations": 1135,
+          "checksum": 118225.50153699431,
+          "ns_per_op": 19247.83436123348
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 638,
+      "median_ns": 25167.841692789967,
+      "min_ns": 24779.976489028213,
+      "max_ns": 25214.603448275862,
+      "mad_ns": 46.761755485895264,
+      "samples": [
+        {
+          "elapsed_ns": 16057083,
+          "iterations": 638,
+          "checksum": 66456.27311066128,
+          "ns_per_op": 25167.841692789967
+        },
+        {
+          "elapsed_ns": 15809625,
+          "iterations": 638,
+          "checksum": 66456.27311066128,
+          "ns_per_op": 24779.976489028213
+        },
+        {
+          "elapsed_ns": 16086917,
+          "iterations": 638,
+          "checksum": 66456.27311066128,
+          "ns_per_op": 25214.603448275862
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 319,
+      "median_ns": 61890.28213166144,
+      "min_ns": 61831.97492163009,
+      "max_ns": 62384.01253918495,
+      "mad_ns": 58.30721003135113,
+      "samples": [
+        {
+          "elapsed_ns": 19900500,
+          "iterations": 319,
+          "checksum": 33228.13655533107,
+          "ns_per_op": 62384.01253918495
+        },
+        {
+          "elapsed_ns": 19724400,
+          "iterations": 319,
+          "checksum": 33228.13655533107,
+          "ns_per_op": 61831.97492163009
+        },
+        {
+          "elapsed_ns": 19743000,
+          "iterations": 319,
+          "checksum": 33228.13655533107,
+          "ns_per_op": 61890.28213166144
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2490,
+      "median_ns": 7937.884738955823,
+      "min_ns": 7935.0068273092365,
+      "max_ns": 7939.742168674698,
+      "mad_ns": 1.8574297188752098,
+      "samples": [
+        {
+          "elapsed_ns": 19758167,
+          "iterations": 2490,
+          "checksum": 259366.95931903124,
+          "ns_per_op": 7935.0068273092365
+        },
+        {
+          "elapsed_ns": 19765333,
+          "iterations": 2490,
+          "checksum": 259366.95931903124,
+          "ns_per_op": 7937.884738955823
+        },
+        {
+          "elapsed_ns": 19769958,
+          "iterations": 2490,
+          "checksum": 259366.95931903124,
+          "ns_per_op": 7939.742168674698
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 26,
+      "median_ns": 759679.4615384615,
+      "min_ns": 756628.2307692308,
+      "max_ns": 787612.1923076923,
+      "mad_ns": 3051.2307692307513,
+      "samples": [
+        {
+          "elapsed_ns": 20477917,
+          "iterations": 26,
+          "checksum": 2708.249374415684,
+          "ns_per_op": 787612.1923076923
+        },
+        {
+          "elapsed_ns": 19751666,
+          "iterations": 26,
+          "checksum": 2708.249374415684,
+          "ns_per_op": 759679.4615384615
+        },
+        {
+          "elapsed_ns": 19672334,
+          "iterations": 26,
+          "checksum": 2708.249374415684,
+          "ns_per_op": 756628.2307692308
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 668,
+      "median_ns": 25275.261976047903,
+      "min_ns": 23523.76497005988,
+      "max_ns": 28344.561377245507,
+      "mad_ns": 1751.4970059880216,
+      "samples": [
+        {
+          "elapsed_ns": 16883875,
+          "iterations": 668,
+          "checksum": 69581.17623498343,
+          "ns_per_op": 25275.261976047903
+        },
+        {
+          "elapsed_ns": 15713875,
+          "iterations": 668,
+          "checksum": 69581.17623498343,
+          "ns_per_op": 23523.76497005988
+        },
+        {
+          "elapsed_ns": 18934167,
+          "iterations": 668,
+          "checksum": 69581.17623498343,
+          "ns_per_op": 28344.561377245507
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1900,
+      "median_ns": 10492.412105263158,
+      "min_ns": 10465.438421052631,
+      "max_ns": 10503.85947368421,
+      "mad_ns": 11.447368421051578,
+      "samples": [
+        {
+          "elapsed_ns": 19935583,
+          "iterations": 1900,
+          "checksum": 197910.5312072964,
+          "ns_per_op": 10492.412105263158
+        },
+        {
+          "elapsed_ns": 19957333,
+          "iterations": 1900,
+          "checksum": 197910.5312072964,
+          "ns_per_op": 10503.85947368421
+        },
+        {
+          "elapsed_ns": 19884333,
+          "iterations": 1900,
+          "checksum": 197910.5312072964,
+          "ns_per_op": 10465.438421052631
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "eigen_symmetric",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2006,
+      "median_ns": 9992.315054835493,
+      "min_ns": 9955.342472582253,
+      "max_ns": 10097.706879361915,
+      "mad_ns": 36.972582253240034,
+      "samples": [
+        {
+          "elapsed_ns": 19970417,
+          "iterations": 2006,
+          "checksum": 208951.85557991316,
+          "ns_per_op": 9955.342472582253
+        },
+        {
+          "elapsed_ns": 20044584,
+          "iterations": 2006,
+          "checksum": 208951.85557991316,
+          "ns_per_op": 9992.315054835493
+        },
+        {
+          "elapsed_ns": 20256000,
+          "iterations": 2006,
+          "checksum": 208951.85557991316,
+          "ns_per_op": 10097.706879361915
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 141,
+      "median_ns": 179488.17730496454,
+      "min_ns": 129626.47517730496,
+      "max_ns": 182532.80141843972,
+      "mad_ns": 3044.6241134751763,
+      "samples": [
+        {
+          "elapsed_ns": 25737125,
+          "iterations": 141,
+          "checksum": 54773.02801242626,
+          "ns_per_op": 182532.80141843972
+        },
+        {
+          "elapsed_ns": 18277333,
+          "iterations": 141,
+          "checksum": 54773.02801242626,
+          "ns_per_op": 129626.47517730496
+        },
+        {
+          "elapsed_ns": 25307833,
+          "iterations": 141,
+          "checksum": 54773.02801242626,
+          "ns_per_op": 179488.17730496454
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 345,
+      "median_ns": 67408.81739130434,
+      "min_ns": 57889.6115942029,
+      "max_ns": 67424.87826086956,
+      "mad_ns": 16.060869565219036,
+      "samples": [
+        {
+          "elapsed_ns": 23261583,
+          "iterations": 345,
+          "checksum": 134019.11109423326,
+          "ns_per_op": 67424.87826086956
+        },
+        {
+          "elapsed_ns": 23256042,
+          "iterations": 345,
+          "checksum": 134019.11109423326,
+          "ns_per_op": 67408.81739130434
+        },
+        {
+          "elapsed_ns": 19971916,
+          "iterations": 345,
+          "checksum": 134019.11109423326,
+          "ns_per_op": 57889.6115942029
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 151,
+      "median_ns": 146792.71523178808,
+      "min_ns": 123229.8013245033,
+      "max_ns": 178682.11920529802,
+      "mad_ns": 23562.913907284776,
+      "samples": [
+        {
+          "elapsed_ns": 26981000,
+          "iterations": 151,
+          "checksum": 58657.63992820065,
+          "ns_per_op": 178682.11920529802
+        },
+        {
+          "elapsed_ns": 22165700,
+          "iterations": 151,
+          "checksum": 58657.63992820065,
+          "ns_per_op": 146792.71523178808
+        },
+        {
+          "elapsed_ns": 18607700,
+          "iterations": 151,
+          "checksum": 58657.63992820065,
+          "ns_per_op": 123229.8013245033
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 257,
+      "median_ns": 70366.40856031129,
+      "min_ns": 68242.21789883268,
+      "max_ns": 71410.8326848249,
+      "mad_ns": 1044.4241245136072,
+      "samples": [
+        {
+          "elapsed_ns": 18084167,
+          "iterations": 257,
+          "checksum": 99834.52623541433,
+          "ns_per_op": 70366.40856031129
+        },
+        {
+          "elapsed_ns": 17538250,
+          "iterations": 257,
+          "checksum": 99834.52623541433,
+          "ns_per_op": 68242.21789883268
+        },
+        {
+          "elapsed_ns": 18352584,
+          "iterations": 257,
+          "checksum": 99834.52623541433,
+          "ns_per_op": 71410.8326848249
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 340,
+      "median_ns": 55321.2,
+      "min_ns": 48489.33823529412,
+      "max_ns": 55757.2294117647,
+      "mad_ns": 436.0294117647063,
+      "samples": [
+        {
+          "elapsed_ns": 18957458,
+          "iterations": 340,
+          "checksum": 132076.80513634582,
+          "ns_per_op": 55757.2294117647
+        },
+        {
+          "elapsed_ns": 18809208,
+          "iterations": 340,
+          "checksum": 132076.80513634582,
+          "ns_per_op": 55321.2
+        },
+        {
+          "elapsed_ns": 16486375,
+          "iterations": 340,
+          "checksum": 132076.80513634582,
+          "ns_per_op": 48489.33823529412
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 281,
+      "median_ns": 66149.46619217082,
+      "min_ns": 53586.29893238434,
+      "max_ns": 89054.41992882562,
+      "mad_ns": 12563.167259786474,
+      "samples": [
+        {
+          "elapsed_ns": 25024292,
+          "iterations": 281,
+          "checksum": 109157.59483327404,
+          "ns_per_op": 89054.41992882562
+        },
+        {
+          "elapsed_ns": 18588000,
+          "iterations": 281,
+          "checksum": 109157.59483327404,
+          "ns_per_op": 66149.46619217082
+        },
+        {
+          "elapsed_ns": 15057750,
+          "iterations": 281,
+          "checksum": 109157.59483327404,
+          "ns_per_op": 53586.29893238434
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 347,
+      "median_ns": 72275.21613832853,
+      "min_ns": 64261.406340057634,
+      "max_ns": 79832.8530259366,
+      "mad_ns": 7557.636887608067,
+      "samples": [
+        {
+          "elapsed_ns": 27702000,
+          "iterations": 347,
+          "checksum": 134796.03347738824,
+          "ns_per_op": 79832.8530259366
+        },
+        {
+          "elapsed_ns": 22298708,
+          "iterations": 347,
+          "checksum": 134796.03347738824,
+          "ns_per_op": 64261.406340057634
+        },
+        {
+          "elapsed_ns": 25079500,
+          "iterations": 347,
+          "checksum": 134796.03347738824,
+          "ns_per_op": 72275.21613832853
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 189,
+      "median_ns": 117476.85185185185,
+      "min_ns": 106301.14814814815,
+      "max_ns": 173159.60846560847,
+      "mad_ns": 11175.703703703708,
+      "samples": [
+        {
+          "elapsed_ns": 32727166,
+          "iterations": 189,
+          "checksum": 73419.16520814519,
+          "ns_per_op": 173159.60846560847
+        },
+        {
+          "elapsed_ns": 22203125,
+          "iterations": 189,
+          "checksum": 73419.16520814519,
+          "ns_per_op": 117476.85185185185
+        },
+        {
+          "elapsed_ns": 20090917,
+          "iterations": 189,
+          "checksum": 73419.16520814519,
+          "ns_per_op": 106301.14814814815
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 190,
+      "median_ns": 125950.0,
+      "min_ns": 125225.78947368421,
+      "max_ns": 138956.31578947368,
+      "mad_ns": 724.2105263157864,
+      "samples": [
+        {
+          "elapsed_ns": 23792900,
+          "iterations": 190,
+          "checksum": 73807.62639972268,
+          "ns_per_op": 125225.78947368421
+        },
+        {
+          "elapsed_ns": 26401700,
+          "iterations": 190,
+          "checksum": 73807.62639972268,
+          "ns_per_op": 138956.31578947368
+        },
+        {
+          "elapsed_ns": 23930500,
+          "iterations": 190,
+          "checksum": 73807.62639972268,
+          "ns_per_op": 125950.0
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 183,
+      "median_ns": 123112.24590163934,
+      "min_ns": 105750.45901639345,
+      "max_ns": 191209.92349726777,
+      "mad_ns": 17361.786885245892,
+      "samples": [
+        {
+          "elapsed_ns": 22529541,
+          "iterations": 183,
+          "checksum": 71088.39805868026,
+          "ns_per_op": 123112.24590163934
+        },
+        {
+          "elapsed_ns": 19352334,
+          "iterations": 183,
+          "checksum": 71088.39805868026,
+          "ns_per_op": 105750.45901639345
+        },
+        {
+          "elapsed_ns": 34991416,
+          "iterations": 183,
+          "checksum": 71088.39805868026,
+          "ns_per_op": 191209.92349726777
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "eigen_symmetric",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 9386542.0,
+      "min_ns": 7253437.5,
+      "max_ns": 12325229.5,
+      "mad_ns": 2133104.5,
+      "samples": [
+        {
+          "elapsed_ns": 18773084,
+          "iterations": 2,
+          "checksum": 776.9223831549756,
+          "ns_per_op": 9386542.0
+        },
+        {
+          "elapsed_ns": 14506875,
+          "iterations": 2,
+          "checksum": 776.9223831549756,
+          "ns_per_op": 7253437.5
+        },
+        {
+          "elapsed_ns": 24650459,
+          "iterations": 2,
+          "checksum": 776.9223831549756,
+          "ns_per_op": 12325229.5
+        }
+      ]
+    }
+  ],
+  "profiles": []
+}

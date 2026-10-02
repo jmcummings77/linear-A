@@ -1,0 +1,10 @@
+.build/
+results/*
+!results/.gitkeep
+!results/index.html
+!results/results.json
+!results/raw_dot.bin
+!results/disassembly.txt
+!results/c-disassembly.txt
+**/bin/
+**/obj/

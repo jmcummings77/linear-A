@@ -13,6 +13,14 @@ public class GenericMatrixTests<T> where T : INumber<T>
 {
     private static T Number(int value) => T.CreateChecked(value);
 
+    private static void AssertDeterminant(T actual, int expected, string? message = null)
+    {
+        if (typeof(T) == typeof(double))
+            Assert.That(double.CreateChecked(actual), Is.EqualTo((double)expected).Within(1e-10 * Math.Max(1, Math.Abs(expected))), message);
+        else
+            Assert.That(actual, Is.EqualTo(Number(expected)), message);
+    }
+
     private static Matrix<T> From(int[,] values)
     {
         var result = new Matrix<T>(values.GetLength(0), values.GetLength(1));
@@ -200,27 +208,27 @@ public class GenericMatrixTests<T> where T : INumber<T>
     {
         var singleton = From(new int[,] { { -7 } });
         Assert.That(singleton.GetTrace(), Is.EqualTo(Number(-7)));
-        Assert.That(singleton.GetDeterminant(), Is.EqualTo(Number(-7)));
+        AssertDeterminant(singleton.GetDeterminant(), -7);
 
         var two = From(new int[,] { { 1, 2 }, { 3, 4 } });
         Assert.That(two.GetTrace(), Is.EqualTo(Number(5)));
-        Assert.That(two.GetDeterminant(), Is.EqualTo(Number(-2)));
+        AssertDeterminant(two.GetDeterminant(), -2);
 
         var three = From(new int[,] { { 6, 1, 1 }, { 4, -2, 5 }, { 2, 8, 7 } });
         Assert.That(three.GetTrace(), Is.EqualTo(Number(11)));
         Assert.That(three.TryGetDeterminant(out var determinant), Is.True);
-        Assert.That(determinant, Is.EqualTo(Number(-306)));
+        AssertDeterminant(determinant, -306);
         Assert.That(three.TryGetTrace(out var trace), Is.True);
         Assert.That(trace, Is.EqualTo(Number(11)));
 
         var four = From(new int[,] { { 3, 2, 0, 1 }, { 4, 0, 1, 2 }, { 3, 0, 2, 1 }, { 9, 2, 3, 1 } });
-        Assert.That(four.GetDeterminant(), Is.EqualTo(Number(24)));
+        AssertDeterminant(four.GetDeterminant(), 24);
     }
 
     [Test]
     public void DeterminantHandlesSingularityAndRowSwaps()
     {
-        Assert.That(From(new int[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 1, 2, 3 } }).GetDeterminant(), Is.EqualTo(T.Zero));
+        AssertDeterminant(From(new int[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 1, 2, 3 } }).GetDeterminant(), 0);
         Assert.That(From(new int[,] { { 0, 1, 0 }, { 1, 0, 0 }, { 0, 0, 1 } }).GetDeterminant(), Is.EqualTo(Number(-1)));
         Assert.That(From(new int[,] { { 0, 1, 0 }, { 0, 0, 1 }, { 1, 0, 0 } }).GetDeterminant(), Is.EqualTo(T.One));
         Assert.That(new Matrix<T>(4, true).GetDeterminant(), Is.EqualTo(T.One));
@@ -256,8 +264,8 @@ public class GenericMatrixTests<T> where T : INumber<T>
                         }
 
             var matrix = From(values);
-            Assert.That(matrix.GetDeterminant(), Is.EqualTo(Number(expected)), $"Sample {sample}");
-            Assert.That(matrix.Transpose().GetDeterminant(), Is.EqualTo(Number(expected)), $"Transpose {sample}");
+            AssertDeterminant(matrix.GetDeterminant(), expected, $"Sample {sample}");
+            AssertDeterminant(matrix.Transpose().GetDeterminant(), expected, $"Transpose {sample}");
         }
     }
 
@@ -287,8 +295,8 @@ public class GenericMatrixTests<T> where T : INumber<T>
         var lower = upper.Transpose();
         Assert.That(lower.IsUpperTriangular(), Is.False);
         Assert.That(lower.IsLowerTriangular(), Is.True);
-        Assert.That(upper.GetDeterminant(), Is.EqualTo(Number(-42)));
-        Assert.That(lower.GetDeterminant(), Is.EqualTo(Number(-42)));
+        AssertDeterminant(upper.GetDeterminant(), -42);
+        AssertDeterminant(lower.GetDeterminant(), -42);
         upper[2, 0] = T.One;
         Assert.That(upper.IsTriangular(), Is.False);
     }

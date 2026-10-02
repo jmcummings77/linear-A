@@ -11,3 +11,10 @@ updates:
     directory: /
     schedule:
       interval: monthly
+  - package-ecosystem: npm
+    directory: /ports/typescript
+    schedule:
+      interval: monthly
+    groups:
+      typescript-tools:
+        patterns: ['*']

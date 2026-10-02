@@ -1,0 +1,5610 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-02T11:16:26.459935+00:00",
+  "revision": "56d3f7ff6d30553a08a9fc6b118d86c635b0ea6d",
+  "dirty": true,
+  "source_sha256": "717f514dfd171beab27732df71e7b8ecf65b58a3905c047e4d239b7c61853c45",
+  "suite": "quick",
+  "seed": 17,
+  "total_seconds": 127.050342542,
+  "machine": {
+    "os": "Darwin",
+    "release": "25.5.0",
+    "architecture": "arm64",
+    "logical_cpus": 8
+  },
+  "methodology": {
+    "numeric_type": "IEEE 754 binary64; exact rational determinant references",
+    "matrix_layout": "Identical row-major inputs within each workload; determinant_spd is symmetric positive definite; determinant_small compares the C# cofactor baseline",
+    "timing": "In-process monotonic timer; allocation, factorization, checksum, and disposal included; setup, startup and JSON excluded",
+    "warmup": "max(5, min(iterations, 100)) operations before each sample; two calibration batches excluded",
+    "sampling": "Serial deterministic randomized order, median and MAD; independent checksum validation for every sample",
+    "profiles": "No profiles collected in this determinant comparison",
+    "limitations": "Compare algorithms within the same workload and size. General and SPD inputs differ; do not take speed ratios across them. Cofactor is restricted to sizes 3, 5 and 7. Cholesky requires exact symmetry and positive computed pivots. These are implementation comparisons, not language rankings."
+  },
+  "implementations": [
+    {
+      "id": "csharp",
+      "name": "C# / Auto",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Determinant algorithm: auto. Matrix<double>; type-aware determinant with pivoting and scaling; rectangular array storage",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "benchmarks/dotnet/Runner.csproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/csharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "csharp-lu",
+      "name": "C# / LU",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Determinant algorithm: lu. Matrix<double>; type-aware determinant with pivoting and scaling; rectangular array storage",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "benchmarks/dotnet/Runner.csproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/csharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "csharp-cholesky",
+      "name": "C# / Cholesky",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Determinant algorithm: cholesky. Matrix<double>; type-aware determinant with pivoting and scaling; rectangular array storage",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "benchmarks/dotnet/Runner.csproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/csharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "csharp-cofactor",
+      "name": "C# / Cofactor",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Determinant algorithm: cofactor. Matrix<double>; type-aware determinant with pivoting and scaling; rectangular array storage",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "benchmarks/dotnet/Runner.csproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/csharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "fsharp",
+      "name": "F# / Auto",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Determinant algorithm: auto. F# float64 matrix; managed flat storage; partial-pivot determinant",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "ports/fsharp/Runner.fsproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/fsharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "fsharp-lu",
+      "name": "F# / LU",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Determinant algorithm: lu. F# float64 matrix; managed flat storage; partial-pivot determinant",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "ports/fsharp/Runner.fsproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/fsharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "fsharp-cholesky",
+      "name": "F# / Cholesky",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Determinant algorithm: cholesky. F# float64 matrix; managed flat storage; partial-pivot determinant",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "ports/fsharp/Runner.fsproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/fsharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "rust",
+      "name": "Rust / Auto",
+      "status": "passed",
+      "toolchain": "rustc 1.69.0 (84c898d65 2023-04-16)",
+      "detail": "Determinant algorithm: auto. Rust f64 matrix; contiguous storage; optimized release build",
+      "build_commands": [
+        [
+          "cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--manifest-path",
+          "ports/rust/Cargo.toml",
+          "--target-dir",
+          ".build/rust"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "rust-lu",
+      "name": "Rust / LU",
+      "status": "passed",
+      "toolchain": "rustc 1.69.0 (84c898d65 2023-04-16)",
+      "detail": "Determinant algorithm: lu. Rust f64 matrix; contiguous storage; optimized release build",
+      "build_commands": [
+        [
+          "cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--manifest-path",
+          "ports/rust/Cargo.toml",
+          "--target-dir",
+          ".build/rust"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "rust-cholesky",
+      "name": "Rust / Cholesky",
+      "status": "passed",
+      "toolchain": "rustc 1.69.0 (84c898d65 2023-04-16)",
+      "detail": "Determinant algorithm: cholesky. Rust f64 matrix; contiguous storage; optimized release build",
+      "build_commands": [
+        [
+          "cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--manifest-path",
+          "ports/rust/Cargo.toml",
+          "--target-dir",
+          ".build/rust"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "go",
+      "name": "Go / Auto",
+      "status": "passed",
+      "toolchain": "go version go1.24.1 darwin/arm64",
+      "detail": "Determinant algorithm: auto. Go float64 matrix; contiguous storage; default optimizing compiler",
+      "build_commands": [
+        [
+          "go",
+          "build",
+          "-o",
+          ".build/go/runner",
+          "./cmd/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "go-lu",
+      "name": "Go / LU",
+      "status": "passed",
+      "toolchain": "go version go1.24.1 darwin/arm64",
+      "detail": "Determinant algorithm: lu. Go float64 matrix; contiguous storage; default optimizing compiler",
+      "build_commands": [
+        [
+          "go",
+          "build",
+          "-o",
+          ".build/go/runner",
+          "./cmd/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "go-cholesky",
+      "name": "Go / Cholesky",
+      "status": "passed",
+      "toolchain": "go version go1.24.1 darwin/arm64",
+      "detail": "Determinant algorithm: cholesky. Go float64 matrix; contiguous storage; default optimizing compiler",
+      "build_commands": [
+        [
+          "go",
+          "build",
+          "-o",
+          ".build/go/runner",
+          "./cmd/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript / Auto",
+      "status": "passed",
+      "toolchain": "v25.9.0; TypeScript 7.0.2",
+      "detail": "Determinant algorithm: auto. TypeScript compiled to JavaScript; Float64Array; Node.js JIT",
+      "build_commands": [
+        [
+          "npm",
+          "ci",
+          "--ignore-scripts"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "typescript-lu",
+      "name": "TypeScript / LU",
+      "status": "passed",
+      "toolchain": "v25.9.0; TypeScript 7.0.2",
+      "detail": "Determinant algorithm: lu. TypeScript compiled to JavaScript; Float64Array; Node.js JIT",
+      "build_commands": [
+        [
+          "npm",
+          "ci",
+          "--ignore-scripts"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "typescript-cholesky",
+      "name": "TypeScript / Cholesky",
+      "status": "passed",
+      "toolchain": "v25.9.0; TypeScript 7.0.2",
+      "detail": "Determinant algorithm: cholesky. TypeScript compiled to JavaScript; Float64Array; Node.js JIT",
+      "build_commands": [
+        [
+          "npm",
+          "ci",
+          "--ignore-scripts"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python / Auto",
+      "status": "passed",
+      "toolchain": "Python 3.9.6",
+      "detail": "Determinant algorithm: auto. Python float matrix; interpreted loops; no NumPy",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "python-lu",
+      "name": "Python / LU",
+      "status": "passed",
+      "toolchain": "Python 3.9.6",
+      "detail": "Determinant algorithm: lu. Python float matrix; interpreted loops; no NumPy",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "python-cholesky",
+      "name": "Python / Cholesky",
+      "status": "passed",
+      "toolchain": "Python 3.9.6",
+      "detail": "Determinant algorithm: cholesky. Python float matrix; interpreted loops; no NumPy",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "cpp",
+      "name": "C++ / Auto",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: auto. C++ double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang++",
+          "-std=c++17",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/cpp/runner.cpp",
+          "-lm",
+          "-o",
+          ".build/cpp/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "cpp-lu",
+      "name": "C++ / LU",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: lu. C++ double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang++",
+          "-std=c++17",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/cpp/runner.cpp",
+          "-lm",
+          "-o",
+          ".build/cpp/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "cpp-cholesky",
+      "name": "C++ / Cholesky",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: cholesky. C++ double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang++",
+          "-std=c++17",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/cpp/runner.cpp",
+          "-lm",
+          "-o",
+          ".build/cpp/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "name": "C / Auto",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: auto. C double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "-lm",
+          "-o",
+          ".build/c/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "c-lu",
+      "name": "C / LU",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: lu. C double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "-lm",
+          "-o",
+          ".build/c/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "c-cholesky",
+      "name": "C / Cholesky",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: cholesky. C double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "-lm",
+          "-o",
+          ".build/c/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "assembly",
+      "name": "ARM64 Assembly / Auto",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: auto. ARM64 arithmetic kernels with C allocation, validation, and pivot control",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "-DMATRIX_USE_ASM",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "ports/assembly/kernels.S",
+          "-lm",
+          "-o",
+          ".build/assembly/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "assembly-lu",
+      "name": "ARM64 Assembly / LU",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: lu. ARM64 arithmetic kernels with C allocation, validation, and pivot control",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "-DMATRIX_USE_ASM",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "ports/assembly/kernels.S",
+          "-lm",
+          "-o",
+          ".build/assembly/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "assembly-cholesky",
+      "name": "ARM64 Assembly / Cholesky",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "Determinant algorithm: cholesky. ARM64 arithmetic kernels with C allocation, validation, and pivot control",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "-DMATRIX_USE_ASM",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "ports/assembly/kernels.S",
+          "-lm",
+          "-o",
+          ".build/assembly/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "julia",
+      "name": "Julia / Auto",
+      "status": "passed",
+      "toolchain": "julia version 1.13.1",
+      "detail": "Determinant algorithm: auto. Julia Float64 matrix; handwritten loops; JIT; no BLAS calls",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "julia-lu",
+      "name": "Julia / LU",
+      "status": "passed",
+      "toolchain": "julia version 1.13.1",
+      "detail": "Determinant algorithm: lu. Julia Float64 matrix; handwritten loops; JIT; no BLAS calls",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "julia-cholesky",
+      "name": "Julia / Cholesky",
+      "status": "passed",
+      "toolchain": "julia version 1.13.1",
+      "detail": "Determinant algorithm: cholesky. Julia Float64 matrix; handwritten loops; JIT; no BLAS calls",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "wasm",
+      "name": "WebAssembly / Auto",
+      "status": "passed",
+      "toolchain": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.10 (d6c521a7f05449857c76bd99e396895583cf2083); Node.js v25.9.0",
+      "detail": "Determinant algorithm: auto. C double matrix compiled with Emscripten; Node.js WebAssembly runtime; JS/WASM dispatch, allocation, checksum reads, and disposal included",
+      "build_commands": [
+        [
+          "python3",
+          "ports/wasm/build.py",
+          "--emcc",
+          "emcc",
+          "--output",
+          ".build/wasm"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "wasm-lu",
+      "name": "WebAssembly / LU",
+      "status": "passed",
+      "toolchain": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.10 (d6c521a7f05449857c76bd99e396895583cf2083); Node.js v25.9.0",
+      "detail": "Determinant algorithm: lu. C double matrix compiled with Emscripten; Node.js WebAssembly runtime; JS/WASM dispatch, allocation, checksum reads, and disposal included",
+      "build_commands": [
+        [
+          "python3",
+          "ports/wasm/build.py",
+          "--emcc",
+          "emcc",
+          "--output",
+          ".build/wasm"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "dense determinant",
+          "passed": true
+        },
+        {
+          "name": "nonsquare determinant",
+          "passed": true
+        },
+        {
+          "name": "empty determinant",
+          "passed": true
+        },
+        {
+          "name": "scalar determinant",
+          "passed": true
+        },
+        {
+          "name": "determinant requires pivot",
+          "passed": true
+        },
+        {
+          "name": "singular determinant",
+          "passed": true
+        },
+        {
+          "name": "dense 4x4 determinant",
+          "passed": true
+        },
+        {
+          "name": "fractional determinant",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 0",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 1",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 2",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 3",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 4",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 5",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 6",
+          "passed": true
+        },
+        {
+          "name": "seeded determinant 7",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "wasm-cholesky",
+      "name": "WebAssembly / Cholesky",
+      "status": "passed",
+      "toolchain": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.10 (d6c521a7f05449857c76bd99e396895583cf2083); Node.js v25.9.0",
+      "detail": "Determinant algorithm: cholesky. C double matrix compiled with Emscripten; Node.js WebAssembly runtime; JS/WASM dispatch, allocation, checksum reads, and disposal included",
+      "build_commands": [
+        [
+          "python3",
+          "ports/wasm/build.py",
+          "--emcc",
+          "emcc",
+          "--output",
+          ".build/wasm"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "empty SPD",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 1",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 2",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 3",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 4",
+          "passed": true
+        },
+        {
+          "name": "generated SPD 5",
+          "passed": true
+        },
+        {
+          "name": "nonsymmetric",
+          "passed": true
+        },
+        {
+          "name": "indefinite",
+          "passed": true
+        },
+        {
+          "name": "semidefinite",
+          "passed": true
+        },
+        {
+          "name": "nonsquare",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "implementation": "assembly-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 359.334228515625,
+      "min_ns": 354.604248046875,
+      "max_ns": 363.067626953125,
+      "mad_ns": 3.7333984375,
+      "samples": [
+        {
+          "elapsed_ns": 1452459,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 354.604248046875
+        },
+        {
+          "elapsed_ns": 1471833,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 359.334228515625
+        },
+        {
+          "elapsed_ns": 1487125,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 363.067626953125
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1037.7197265625,
+      "min_ns": 1014.14990234375,
+      "max_ns": 1053.22265625,
+      "mad_ns": 15.5029296875,
+      "samples": [
+        {
+          "elapsed_ns": 4250500,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1037.7197265625
+        },
+        {
+          "elapsed_ns": 4153958,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1014.14990234375
+        },
+        {
+          "elapsed_ns": 4314000,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1053.22265625
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1249,
+      "median_ns": 16040.592473979183,
+      "min_ns": 15884.387510008006,
+      "max_ns": 16515.212169735787,
+      "mad_ns": 156.20496397117677,
+      "samples": [
+        {
+          "elapsed_ns": 20034700,
+          "iterations": 1249,
+          "checksum": 1390742883625024.2,
+          "ns_per_op": 16040.592473979183
+        },
+        {
+          "elapsed_ns": 20627500,
+          "iterations": 1249,
+          "checksum": 1390742883625024.2,
+          "ns_per_op": 16515.212169735787
+        },
+        {
+          "elapsed_ns": 19839600,
+          "iterations": 1249,
+          "checksum": 1390742883625024.2,
+          "ns_per_op": 15884.387510008006
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 353.74951171875,
+      "min_ns": 348.18505859375,
+      "max_ns": 367.75732421875,
+      "mad_ns": 5.564453125,
+      "samples": [
+        {
+          "elapsed_ns": 1426166,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 348.18505859375
+        },
+        {
+          "elapsed_ns": 1448958,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 353.74951171875
+        },
+        {
+          "elapsed_ns": 1506334,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 367.75732421875
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 268.341064453125,
+      "min_ns": 268.198486328125,
+      "max_ns": 270.8740234375,
+      "mad_ns": 0.142578125,
+      "samples": [
+        {
+          "elapsed_ns": 1098541,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 268.198486328125
+        },
+        {
+          "elapsed_ns": 1099125,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 268.341064453125
+        },
+        {
+          "elapsed_ns": 1109500,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 270.8740234375
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 263,
+      "median_ns": 76849.96577946768,
+      "min_ns": 76801.49049429658,
+      "max_ns": 77160.6463878327,
+      "mad_ns": 48.47528517109458,
+      "samples": [
+        {
+          "elapsed_ns": 20198792,
+          "iterations": 263,
+          "checksum": 292846579978688.06,
+          "ns_per_op": 76801.49049429658
+        },
+        {
+          "elapsed_ns": 20211541,
+          "iterations": 263,
+          "checksum": 292846579978688.06,
+          "ns_per_op": 76849.96577946768
+        },
+        {
+          "elapsed_ns": 20293250,
+          "iterations": 263,
+          "checksum": 292846579978688.06,
+          "ns_per_op": 77160.6463878327
+        }
+      ]
+    },
+    {
+      "implementation": "go-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1291.9716796875,
+      "min_ns": 1277.82177734375,
+      "max_ns": 1297.963623046875,
+      "mad_ns": 5.991943359375,
+      "samples": [
+        {
+          "elapsed_ns": 5316459,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1297.963623046875
+        },
+        {
+          "elapsed_ns": 5233958,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1277.82177734375
+        },
+        {
+          "elapsed_ns": 5291916,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1291.9716796875
+        }
+      ]
+    },
+    {
+      "implementation": "wasm-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1025.5126953125,
+      "min_ns": 1003.366943359375,
+      "max_ns": 1028.74755859375,
+      "mad_ns": 3.23486328125,
+      "samples": [
+        {
+          "elapsed_ns": 4200500,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1025.5126953125
+        },
+        {
+          "elapsed_ns": 4109791,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1003.366943359375
+        },
+        {
+          "elapsed_ns": 4213750,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1028.74755859375
+        }
+      ]
+    },
+    {
+      "implementation": "c-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 374.32861328125,
+      "min_ns": 347.71728515625,
+      "max_ns": 386.525634765625,
+      "mad_ns": 12.197021484375,
+      "samples": [
+        {
+          "elapsed_ns": 1533250,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 374.32861328125
+        },
+        {
+          "elapsed_ns": 1424250,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 347.71728515625
+        },
+        {
+          "elapsed_ns": 1583209,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 386.525634765625
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 744.68994140625,
+      "min_ns": 738.4033203125,
+      "max_ns": 756.16455078125,
+      "mad_ns": 6.28662109375,
+      "samples": [
+        {
+          "elapsed_ns": 3050250,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 744.68994140625
+        },
+        {
+          "elapsed_ns": 3024500,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 738.4033203125
+        },
+        {
+          "elapsed_ns": 3097250,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 756.16455078125
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 820.9228515625,
+      "min_ns": 812.001708984375,
+      "max_ns": 826.589111328125,
+      "mad_ns": 5.666259765625,
+      "samples": [
+        {
+          "elapsed_ns": 3325959,
+          "iterations": 4096,
+          "checksum": 4560834949021697.0,
+          "ns_per_op": 812.001708984375
+        },
+        {
+          "elapsed_ns": 3385709,
+          "iterations": 4096,
+          "checksum": 4560834949021697.0,
+          "ns_per_op": 826.589111328125
+        },
+        {
+          "elapsed_ns": 3362500,
+          "iterations": 4096,
+          "checksum": 4560834949021697.0,
+          "ns_per_op": 820.9228515625
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1403.584716796875,
+      "min_ns": 1377.30908203125,
+      "max_ns": 1535.04443359375,
+      "mad_ns": 26.275634765625,
+      "samples": [
+        {
+          "elapsed_ns": 5749083,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1403.584716796875
+        },
+        {
+          "elapsed_ns": 6287542,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1535.04443359375
+        },
+        {
+          "elapsed_ns": 5641458,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 1377.30908203125
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1302,
+      "median_ns": 15376.267281105991,
+      "min_ns": 15348.924731182795,
+      "max_ns": 15578.110599078342,
+      "mad_ns": 27.342549923196202,
+      "samples": [
+        {
+          "elapsed_ns": 20019900,
+          "iterations": 1302,
+          "checksum": 1449757593658752.2,
+          "ns_per_op": 15376.267281105991
+        },
+        {
+          "elapsed_ns": 19984300,
+          "iterations": 1302,
+          "checksum": 1449757593658752.2,
+          "ns_per_op": 15348.924731182795
+        },
+        {
+          "elapsed_ns": 20282700,
+          "iterations": 1302,
+          "checksum": 1449757593658752.2,
+          "ns_per_op": 15578.110599078342
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 3781,
+      "median_ns": 5301.190161332981,
+      "min_ns": 5292.673895794764,
+      "max_ns": 5301.2959534514675,
+      "mad_ns": 0.10579211848653358,
+      "samples": [
+        {
+          "elapsed_ns": 20043800,
+          "iterations": 3781,
+          "checksum": 4210087144104256.5,
+          "ns_per_op": 5301.190161332981
+        },
+        {
+          "elapsed_ns": 20011600,
+          "iterations": 3781,
+          "checksum": 4210087144104256.5,
+          "ns_per_op": 5292.673895794764
+        },
+        {
+          "elapsed_ns": 20044200,
+          "iterations": 3781,
+          "checksum": 4210087144104256.5,
+          "ns_per_op": 5301.2959534514675
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 3743,
+      "median_ns": 5281.405289874432,
+      "min_ns": 5278.626769970612,
+      "max_ns": 5292.011755276516,
+      "mad_ns": 2.77851990381987,
+      "samples": [
+        {
+          "elapsed_ns": 19768300,
+          "iterations": 3743,
+          "checksum": 4167774710495168.5,
+          "ns_per_op": 5281.405289874432
+        },
+        {
+          "elapsed_ns": 19808000,
+          "iterations": 3743,
+          "checksum": 4167774710495168.5,
+          "ns_per_op": 5292.011755276516
+        },
+        {
+          "elapsed_ns": 19757900,
+          "iterations": 3743,
+          "checksum": 4167774710495168.5,
+          "ns_per_op": 5278.626769970612
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2021,
+      "median_ns": 5985.321128154379,
+      "min_ns": 5887.267194458189,
+      "max_ns": 6039.419594260267,
+      "mad_ns": 54.09846610588829,
+      "samples": [
+        {
+          "elapsed_ns": 12205667,
+          "iterations": 2021,
+          "checksum": 2250353376946496.2,
+          "ns_per_op": 6039.419594260267
+        },
+        {
+          "elapsed_ns": 11898167,
+          "iterations": 2021,
+          "checksum": 2250353376946496.2,
+          "ns_per_op": 5887.267194458189
+        },
+        {
+          "elapsed_ns": 12096334,
+          "iterations": 2021,
+          "checksum": 2250353376946496.2,
+          "ns_per_op": 5985.321128154379
+        }
+      ]
+    },
+    {
+      "implementation": "rust-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 686.808349609375,
+      "min_ns": 676.971435546875,
+      "max_ns": 720.621826171875,
+      "mad_ns": 9.8369140625,
+      "samples": [
+        {
+          "elapsed_ns": 2772875,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 676.971435546875
+        },
+        {
+          "elapsed_ns": 2813167,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 686.808349609375
+        },
+        {
+          "elapsed_ns": 2951667,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 720.621826171875
+        }
+      ]
+    },
+    {
+      "implementation": "julia-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 753.30615234375,
+      "min_ns": 750.1015625,
+      "max_ns": 763.173583984375,
+      "mad_ns": 3.20458984375,
+      "samples": [
+        {
+          "elapsed_ns": 3085542,
+          "iterations": 4096,
+          "checksum": 4560834949021697.0,
+          "ns_per_op": 753.30615234375
+        },
+        {
+          "elapsed_ns": 3125959,
+          "iterations": 4096,
+          "checksum": 4560834949021697.0,
+          "ns_per_op": 763.173583984375
+        },
+        {
+          "elapsed_ns": 3072416,
+          "iterations": 4096,
+          "checksum": 4560834949021697.0,
+          "ns_per_op": 750.1015625
+        }
+      ]
+    },
+    {
+      "implementation": "python-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 295,
+      "median_ns": 67283.89830508475,
+      "min_ns": 66881.07457627119,
+      "max_ns": 67870.62372881356,
+      "mad_ns": 402.82372881355695,
+      "samples": [
+        {
+          "elapsed_ns": 19848750,
+          "iterations": 295,
+          "checksum": 328478103017920.06,
+          "ns_per_op": 67283.89830508475
+        },
+        {
+          "elapsed_ns": 19729917,
+          "iterations": 295,
+          "checksum": 328478103017920.06,
+          "ns_per_op": 66881.07457627119
+        },
+        {
+          "elapsed_ns": 20021834,
+          "iterations": 295,
+          "checksum": 328478103017920.06,
+          "ns_per_op": 67870.62372881356
+        }
+      ]
+    },
+    {
+      "implementation": "typescript-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2214,
+      "median_ns": 5695.06549232159,
+      "min_ns": 5627.973351400181,
+      "max_ns": 5703.647244805781,
+      "mad_ns": 8.581752484191384,
+      "samples": [
+        {
+          "elapsed_ns": 12608875,
+          "iterations": 2214,
+          "checksum": 2465256000276864.5,
+          "ns_per_op": 5695.06549232159
+        },
+        {
+          "elapsed_ns": 12627875,
+          "iterations": 2214,
+          "checksum": 2465256000276864.5,
+          "ns_per_op": 5703.647244805781
+        },
+        {
+          "elapsed_ns": 12460333,
+          "iterations": 2214,
+          "checksum": 2465256000276864.5,
+          "ns_per_op": 5627.973351400181
+        }
+      ]
+    },
+    {
+      "implementation": "cpp-lu",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 269.388916015625,
+      "min_ns": 268.7275390625,
+      "max_ns": 270.294189453125,
+      "mad_ns": 0.661376953125,
+      "samples": [
+        {
+          "elapsed_ns": 1107125,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 270.294189453125
+        },
+        {
+          "elapsed_ns": 1103417,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 269.388916015625
+        },
+        {
+          "elapsed_ns": 1100708,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 268.7275390625
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "determinant",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 341.023681640625,
+      "min_ns": 338.236572265625,
+      "max_ns": 351.338623046875,
+      "mad_ns": 2.787109375,
+      "samples": [
+        {
+          "elapsed_ns": 1385417,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 338.236572265625
+        },
+        {
+          "elapsed_ns": 1396833,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 341.023681640625
+        },
+        {
+          "elapsed_ns": 1439083,
+          "iterations": 4096,
+          "checksum": 4560834949021697,
+          "ns_per_op": 351.338623046875
+        }
+      ]
+    },
+    {
+      "implementation": "julia-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 4472.320556640625,
+      "min_ns": 4459.28955078125,
+      "max_ns": 4541.839599609375,
+      "mad_ns": 13.031005859375,
+      "samples": [
+        {
+          "elapsed_ns": 18265250,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 4459.28955078125
+        },
+        {
+          "elapsed_ns": 18318625,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 4472.320556640625
+        },
+        {
+          "elapsed_ns": 18603375,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 4541.839599609375
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1362.833740234375,
+      "min_ns": 1356.55712890625,
+      "max_ns": 1383.82958984375,
+      "mad_ns": 6.276611328125,
+      "samples": [
+        {
+          "elapsed_ns": 5556458,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1356.55712890625
+        },
+        {
+          "elapsed_ns": 5668166,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1383.82958984375
+        },
+        {
+          "elapsed_ns": 5582167,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1362.833740234375
+        }
+      ]
+    },
+    {
+      "implementation": "cpp-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1374.593017578125,
+      "min_ns": 1347.17822265625,
+      "max_ns": 1393.117431640625,
+      "mad_ns": 18.5244140625,
+      "samples": [
+        {
+          "elapsed_ns": 5706209,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1393.117431640625
+        },
+        {
+          "elapsed_ns": 5518042,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1347.17822265625
+        },
+        {
+          "elapsed_ns": 5630333,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1374.593017578125
+        }
+      ]
+    },
+    {
+      "implementation": "rust-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3458.648681640625,
+      "min_ns": 3439.02587890625,
+      "max_ns": 3502.146240234375,
+      "mad_ns": 19.622802734375,
+      "samples": [
+        {
+          "elapsed_ns": 14086250,
+          "iterations": 4096,
+          "checksum": 307460749532878300000000000000000,
+          "ns_per_op": 3439.02587890625
+        },
+        {
+          "elapsed_ns": 14166625,
+          "iterations": 4096,
+          "checksum": 307460749532878300000000000000000,
+          "ns_per_op": 3458.648681640625
+        },
+        {
+          "elapsed_ns": 14344791,
+          "iterations": 4096,
+          "checksum": 307460749532878300000000000000000,
+          "ns_per_op": 3502.146240234375
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3637.013671875,
+      "min_ns": 3632.487060546875,
+      "max_ns": 3659.922119140625,
+      "mad_ns": 4.526611328125,
+      "samples": [
+        {
+          "elapsed_ns": 14878667,
+          "iterations": 4096,
+          "checksum": 307460749532878300000000000000000,
+          "ns_per_op": 3632.487060546875
+        },
+        {
+          "elapsed_ns": 14991041,
+          "iterations": 4096,
+          "checksum": 307460749532878300000000000000000,
+          "ns_per_op": 3659.922119140625
+        },
+        {
+          "elapsed_ns": 14897208,
+          "iterations": 4096,
+          "checksum": 307460749532878300000000000000000,
+          "ns_per_op": 3637.013671875
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 4604.990478515625,
+      "min_ns": 4526.275634765625,
+      "max_ns": 4728.1494140625,
+      "mad_ns": 78.71484375,
+      "samples": [
+        {
+          "elapsed_ns": 19366500,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 4728.1494140625
+        },
+        {
+          "elapsed_ns": 18539625,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 4526.275634765625
+        },
+        {
+          "elapsed_ns": 18862041,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 4604.990478515625
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 386,
+      "median_ns": 52006.21761658031,
+      "min_ns": 51760.362694300515,
+      "max_ns": 52044.55958549223,
+      "mad_ns": 38.34196891191823,
+      "samples": [
+        {
+          "elapsed_ns": 20089200,
+          "iterations": 386,
+          "checksum": 2.8974572587814353e+31,
+          "ns_per_op": 52044.55958549223
+        },
+        {
+          "elapsed_ns": 20074400,
+          "iterations": 386,
+          "checksum": 2.8974572587814353e+31,
+          "ns_per_op": 52006.21761658031
+        },
+        {
+          "elapsed_ns": 19979500,
+          "iterations": 386,
+          "checksum": 2.8974572587814353e+31,
+          "ns_per_op": 51760.362694300515
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3066.650390625,
+      "min_ns": 3057.108642578125,
+      "max_ns": 3074.21875,
+      "mad_ns": 7.568359375,
+      "samples": [
+        {
+          "elapsed_ns": 12592000,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 3074.21875
+        },
+        {
+          "elapsed_ns": 12561000,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 3066.650390625
+        },
+        {
+          "elapsed_ns": 12521917,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 3057.108642578125
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1935.343505859375,
+      "min_ns": 1933.3701171875,
+      "max_ns": 1982.767822265625,
+      "mad_ns": 1.973388671875,
+      "samples": [
+        {
+          "elapsed_ns": 7927167,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1935.343505859375
+        },
+        {
+          "elapsed_ns": 7919084,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1933.3701171875
+        },
+        {
+          "elapsed_ns": 8121417,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1982.767822265625
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 49,
+      "median_ns": 413626.693877551,
+      "min_ns": 412103.7551020408,
+      "max_ns": 415729.5918367347,
+      "mad_ns": 1522.938775510178,
+      "samples": [
+        {
+          "elapsed_ns": 20370750,
+          "iterations": 49,
+          "checksum": 3.678119318142216e+30,
+          "ns_per_op": 415729.5918367347
+        },
+        {
+          "elapsed_ns": 20193084,
+          "iterations": 49,
+          "checksum": 3.678119318142216e+30,
+          "ns_per_op": 412103.7551020408
+        },
+        {
+          "elapsed_ns": 20267708,
+          "iterations": 49,
+          "checksum": 3.678119318142216e+30,
+          "ns_per_op": 413626.693877551
+        }
+      ]
+    },
+    {
+      "implementation": "assembly-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1930.6640625,
+      "min_ns": 1911.763427734375,
+      "max_ns": 1932.016845703125,
+      "mad_ns": 1.352783203125,
+      "samples": [
+        {
+          "elapsed_ns": 7908000,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1930.6640625
+        },
+        {
+          "elapsed_ns": 7830583,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1911.763427734375
+        },
+        {
+          "elapsed_ns": 7913541,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1932.016845703125
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1287,
+      "median_ns": 15671.561771561772,
+      "min_ns": 15258.119658119658,
+      "max_ns": 16050.582750582751,
+      "mad_ns": 379.0209790209792,
+      "samples": [
+        {
+          "elapsed_ns": 20169300,
+          "iterations": 1287,
+          "checksum": 9.660692984589758e+31,
+          "ns_per_op": 15671.561771561772
+        },
+        {
+          "elapsed_ns": 20657100,
+          "iterations": 1287,
+          "checksum": 9.660692984589758e+31,
+          "ns_per_op": 16050.582750582751
+        },
+        {
+          "elapsed_ns": 19637200,
+          "iterations": 1287,
+          "checksum": 9.660692984589758e+31,
+          "ns_per_op": 15258.119658119658
+        }
+      ]
+    },
+    {
+      "implementation": "go-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2957,
+      "median_ns": 6400.349678728441,
+      "min_ns": 6385.610415962124,
+      "max_ns": 6424.698342915117,
+      "mad_ns": 14.739262766317552,
+      "samples": [
+        {
+          "elapsed_ns": 18882250,
+          "iterations": 2957,
+          "checksum": 2.2196324130094916e+32,
+          "ns_per_op": 6385.610415962124
+        },
+        {
+          "elapsed_ns": 18997833,
+          "iterations": 2957,
+          "checksum": 2.2196324130094916e+32,
+          "ns_per_op": 6424.698342915117
+        },
+        {
+          "elapsed_ns": 18925834,
+          "iterations": 2957,
+          "checksum": 2.2196324130094916e+32,
+          "ns_per_op": 6400.349678728441
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1802.14453125,
+      "min_ns": 1773.681640625,
+      "max_ns": 1853.922607421875,
+      "mad_ns": 28.462890625,
+      "samples": [
+        {
+          "elapsed_ns": 7381584,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1802.14453125
+        },
+        {
+          "elapsed_ns": 7265000,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1773.681640625
+        },
+        {
+          "elapsed_ns": 7593667,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1853.922607421875
+        }
+      ]
+    },
+    {
+      "implementation": "python-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 49,
+      "median_ns": 376041.6530612245,
+      "min_ns": 373549.32653061225,
+      "max_ns": 376345.2244897959,
+      "mad_ns": 303.57142857142026,
+      "samples": [
+        {
+          "elapsed_ns": 18426041,
+          "iterations": 49,
+          "checksum": 3.678119318142216e+30,
+          "ns_per_op": 376041.6530612245
+        },
+        {
+          "elapsed_ns": 18440916,
+          "iterations": 49,
+          "checksum": 3.678119318142216e+30,
+          "ns_per_op": 376345.2244897959
+        },
+        {
+          "elapsed_ns": 18303917,
+          "iterations": 49,
+          "checksum": 3.678119318142216e+30,
+          "ns_per_op": 373549.32653061225
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 368,
+      "median_ns": 54329.61956521739,
+      "min_ns": 54171.739130434784,
+      "max_ns": 56522.55434782609,
+      "mad_ns": 157.88043478260806,
+      "samples": [
+        {
+          "elapsed_ns": 19935200,
+          "iterations": 368,
+          "checksum": 2.762342671584373e+31,
+          "ns_per_op": 54171.739130434784
+        },
+        {
+          "elapsed_ns": 19993300,
+          "iterations": 368,
+          "checksum": 2.762342671584373e+31,
+          "ns_per_op": 54329.61956521739
+        },
+        {
+          "elapsed_ns": 20800300,
+          "iterations": 368,
+          "checksum": 2.762342671584373e+31,
+          "ns_per_op": 56522.55434782609
+        }
+      ]
+    },
+    {
+      "implementation": "wasm-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3093.973876953125,
+      "min_ns": 3078.450439453125,
+      "max_ns": 3369.3642578125,
+      "mad_ns": 15.5234375,
+      "samples": [
+        {
+          "elapsed_ns": 12672917,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 3093.973876953125
+        },
+        {
+          "elapsed_ns": 12609333,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 3078.450439453125
+        },
+        {
+          "elapsed_ns": 13800916,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 3369.3642578125
+        }
+      ]
+    },
+    {
+      "implementation": "typescript-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 541,
+      "median_ns": 33026.72643253235,
+      "min_ns": 30793.36044362292,
+      "max_ns": 34518.71534195934,
+      "mad_ns": 1491.9889094269893,
+      "samples": [
+        {
+          "elapsed_ns": 17867459,
+          "iterations": 541,
+          "checksum": 4.06094398186725e+31,
+          "ns_per_op": 33026.72643253235
+        },
+        {
+          "elapsed_ns": 16659208,
+          "iterations": 541,
+          "checksum": 4.06094398186725e+31,
+          "ns_per_op": 30793.36044362292
+        },
+        {
+          "elapsed_ns": 18674625,
+          "iterations": 541,
+          "checksum": 4.06094398186725e+31,
+          "ns_per_op": 34518.71534195934
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2837,
+      "median_ns": 6729.262248854424,
+      "min_ns": 6668.531899894255,
+      "max_ns": 6790.109975326049,
+      "mad_ns": 60.73034896016907,
+      "samples": [
+        {
+          "elapsed_ns": 19263542,
+          "iterations": 2837,
+          "checksum": 2.1295560215447725e+32,
+          "ns_per_op": 6790.109975326049
+        },
+        {
+          "elapsed_ns": 18918625,
+          "iterations": 2837,
+          "checksum": 2.1295560215447725e+32,
+          "ns_per_op": 6668.531899894255
+        },
+        {
+          "elapsed_ns": 19090917,
+          "iterations": 2837,
+          "checksum": 2.1295560215447725e+32,
+          "ns_per_op": 6729.262248854424
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1299,
+      "median_ns": 15276.058506543495,
+      "min_ns": 15261.508852963818,
+      "max_ns": 15316.705157813703,
+      "mad_ns": 14.549653579677397,
+      "samples": [
+        {
+          "elapsed_ns": 19896400,
+          "iterations": 1299,
+          "checksum": 9.750769376054455e+31,
+          "ns_per_op": 15316.705157813703
+        },
+        {
+          "elapsed_ns": 19843600,
+          "iterations": 1299,
+          "checksum": 9.750769376054455e+31,
+          "ns_per_op": 15276.058506543495
+        },
+        {
+          "elapsed_ns": 19824700,
+          "iterations": 1299,
+          "checksum": 9.750769376054455e+31,
+          "ns_per_op": 15261.508852963818
+        }
+      ]
+    },
+    {
+      "implementation": "c-lu",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1806.65087890625,
+      "min_ns": 1794.96240234375,
+      "max_ns": 1819.509033203125,
+      "mad_ns": 11.6884765625,
+      "samples": [
+        {
+          "elapsed_ns": 7400042,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1806.65087890625
+        },
+        {
+          "elapsed_ns": 7352166,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1794.96240234375
+        },
+        {
+          "elapsed_ns": 7452709,
+          "iterations": 4096,
+          "checksum": 3.074607495328783e+32,
+          "ns_per_op": 1819.509033203125
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "determinant",
+      "size": 16,
+      "status": "passed",
+      "iterations": 525,
+      "median_ns": 31908.253333333334,
+      "min_ns": 31360.39619047619,
+      "max_ns": 32679.285714285714,
+      "mad_ns": 547.8571428571449,
+      "samples": [
+        {
+          "elapsed_ns": 16751833,
+          "iterations": 525,
+          "checksum": 3.9408421265809722e+31,
+          "ns_per_op": 31908.253333333334
+        },
+        {
+          "elapsed_ns": 16464208,
+          "iterations": 525,
+          "checksum": 3.9408421265809722e+31,
+          "ns_per_op": 31360.39619047619
+        },
+        {
+          "elapsed_ns": 17156625,
+          "iterations": 525,
+          "checksum": 3.9408421265809722e+31,
+          "ns_per_op": 32679.285714285714
+        }
+      ]
+    },
+    {
+      "implementation": "assembly-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 259.765625,
+      "min_ns": 256.011962890625,
+      "max_ns": 290.262939453125,
+      "mad_ns": 3.753662109375,
+      "samples": [
+        {
+          "elapsed_ns": 1048625,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 256.011962890625
+        },
+        {
+          "elapsed_ns": 1188917,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 290.262939453125
+        },
+        {
+          "elapsed_ns": 1064000,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 259.765625
+        }
+      ]
+    },
+    {
+      "implementation": "wasm-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1024.8310546875,
+      "min_ns": 1011.60693359375,
+      "max_ns": 1038.533447265625,
+      "mad_ns": 13.22412109375,
+      "samples": [
+        {
+          "elapsed_ns": 4197708,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1024.8310546875
+        },
+        {
+          "elapsed_ns": 4253833,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1038.533447265625
+        },
+        {
+          "elapsed_ns": 4143542,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1011.60693359375
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1298,
+      "median_ns": 15409.553158705701,
+      "min_ns": 15282.588597842836,
+      "max_ns": 15605.161787365178,
+      "mad_ns": 126.96456086286526,
+      "samples": [
+        {
+          "elapsed_ns": 19836800,
+          "iterations": 1298,
+          "checksum": 1361193703110916,
+          "ns_per_op": 15282.588597842836
+        },
+        {
+          "elapsed_ns": 20255500,
+          "iterations": 1298,
+          "checksum": 1361193703110916,
+          "ns_per_op": 15605.161787365178
+        },
+        {
+          "elapsed_ns": 20001600,
+          "iterations": 1298,
+          "checksum": 1361193703110916,
+          "ns_per_op": 15409.553158705701
+        }
+      ]
+    },
+    {
+      "implementation": "c-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 395.6298828125,
+      "min_ns": 363.922119140625,
+      "max_ns": 429.2197265625,
+      "mad_ns": 31.707763671875,
+      "samples": [
+        {
+          "elapsed_ns": 1620500,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 395.6298828125
+        },
+        {
+          "elapsed_ns": 1758084,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 429.2197265625
+        },
+        {
+          "elapsed_ns": 1490625,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 363.922119140625
+        }
+      ]
+    },
+    {
+      "implementation": "cpp-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 279.978515625,
+      "min_ns": 274.6787109375,
+      "max_ns": 286.427734375,
+      "mad_ns": 5.2998046875,
+      "samples": [
+        {
+          "elapsed_ns": 1125084,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 274.6787109375
+        },
+        {
+          "elapsed_ns": 1146792,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 279.978515625
+        },
+        {
+          "elapsed_ns": 1173208,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 286.427734375
+        }
+      ]
+    },
+    {
+      "implementation": "python-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 300,
+      "median_ns": 67098.19333333333,
+      "min_ns": 66915.41666666667,
+      "max_ns": 68612.5,
+      "mad_ns": 182.77666666665755,
+      "samples": [
+        {
+          "elapsed_ns": 20129458,
+          "iterations": 300,
+          "checksum": 314605632460151.6,
+          "ns_per_op": 67098.19333333333
+        },
+        {
+          "elapsed_ns": 20583750,
+          "iterations": 300,
+          "checksum": 314605632460151.6,
+          "ns_per_op": 68612.5
+        },
+        {
+          "elapsed_ns": 20074625,
+          "iterations": 300,
+          "checksum": 314605632460151.6,
+          "ns_per_op": 66915.41666666667
+        }
+      ]
+    },
+    {
+      "implementation": "go-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 435.5673828125,
+      "min_ns": 434.14306640625,
+      "max_ns": 435.760498046875,
+      "mad_ns": 0.193115234375,
+      "samples": [
+        {
+          "elapsed_ns": 1784084,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 435.5673828125
+        },
+        {
+          "elapsed_ns": 1778250,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 434.14306640625
+        },
+        {
+          "elapsed_ns": 1784875,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 435.760498046875
+        }
+      ]
+    },
+    {
+      "implementation": "wasm-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 780.059814453125,
+      "min_ns": 778.228759765625,
+      "max_ns": 829.82373046875,
+      "mad_ns": 1.8310546875,
+      "samples": [
+        {
+          "elapsed_ns": 3195125,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 780.059814453125
+        },
+        {
+          "elapsed_ns": 3398958,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 829.82373046875
+        },
+        {
+          "elapsed_ns": 3187625,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 778.228759765625
+        }
+      ]
+    },
+    {
+      "implementation": "c-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 259.867431640625,
+      "min_ns": 253.591064453125,
+      "max_ns": 264.607666015625,
+      "mad_ns": 4.740234375,
+      "samples": [
+        {
+          "elapsed_ns": 1064417,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 259.867431640625
+        },
+        {
+          "elapsed_ns": 1038709,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 253.591064453125
+        },
+        {
+          "elapsed_ns": 1083833,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 264.607666015625
+        }
+      ]
+    },
+    {
+      "implementation": "rust-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 685.55712890625,
+      "min_ns": 684.1025390625,
+      "max_ns": 696.634765625,
+      "mad_ns": 1.45458984375,
+      "samples": [
+        {
+          "elapsed_ns": 2802084,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 684.1025390625
+        },
+        {
+          "elapsed_ns": 2853416,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 696.634765625
+        },
+        {
+          "elapsed_ns": 2808042,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 685.55712890625
+        }
+      ]
+    },
+    {
+      "implementation": "julia-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 754.374267578125,
+      "min_ns": 738.1591796875,
+      "max_ns": 758.646728515625,
+      "mad_ns": 4.2724609375,
+      "samples": [
+        {
+          "elapsed_ns": 3089917,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 754.374267578125
+        },
+        {
+          "elapsed_ns": 3107417,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 758.646728515625
+        },
+        {
+          "elapsed_ns": 3023500,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 738.1591796875
+        }
+      ]
+    },
+    {
+      "implementation": "go-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1303.720947265625,
+      "min_ns": 1291.656494140625,
+      "max_ns": 1315.54150390625,
+      "mad_ns": 11.820556640625,
+      "samples": [
+        {
+          "elapsed_ns": 5340041,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1303.720947265625
+        },
+        {
+          "elapsed_ns": 5388458,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1315.54150390625
+        },
+        {
+          "elapsed_ns": 5290625,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1291.656494140625
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3782.1044921875,
+      "min_ns": 3769.921875,
+      "max_ns": 3932.71484375,
+      "mad_ns": 12.1826171875,
+      "samples": [
+        {
+          "elapsed_ns": 15441600,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 3769.921875
+        },
+        {
+          "elapsed_ns": 16108400,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 3932.71484375
+        },
+        {
+          "elapsed_ns": 15491500,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 3782.1044921875
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 3762,
+      "median_ns": 5306.645401382243,
+      "min_ns": 5286.549707602339,
+      "max_ns": 5314.859117490696,
+      "mad_ns": 8.2137161084529,
+      "samples": [
+        {
+          "elapsed_ns": 19888000,
+          "iterations": 3762,
+          "checksum": 3945154631050479.5,
+          "ns_per_op": 5286.549707602339
+        },
+        {
+          "elapsed_ns": 19963600,
+          "iterations": 3762,
+          "checksum": 3945154631050479.5,
+          "ns_per_op": 5306.645401382243
+        },
+        {
+          "elapsed_ns": 19994500,
+          "iterations": 3762,
+          "checksum": 3945154631050479.5,
+          "ns_per_op": 5314.859117490696
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 2330.9814453125,
+      "min_ns": 2330.4443359375,
+      "max_ns": 2348.6328125,
+      "mad_ns": 0.537109375,
+      "samples": [
+        {
+          "elapsed_ns": 9620000,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 2348.6328125
+        },
+        {
+          "elapsed_ns": 9545500,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 2330.4443359375
+        },
+        {
+          "elapsed_ns": 9547700,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 2330.9814453125
+        }
+      ]
+    },
+    {
+      "implementation": "typescript-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2134,
+      "median_ns": 5813.710402999062,
+      "min_ns": 5733.286785379569,
+      "max_ns": 6136.012183692596,
+      "mad_ns": 80.4236176194936,
+      "samples": [
+        {
+          "elapsed_ns": 12406458,
+          "iterations": 2134,
+          "checksum": 2237894732233131,
+          "ns_per_op": 5813.710402999062
+        },
+        {
+          "elapsed_ns": 13094250,
+          "iterations": 2134,
+          "checksum": 2237894732233131,
+          "ns_per_op": 6136.012183692596
+        },
+        {
+          "elapsed_ns": 12234834,
+          "iterations": 2134,
+          "checksum": 2237894732233131,
+          "ns_per_op": 5733.286785379569
+        }
+      ]
+    },
+    {
+      "implementation": "rust-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 306.233642578125,
+      "min_ns": 305.948974609375,
+      "max_ns": 312.601806640625,
+      "mad_ns": 0.28466796875,
+      "samples": [
+        {
+          "elapsed_ns": 1254333,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 306.233642578125
+        },
+        {
+          "elapsed_ns": 1280417,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 312.601806640625
+        },
+        {
+          "elapsed_ns": 1253167,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 305.948974609375
+        }
+      ]
+    },
+    {
+      "implementation": "julia-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 439.218994140625,
+      "min_ns": 434.356689453125,
+      "max_ns": 451.029541015625,
+      "mad_ns": 4.8623046875,
+      "samples": [
+        {
+          "elapsed_ns": 1799041,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 439.218994140625
+        },
+        {
+          "elapsed_ns": 1847417,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 451.029541015625
+        },
+        {
+          "elapsed_ns": 1779125,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 434.356689453125
+        }
+      ]
+    },
+    {
+      "implementation": "python-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 618,
+      "median_ns": 32361.852750809063,
+      "min_ns": 32250.538834951458,
+      "max_ns": 32704.490291262136,
+      "mad_ns": 111.31391585760502,
+      "samples": [
+        {
+          "elapsed_ns": 19999625,
+          "iterations": 618,
+          "checksum": 648087602867909.1,
+          "ns_per_op": 32361.852750809063
+        },
+        {
+          "elapsed_ns": 20211375,
+          "iterations": 618,
+          "checksum": 648087602867909.1,
+          "ns_per_op": 32704.490291262136
+        },
+        {
+          "elapsed_ns": 19930833,
+          "iterations": 618,
+          "checksum": 648087602867909.1,
+          "ns_per_op": 32250.538834951458
+        }
+      ]
+    },
+    {
+      "implementation": "typescript-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1646.9931640625,
+      "min_ns": 1646.09765625,
+      "max_ns": 1686.116455078125,
+      "mad_ns": 0.8955078125,
+      "samples": [
+        {
+          "elapsed_ns": 6906333,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1686.116455078125
+        },
+        {
+          "elapsed_ns": 6742416,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1646.09765625
+        },
+        {
+          "elapsed_ns": 6746084,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 1646.9931640625
+        }
+      ]
+    },
+    {
+      "implementation": "cpp-cholesky",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 277.638671875,
+      "min_ns": 268.402099609375,
+      "max_ns": 282.65380859375,
+      "mad_ns": 5.01513671875,
+      "samples": [
+        {
+          "elapsed_ns": 1099375,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 268.402099609375
+        },
+        {
+          "elapsed_ns": 1137208,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 277.638671875
+        },
+        {
+          "elapsed_ns": 1157750,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 282.65380859375
+        }
+      ]
+    },
+    {
+      "implementation": "assembly-lu",
+      "operation": "determinant_spd",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 359.2734375,
+      "min_ns": 352.610107421875,
+      "max_ns": 359.995361328125,
+      "mad_ns": 0.721923828125,
+      "samples": [
+        {
+          "elapsed_ns": 1444291,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 352.610107421875
+        },
+        {
+          "elapsed_ns": 1474541,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 359.995361328125
+        },
+        {
+          "elapsed_ns": 1471584,
+          "iterations": 4096,
+          "checksum": 4295415568522835.5,
+          "ns_per_op": 359.2734375
+        }
+      ]
+    },
+    {
+      "implementation": "julia-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3073.2421875,
+      "min_ns": 2817.474365234375,
+      "max_ns": 3099.3857421875,
+      "mad_ns": 26.1435546875,
+      "samples": [
+        {
+          "elapsed_ns": 11540375,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 2817.474365234375
+        },
+        {
+          "elapsed_ns": 12588000,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 3073.2421875
+        },
+        {
+          "elapsed_ns": 12695084,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 3099.3857421875
+        }
+      ]
+    },
+    {
+      "implementation": "cpp-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1423.90966796875,
+      "min_ns": 1406.351806640625,
+      "max_ns": 1436.869384765625,
+      "mad_ns": 12.959716796875,
+      "samples": [
+        {
+          "elapsed_ns": 5885417,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1436.869384765625
+        },
+        {
+          "elapsed_ns": 5760417,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1406.351806640625
+        },
+        {
+          "elapsed_ns": 5832334,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1423.90966796875
+        }
+      ]
+    },
+    {
+      "implementation": "cpp-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 955.9326171875,
+      "min_ns": 954.935791015625,
+      "max_ns": 959.503173828125,
+      "mad_ns": 0.996826171875,
+      "samples": [
+        {
+          "elapsed_ns": 3915500,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 955.9326171875
+        },
+        {
+          "elapsed_ns": 3930125,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 959.503173828125
+        },
+        {
+          "elapsed_ns": 3911417,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 954.935791015625
+        }
+      ]
+    },
+    {
+      "implementation": "rust-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1154.4697265625,
+      "min_ns": 1136.749267578125,
+      "max_ns": 1155.466796875,
+      "mad_ns": 0.9970703125,
+      "samples": [
+        {
+          "elapsed_ns": 4656125,
+          "iterations": 4096,
+          "checksum": 291672729836622630000000000000000,
+          "ns_per_op": 1136.749267578125
+        },
+        {
+          "elapsed_ns": 4728708,
+          "iterations": 4096,
+          "checksum": 291672729836622630000000000000000,
+          "ns_per_op": 1154.4697265625
+        },
+        {
+          "elapsed_ns": 4732792,
+          "iterations": 4096,
+          "checksum": 291672729836622630000000000000000,
+          "ns_per_op": 1155.466796875
+        }
+      ]
+    },
+    {
+      "implementation": "rust-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3495.1884765625,
+      "min_ns": 3474.334716796875,
+      "max_ns": 3506.683349609375,
+      "mad_ns": 11.494873046875,
+      "samples": [
+        {
+          "elapsed_ns": 14230875,
+          "iterations": 4096,
+          "checksum": 291672729836622630000000000000000,
+          "ns_per_op": 3474.334716796875
+        },
+        {
+          "elapsed_ns": 14316292,
+          "iterations": 4096,
+          "checksum": 291672729836622630000000000000000,
+          "ns_per_op": 3495.1884765625
+        },
+        {
+          "elapsed_ns": 14363375,
+          "iterations": 4096,
+          "checksum": 291672729836622630000000000000000,
+          "ns_per_op": 3506.683349609375
+        }
+      ]
+    },
+    {
+      "implementation": "julia-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 4598.286865234375,
+      "min_ns": 4516.41845703125,
+      "max_ns": 4689.402099609375,
+      "mad_ns": 81.868408203125,
+      "samples": [
+        {
+          "elapsed_ns": 18834583,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 4598.286865234375
+        },
+        {
+          "elapsed_ns": 19207791,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 4689.402099609375
+        },
+        {
+          "elapsed_ns": 18499250,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 4516.41845703125
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1130,
+      "median_ns": 17785.04424778761,
+      "min_ns": 17709.29203539823,
+      "max_ns": 17884.601769911504,
+      "mad_ns": 75.75221238937957,
+      "samples": [
+        {
+          "elapsed_ns": 20097100,
+          "iterations": 1130,
+          "checksum": 8.046635369027566e+31,
+          "ns_per_op": 17785.04424778761
+        },
+        {
+          "elapsed_ns": 20209600,
+          "iterations": 1130,
+          "checksum": 8.046635369027566e+31,
+          "ns_per_op": 17884.601769911504
+        },
+        {
+          "elapsed_ns": 20011500,
+          "iterations": 1130,
+          "checksum": 8.046635369027566e+31,
+          "ns_per_op": 17709.29203539823
+        }
+      ]
+    },
+    {
+      "implementation": "wasm-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3069.13232421875,
+      "min_ns": 3052.581787109375,
+      "max_ns": 3088.409423828125,
+      "mad_ns": 16.550537109375,
+      "samples": [
+        {
+          "elapsed_ns": 12571166,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 3069.13232421875
+        },
+        {
+          "elapsed_ns": 12650125,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 3088.409423828125
+        },
+        {
+          "elapsed_ns": 12503375,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 3052.581787109375
+        }
+      ]
+    },
+    {
+      "implementation": "assembly-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1953.37939453125,
+      "min_ns": 1927.958251953125,
+      "max_ns": 1964.640380859375,
+      "mad_ns": 11.260986328125,
+      "samples": [
+        {
+          "elapsed_ns": 7896917,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1927.958251953125
+        },
+        {
+          "elapsed_ns": 8001042,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1953.37939453125
+        },
+        {
+          "elapsed_ns": 8047167,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1964.640380859375
+        }
+      ]
+    },
+    {
+      "implementation": "python-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 53,
+      "median_ns": 380060.5283018868,
+      "min_ns": 375955.96226415096,
+      "max_ns": 382786.1509433962,
+      "mad_ns": 2725.622641509399,
+      "samples": [
+        {
+          "elapsed_ns": 20143208,
+          "iterations": 53,
+          "checksum": 3.774085615561492e+30,
+          "ns_per_op": 380060.5283018868
+        },
+        {
+          "elapsed_ns": 20287666,
+          "iterations": 53,
+          "checksum": 3.774085615561492e+30,
+          "ns_per_op": 382786.1509433962
+        },
+        {
+          "elapsed_ns": 19925666,
+          "iterations": 53,
+          "checksum": 3.774085615561492e+30,
+          "ns_per_op": 375955.96226415096
+        }
+      ]
+    },
+    {
+      "implementation": "assembly-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 900.2177734375,
+      "min_ns": 898.74267578125,
+      "max_ns": 914.17431640625,
+      "mad_ns": 1.47509765625,
+      "samples": [
+        {
+          "elapsed_ns": 3687292,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 900.2177734375
+        },
+        {
+          "elapsed_ns": 3681250,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 898.74267578125
+        },
+        {
+          "elapsed_ns": 3744458,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 914.17431640625
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1287,
+      "median_ns": 15359.90675990676,
+      "min_ns": 15288.65578865579,
+      "max_ns": 15417.715617715618,
+      "mad_ns": 57.80885780885728,
+      "samples": [
+        {
+          "elapsed_ns": 19768200,
+          "iterations": 1287,
+          "checksum": 9.164619221184395e+31,
+          "ns_per_op": 15359.90675990676
+        },
+        {
+          "elapsed_ns": 19676500,
+          "iterations": 1287,
+          "checksum": 9.164619221184395e+31,
+          "ns_per_op": 15288.65578865579
+        },
+        {
+          "elapsed_ns": 19842600,
+          "iterations": 1287,
+          "checksum": 9.164619221184395e+31,
+          "ns_per_op": 15417.715617715618
+        }
+      ]
+    },
+    {
+      "implementation": "go-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1705.657958984375,
+      "min_ns": 1699.239013671875,
+      "max_ns": 1711.31396484375,
+      "mad_ns": 5.656005859375,
+      "samples": [
+        {
+          "elapsed_ns": 6960083,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1699.239013671875
+        },
+        {
+          "elapsed_ns": 6986375,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1705.657958984375
+        },
+        {
+          "elapsed_ns": 7009542,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1711.31396484375
+        }
+      ]
+    },
+    {
+      "implementation": "c-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1834.065673828125,
+      "min_ns": 1806.203369140625,
+      "max_ns": 1837.860107421875,
+      "mad_ns": 3.79443359375,
+      "samples": [
+        {
+          "elapsed_ns": 7527875,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1837.860107421875
+        },
+        {
+          "elapsed_ns": 7398209,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1806.203369140625
+        },
+        {
+          "elapsed_ns": 7512333,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1834.065673828125
+        }
+      ]
+    },
+    {
+      "implementation": "python-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 143,
+      "median_ns": 142182.4055944056,
+      "min_ns": 139992.13286713287,
+      "max_ns": 154445.22377622378,
+      "mad_ns": 2190.272727272735,
+      "samples": [
+        {
+          "elapsed_ns": 20332084,
+          "iterations": 143,
+          "checksum": 1.0182910245760238e+31,
+          "ns_per_op": 142182.4055944056
+        },
+        {
+          "elapsed_ns": 22085667,
+          "iterations": 143,
+          "checksum": 1.0182910245760238e+31,
+          "ns_per_op": 154445.22377622378
+        },
+        {
+          "elapsed_ns": 20018875,
+          "iterations": 143,
+          "checksum": 1.0182910245760238e+31,
+          "ns_per_op": 139992.13286713287
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 384,
+      "median_ns": 52426.302083333336,
+      "min_ns": 52047.916666666664,
+      "max_ns": 52900.260416666664,
+      "mad_ns": 378.3854166666715,
+      "samples": [
+        {
+          "elapsed_ns": 20131700,
+          "iterations": 384,
+          "checksum": 2.734431842218132e+31,
+          "ns_per_op": 52426.302083333336
+        },
+        {
+          "elapsed_ns": 19986400,
+          "iterations": 384,
+          "checksum": 2.734431842218132e+31,
+          "ns_per_op": 52047.916666666664
+        },
+        {
+          "elapsed_ns": 20313700,
+          "iterations": 384,
+          "checksum": 2.734431842218132e+31,
+          "ns_per_op": 52900.260416666664
+        }
+      ]
+    },
+    {
+      "implementation": "wasm-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 1561.13671875,
+      "min_ns": 1559.600830078125,
+      "max_ns": 1570.200439453125,
+      "mad_ns": 1.535888671875,
+      "samples": [
+        {
+          "elapsed_ns": 6431541,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1570.200439453125
+        },
+        {
+          "elapsed_ns": 6394416,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1561.13671875
+        },
+        {
+          "elapsed_ns": 6388125,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 1559.600830078125
+        }
+      ]
+    },
+    {
+      "implementation": "typescript-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3453,
+      "median_ns": 3244.3770634231105,
+      "min_ns": 3197.3162467419634,
+      "max_ns": 3469.036490008688,
+      "mad_ns": 47.06081668114712,
+      "samples": [
+        {
+          "elapsed_ns": 11202834,
+          "iterations": 3453,
+          "checksum": 2.458852383119718e+32,
+          "ns_per_op": 3244.3770634231105
+        },
+        {
+          "elapsed_ns": 11040333,
+          "iterations": 3453,
+          "checksum": 2.458852383119718e+32,
+          "ns_per_op": 3197.3162467419634
+        },
+        {
+          "elapsed_ns": 11978583,
+          "iterations": 3453,
+          "checksum": 2.458852383119718e+32,
+          "ns_per_op": 3469.036490008688
+        }
+      ]
+    },
+    {
+      "implementation": "go-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3072,
+      "median_ns": 6499.104817708333,
+      "min_ns": 6458.6181640625,
+      "max_ns": 6503.87890625,
+      "mad_ns": 4.77408854166697,
+      "samples": [
+        {
+          "elapsed_ns": 19965250,
+          "iterations": 3072,
+          "checksum": 2.1875454737745864e+32,
+          "ns_per_op": 6499.104817708333
+        },
+        {
+          "elapsed_ns": 19840875,
+          "iterations": 3072,
+          "checksum": 2.1875454737745864e+32,
+          "ns_per_op": 6458.6181640625
+        },
+        {
+          "elapsed_ns": 19979916,
+          "iterations": 3072,
+          "checksum": 2.1875454737745864e+32,
+          "ns_per_op": 6503.87890625
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1693,
+      "median_ns": 11750.856467808624,
+      "min_ns": 11735.26284701713,
+      "max_ns": 11826.520968694625,
+      "mad_ns": 15.593620791494686,
+      "samples": [
+        {
+          "elapsed_ns": 19867800,
+          "iterations": 1693,
+          "checksum": 1.2055711221029424e+32,
+          "ns_per_op": 11735.26284701713
+        },
+        {
+          "elapsed_ns": 19894200,
+          "iterations": 1693,
+          "checksum": 1.2055711221029424e+32,
+          "ns_per_op": 11750.856467808624
+        },
+        {
+          "elapsed_ns": 20022300,
+          "iterations": 1693,
+          "checksum": 1.2055711221029424e+32,
+          "ns_per_op": 11826.520968694625
+        }
+      ]
+    },
+    {
+      "implementation": "c-cholesky",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 921.142578125,
+      "min_ns": 907.694580078125,
+      "max_ns": 940.948486328125,
+      "mad_ns": 13.447998046875,
+      "samples": [
+        {
+          "elapsed_ns": 3717917,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 907.694580078125
+        },
+        {
+          "elapsed_ns": 3773000,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 921.142578125
+        },
+        {
+          "elapsed_ns": 3854125,
+          "iterations": 4096,
+          "checksum": 2.9167272983662263e+32,
+          "ns_per_op": 940.948486328125
+        }
+      ]
+    },
+    {
+      "implementation": "typescript-lu",
+      "operation": "determinant_spd",
+      "size": 16,
+      "status": "passed",
+      "iterations": 548,
+      "median_ns": 31162.63686131387,
+      "min_ns": 30264.218978102188,
+      "max_ns": 31565.616788321167,
+      "mad_ns": 402.9799270072981,
+      "samples": [
+        {
+          "elapsed_ns": 17297958,
+          "iterations": 548,
+          "checksum": 3.902262108165459e+31,
+          "ns_per_op": 31565.616788321167
+        },
+        {
+          "elapsed_ns": 17077125,
+          "iterations": 548,
+          "checksum": 3.902262108165459e+31,
+          "ns_per_op": 31162.63686131387
+        },
+        {
+          "elapsed_ns": 16584792,
+          "iterations": 548,
+          "checksum": 3.902262108165459e+31,
+          "ns_per_op": 30264.218978102188
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "determinant_small",
+      "size": 3,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 880.0537109375,
+      "min_ns": 872.8515625,
+      "max_ns": 881.884765625,
+      "mad_ns": 1.8310546875,
+      "samples": [
+        {
+          "elapsed_ns": 3575200,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 872.8515625
+        },
+        {
+          "elapsed_ns": 3612200,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 881.884765625
+        },
+        {
+          "elapsed_ns": 3604700,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 880.0537109375
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-lu",
+      "operation": "determinant_small",
+      "size": 3,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 878.662109375,
+      "min_ns": 874.169921875,
+      "max_ns": 1049.951171875,
+      "mad_ns": 4.4921875,
+      "samples": [
+        {
+          "elapsed_ns": 4300600,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 1049.951171875
+        },
+        {
+          "elapsed_ns": 3580600,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 874.169921875
+        },
+        {
+          "elapsed_ns": 3599000,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 878.662109375
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-cofactor",
+      "operation": "determinant_small",
+      "size": 3,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 394.287109375,
+      "min_ns": 383.0078125,
+      "max_ns": 401.5625,
+      "mad_ns": 7.275390625,
+      "samples": [
+        {
+          "elapsed_ns": 1568800,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 383.0078125
+        },
+        {
+          "elapsed_ns": 1615000,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 394.287109375
+        },
+        {
+          "elapsed_ns": 1644800,
+          "iterations": 4096,
+          "checksum": 7182923,
+          "ns_per_op": 401.5625
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-lu",
+      "operation": "determinant_small",
+      "size": 5,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 2084.228515625,
+      "min_ns": 2056.298828125,
+      "max_ns": 2101.7333984375,
+      "mad_ns": 17.5048828125,
+      "samples": [
+        {
+          "elapsed_ns": 8422600,
+          "iterations": 4096,
+          "checksum": 7732517494.812501,
+          "ns_per_op": 2056.298828125
+        },
+        {
+          "elapsed_ns": 8608700,
+          "iterations": 4096,
+          "checksum": 7732517494.812501,
+          "ns_per_op": 2101.7333984375
+        },
+        {
+          "elapsed_ns": 8537000,
+          "iterations": 4096,
+          "checksum": 7732517494.812501,
+          "ns_per_op": 2084.228515625
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-cofactor",
+      "operation": "determinant_small",
+      "size": 5,
+      "status": "passed",
+      "iterations": 2309,
+      "median_ns": 8708.705067128627,
+      "min_ns": 8668.514508445214,
+      "max_ns": 8721.351234300562,
+      "mad_ns": 12.646167171935303,
+      "samples": [
+        {
+          "elapsed_ns": 20015600,
+          "iterations": 2309,
+          "checksum": 4358980199.102066,
+          "ns_per_op": 8668.514508445214
+        },
+        {
+          "elapsed_ns": 20137600,
+          "iterations": 2309,
+          "checksum": 4358980199.102066,
+          "ns_per_op": 8721.351234300562
+        },
+        {
+          "elapsed_ns": 20108400,
+          "iterations": 2309,
+          "checksum": 4358980199.102066,
+          "ns_per_op": 8708.705067128627
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "determinant_small",
+      "size": 5,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 2085.9375,
+      "min_ns": 2079.00390625,
+      "max_ns": 2097.7294921875,
+      "mad_ns": 6.93359375,
+      "samples": [
+        {
+          "elapsed_ns": 8592300,
+          "iterations": 4096,
+          "checksum": 7732517494.812501,
+          "ns_per_op": 2097.7294921875
+        },
+        {
+          "elapsed_ns": 8515600,
+          "iterations": 4096,
+          "checksum": 7732517494.812501,
+          "ns_per_op": 2079.00390625
+        },
+        {
+          "elapsed_ns": 8544000,
+          "iterations": 4096,
+          "checksum": 7732517494.812501,
+          "ns_per_op": 2085.9375
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "determinant_small",
+      "size": 7,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3972.8271484375,
+      "min_ns": 3966.064453125,
+      "max_ns": 4004.7607421875,
+      "mad_ns": 6.7626953125,
+      "samples": [
+        {
+          "elapsed_ns": 16403500,
+          "iterations": 4096,
+          "checksum": 51004188057896.44,
+          "ns_per_op": 4004.7607421875
+        },
+        {
+          "elapsed_ns": 16272700,
+          "iterations": 4096,
+          "checksum": 51004188057896.44,
+          "ns_per_op": 3972.8271484375
+        },
+        {
+          "elapsed_ns": 16245000,
+          "iterations": 4096,
+          "checksum": 51004188057896.44,
+          "ns_per_op": 3966.064453125
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-lu",
+      "operation": "determinant_small",
+      "size": 7,
+      "status": "passed",
+      "iterations": 4096,
+      "median_ns": 3962.2802734375,
+      "min_ns": 3951.9775390625,
+      "max_ns": 3964.35546875,
+      "mad_ns": 2.0751953125,
+      "samples": [
+        {
+          "elapsed_ns": 16238000,
+          "iterations": 4096,
+          "checksum": 51004188057896.44,
+          "ns_per_op": 3964.35546875
+        },
+        {
+          "elapsed_ns": 16187300,
+          "iterations": 4096,
+          "checksum": 51004188057896.44,
+          "ns_per_op": 3951.9775390625
+        },
+        {
+          "elapsed_ns": 16229500,
+          "iterations": 4096,
+          "checksum": 51004188057896.44,
+          "ns_per_op": 3962.2802734375
+        }
+      ]
+    },
+    {
+      "implementation": "csharp-cofactor",
+      "operation": "determinant_small",
+      "size": 7,
+      "status": "passed",
+      "iterations": 53,
+      "median_ns": 352452.8301886792,
+      "min_ns": 352307.5471698113,
+      "max_ns": 353200.0,
+      "mad_ns": 145.28301886789268,
+      "samples": [
+        {
+          "elapsed_ns": 18672300,
+          "iterations": 53,
+          "checksum": 659966300553.8501,
+          "ns_per_op": 352307.5471698113
+        },
+        {
+          "elapsed_ns": 18680000,
+          "iterations": 53,
+          "checksum": 659966300553.8501,
+          "ns_per_op": 352452.8301886792
+        },
+        {
+          "elapsed_ns": 18719600,
+          "iterations": 53,
+          "checksum": 659966300553.8501,
+          "ns_per_op": 353200.0
+        }
+      ]
+    }
+  ],
+  "profiles": []
+}

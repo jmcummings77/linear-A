@@ -1,0 +1,115 @@
+name: Matrix ports
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      performance:
+        description: Collect a quick comparison report and available stack profiles
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: matrix-ports-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+      CC: clang
+      CXX: clang++
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/*packages.lock.json'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+      - uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: '6.0.10'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+          cache: npm
+          cache-dependency-path: ports/typescript/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+          cache: false
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+          arch: aarch64
+      - name: Install native compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang
+      - name: Test C# library
+        run: |
+          dotnet restore --locked-mode
+          dotnet test --configuration Release --no-restore
+      - name: Test F# library
+        run: dotnet fsi ports/fsharp/tests.fsx
+      - name: Test Rust library and runner
+        run: cargo test --locked --manifest-path ports/rust/Cargo.toml
+      - name: Test Go library and runner
+        working-directory: ports/go
+        run: go test ./...
+      - name: Test TypeScript library and runner
+        run: |
+          npm --prefix ports/typescript ci --ignore-scripts
+          npm --prefix ports/typescript test
+      - name: Test Python library and runner
+        run: python3 -m unittest discover -s ports/python -p 'test_*.py'
+      - name: Build and test WebAssembly library, runner, and live worker
+        run: |
+          python3 ports/wasm/build.py --output .build/wasm
+          python3 ports/wasm/build.py --trace --output .build/wasm-trace
+          node --test ports/wasm/*.test.mjs
+      - name: Test benchmark harness and profile parsers
+        run: |
+          python3 -m unittest discover -s tests/benchmark_harness -v
+          node --test tests/report-theme.test.mjs tests/timing-report.test.mjs
+      - name: Test Julia library and runner
+        run: julia --startup-file=no --threads=1 --project=ports/julia ports/julia/test/runtests.jl
+      - name: Test C, C++, and ARM64 libraries
+        run: |
+          mkdir -p .build/unit
+          clang -std=c11 -O3 -g -ffp-contract=off ports/c/matrix.c ports/c/tests.c -lm -o .build/unit/c-tests
+          .build/unit/c-tests
+          clang++ -std=c++17 -O3 -g -ffp-contract=off ports/cpp/tests.cpp -o .build/unit/cpp-tests
+          .build/unit/cpp-tests
+          clang -std=c11 -O3 -g -ffp-contract=off -DMATRIX_USE_ASM ports/c/matrix.c ports/assembly/tests.c ports/assembly/kernels.S -lm -o .build/unit/assembly-tests
+          .build/unit/assembly-tests
+      - name: Build and verify all eleven runners
+        run: python3 benchmarks/run.py --verify-only --require-all --output benchmarks/reports/verification
+      - name: Verify determinant algorithms on general and SPD inputs
+        run: python3 benchmarks/determinants.py --no-build --verify-only --require-all --output benchmarks/reports/determinant-verification
+      - name: Check C# benchmark adapter formatting
+        run: dotnet format benchmarks/dotnet/Runner.csproj --verify-no-changes --no-restore
+      - name: Collect optional quick performance report
+        if: github.event_name == 'workflow_dispatch' && inputs.performance
+        run: python3 benchmarks/run.py --no-build --suite quick --profiles --require-all --output benchmarks/reports/quick
+      - name: Upload verification and comparison reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: matrix-ports-${{ runner.arch }}
+          path: benchmarks/reports/
+          if-no-files-found: warn
+          retention-days: 14

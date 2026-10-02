@@ -1,0 +1,22 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1643 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1643 start  (in dyld) + 6992  [0x18068be00]
+        1643 main  (in linear-a-rust) + 52  [0x10065e248]
+          1643 std::rt::lang_start_internal::h91996717d3eb1d2a  (in linear-a-rust) + 648  [0x100674d30]
+            1643 std::rt::lang_start::_$u7b$$u7b$closure$u7d$$u7d$::he971d1d403feaaf5  (in linear-a-rust) + 16  [0x10065e800]
+              1643 std::sys_common::backtrace::__rust_begin_short_backtrace::he31337021a58d088  (in linear-a-rust) + 12  [0x10065e550]  backtrace.rs:134
+                1641 linear_a_rust::main::h9333794c1093e9ed  (in linear-a-rust) + 2260  [0x10065dd5c]  main.rs:244
+                + 1639 linear_a_rust::execute::h9ce16c8d99e45a88  (in linear-a-rust) + 160  [0x10065cd6c]  main.rs:93
+                + ! 1635 linear_a::Matrix::multiply::h963c99b8d23c9297  (in linear-a-rust) + 440,400,...  [0x100660614,0x1006605ec,...]
+                + ! 4 linear_a::Matrix::multiply::h963c99b8d23c9297  (in linear-a-rust) + 104  [0x1006604c4]
+                + !   3 linear_a::allocate::h9ab31151a5e5eeac  (in linear-a-rust) + 188  [0x10065f730]
+                + !   | 3 _platform_memset  (in libsystem_platform.dylib) + 140  [0x180a5311c]
+                + !   1 linear_a::allocate::h9ab31151a5e5eeac  (in linear-a-rust) + 88  [0x10065f6cc]
+                + !     1 alloc::raw_vec::finish_grow::h94c48652686d11b9  (in linear-a-rust) + 92  [0x100660fb8]
+                + !       1 _xzm_xzone_malloc_small_freelist  (in libsystem_malloc.dylib) + 0  [0x18086c2d0]
+                + 2 linear_a_rust::execute::h9ce16c8d99e45a88  (in linear-a-rust) + 140,160  [0x10065cd58,0x10065cd6c]  main.rs:93
+                2 linear_a_rust::main::h9333794c1093e9ed  (in linear-a-rust) + 2380  [0x10065ddd4]  main.rs:244
+                  1 _xzm_free_outlined  (in libsystem_malloc.dylib) + 828  [0x18086f750]
+                  1 _xzm_xzone_free_freelist  (in libsystem_malloc.dylib) + 668  [0x18086fd74]

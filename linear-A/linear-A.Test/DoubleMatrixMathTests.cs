@@ -244,6 +244,14 @@ namespace linear_A.Test
             Assert.That(matrix.IsTriangular(), Is.False);
         }
 
+        [Test]
+        public void UnscalableRowsRetainAProductWhenTheEliminationFactorUnderflows()
+        {
+            var matrix = Create(new[,] { { 1e308, 1e308, 1e-308 }, { 1e-308, 2e-308, 1e308 }, { 0d, 0d, 1e-308 } });
+            Assert.That(matrix.GetDeterminant() / 1e-308, Is.EqualTo(1d).Within(1e-12));
+            Assert.That(matrix.IsInvertible(), Is.True);
+        }
+
         [TestCase(double.NaN)]
         [TestCase(double.PositiveInfinity)]
         [TestCase(double.NegativeInfinity)]

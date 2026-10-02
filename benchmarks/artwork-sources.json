@@ -1,0 +1,38 @@
+{
+  "creator": "Nikolaj Sokolowski",
+  "site": "https://bookofshapes.com/",
+  "license": "https://bookofshapes.com/license",
+  "exported_on": "2026-10-02",
+  "patterns": [
+    {
+      "id": "report-art-cube",
+      "source": "https://bookofshapes.com/patterns/iso-cube-wireframe",
+      "export_sha256": "c9ed0c2e20d2727bcac76de138a1fe6f53e14cfc955b81caf7c3ad43fd4a0dff"
+    },
+    {
+      "id": "report-art-woven",
+      "source": "https://bookofshapes.com/patterns/woven_grid",
+      "export_sha256": "c3bb122947feaec8f684ed3e383a89deada6f44bf8fbe5f659759f77f23d8b0a"
+    },
+    {
+      "id": "report-art-flow",
+      "source": "https://bookofshapes.com/patterns/flow_lines",
+      "export_sha256": "e3b6286add97b26f5654e8dd55af48d078a8372235e46ee8eea0398ea8e19341"
+    },
+    {
+      "id": "report-art-spiral",
+      "source": "https://bookofshapes.com/patterns/spiral_morph",
+      "export_sha256": "3fe4c470c1574b76e68d1f8fa049765bb6ecca4f8a699ab2816c9179287749cf"
+    },
+    {
+      "id": "report-art-mesh",
+      "source": "https://bookofshapes.com/patterns/interference-mesh",
+      "export_sha256": "0aeb5ae94e6e7f16ff0333009c544d68fdf1fe938bf8af72ad9b5637960835f6"
+    },
+    {
+      "id": "report-art-sphere",
+      "source": "https://bookofshapes.com/patterns/iso-sphere",
+      "export_sha256": "ca1bd7fe3e01d462a412e912be75a20285d5eea28e15d3797aefcbaaa263eaa8"
+    }
+  ]
+}

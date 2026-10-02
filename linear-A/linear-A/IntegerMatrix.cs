@@ -1,660 +1,229 @@
-#region Copyright
+// Copyright John-Michael Cummings 2021.
 
-// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IntegerMatrix.cs" company="John-Michael Cummings">
-//   John-Michael Cummings 2021
-// </copyright>
-// <summary>
-//   A matrix of 32-bit integers.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+using System;
+using System.Collections;
+using System.Collections.Generic;
 
-#endregion
+namespace linear_A;
 
-namespace linear_A
+/// <summary>A mutable, fixed-size matrix of 32-bit integers.</summary>
+/// <remarks>
+/// Available on .NET Standard 2.1 and .NET 10. Prefer Matrix&lt;int&gt; for new .NET 10 code.
+/// Addition, subtraction, scaling, multiplication, and trace use unchecked int arithmetic.
+/// Determinants use exact intermediates; cross products use checked arithmetic.
+/// Instances are not thread-safe.
+/// </remarks>
+public class IntegerMatrix : IEnumerable<int>
 {
+    private readonly LegacyMatrixCore<int, LegacyIntegerArithmetic> _core;
 
-    #region Using Statements
+    /// <summary>Creates the empty 0-by-0 matrix.</summary>
+    public IntegerMatrix() : this(new LegacyMatrixCore<int, LegacyIntegerArithmetic>(0, 0)) { }
 
-    using System;
-    using System.Collections;
-    using System.Numerics;
-    // ReSharper disable NotAccessedField.Local
-    // ReSharper disable UnusedMember.Global
-    // ReSharper disable UnusedParameter.Global
+    /// <summary>Creates a zero or identity square matrix with strictly positive dimensions.</summary>
+    public IntegerMatrix(int squareDimensions, bool initializeAsIdentity)
+        : this(LegacyMatrixCore<int, LegacyIntegerArithmetic>.Square(squareDimensions, initializeAsIdentity)) { }
 
-    #endregion
+    /// <summary>Creates a zero matrix with strictly positive row and column counts.</summary>
+    public IntegerMatrix(int rowCount, int columnCount)
+        : this(LegacyMatrixCore<int, LegacyIntegerArithmetic>.Rectangle(rowCount, columnCount)) { }
+
+    /// <summary>Copies a matrix into independent storage; null creates an empty 0-by-0 matrix.</summary>
+    public IntegerMatrix(IntegerMatrix? matrixToCopy)
+        : this(matrixToCopy?._core.Copy() ?? new LegacyMatrixCore<int, LegacyIntegerArithmetic>(0, 0)) { }
+
+    private IntegerMatrix(LegacyMatrixCore<int, LegacyIntegerArithmetic> core) => _core = core;
+
+    /// <summary>Copies a zero-based array, preserving its shape, including zero-size dimensions.</summary>
+    public static IntegerMatrix FromArray(int[,] values)
+        => new(LegacyMatrixCore<int, LegacyIntegerArithmetic>.FromArray(values));
+
+    /// <summary>Returns an independent two-dimensional copy of the entries.</summary>
+    public int[,] ToArray() => (int[,])_core.Items.Clone();
+
+#if NET10_0_OR_GREATER
+    /// <summary>Copies the entries and shape into a generic matrix.</summary>
+    public Matrix<int> ToMatrix() => new(_core.Items);
+
+    /// <summary>Copies a generic matrix, preserving its shape, including zero-size dimensions.</summary>
+    public static IntegerMatrix FromMatrix(Matrix<int> matrix)
+    {
+        if (matrix == null) throw new ArgumentNullException(nameof(matrix));
+        var core = new LegacyMatrixCore<int, LegacyIntegerArithmetic>(matrix.RowCount, matrix.ColumnCount);
+        for (var row = 0; row < matrix.RowCount; row++)
+            for (var column = 0; column < matrix.ColumnCount; column++)
+                core.Items[row, column] = matrix[row, column];
+        return new IntegerMatrix(core);
+    }
+#endif
+
+    /// <summary>Gets the number of rows.</summary>
+    public int RowCount => _core.RowCount;
+
+    /// <summary>Gets the number of columns.</summary>
+    public int ColumnCount => _core.ColumnCount;
+
+    /// <summary>Gets whether the matrix has a fixed size.</summary>
+    public bool IsFixedSize => true;
+
+    /// <summary>Gets whether the matrix is read-only.</summary>
+    public bool IsReadOnly => false;
+
+    /// <summary>Gets or sets a value using zero-based indices.</summary>
+    public int this[int rowIndex, int columnIndex]
+    {
+        get => _core.Items[rowIndex, columnIndex];
+        set => _core.Items[rowIndex, columnIndex] = value;
+    }
+
+    /// <summary>Adds in place; null or unequal shapes return false without changing this matrix.</summary>
+    public bool TryAddMatrix(IntegerMatrix? matrixToAdd) => _core.TryCombine(matrixToAdd?._core, false);
+
+    /// <summary>Subtracts in place; null or unequal shapes return false without changing this matrix.</summary>
+    public bool TrySubtractMatrix(IntegerMatrix? matrixToSubtract) => _core.TryCombine(matrixToSubtract?._core, true);
+
+    /// <summary>Returns an independent transpose with swapped dimensions.</summary>
+    public IntegerMatrix Transpose() => new(_core.Transpose());
+
+    /// <summary>Multiplies each entry by the scalar in place.</summary>
+    public void Scale(int scalar) => _core.Scale(scalar);
+
+    /// <summary>Returns the matrix product without modifying either operand.</summary>
+    /// <remarks>The left column count must equal the right row count.</remarks>
+    public IntegerMatrix DotProduct(IntegerMatrix multiplicand) => new(_core.DotProduct(multiplicand?._core));
+
+    /// <summary>Replaces this vector with its right-handed cross product on success.</summary>
+    /// <remarks>Null, invalid shapes, nonfinite entries/results, or checked overflow return false without mutation.</remarks>
+    public bool CrossProduct(IntegerMatrix? multiplicand) => _core.CrossProduct(multiplicand?._core);
+
+    /// <summary>Returns an independent right-handed cross product, retaining this vector's shape.</summary>
+    /// <remarks>Each operand must be a finite 3-by-1 or 1-by-3 vector. Invalid input or checked overflow throws.</remarks>
+    public IntegerMatrix GetCrossProduct(IntegerMatrix multiplicand) => new(_core.GetCrossProduct(multiplicand?._core));
+
+    /// <summary>Returns an independent copy of the requested row.</summary>
+    public int[] GetRow(int rowNumber) => _core.GetRow(rowNumber);
+
+    /// <summary>Returns an independent copy of the requested column.</summary>
+    public int[] GetColumn(int columnNumber) => _core.GetColumn(columnNumber);
+
+    /// <summary>Returns whether row and column counts match.</summary>
+    public bool IsSquare() => _core.IsSquare();
+
+    /// <summary>Checks whether a square matrix is upper or lower triangular using exact zero comparisons.</summary>
+    public bool IsTriangular() => IsUpperTriangular() || IsLowerTriangular();
+
+    /// <summary>Checks whether every entry below the diagonal of a square matrix is exactly zero.</summary>
+    public bool IsUpperTriangular() => _core.IsTriangular(true);
+
+    /// <summary>Checks whether every entry above the diagonal of a square matrix is exactly zero.</summary>
+    public bool IsLowerTriangular() => _core.IsTriangular(false);
+
+    /// <summary>Returns the diagonal sum; nonsquare matrices throw NotSquareMatrixException.</summary>
+    public int GetTrace() => _core.GetTrace();
+
+    /// <summary>Returns false and zero for a nonsquare matrix; otherwise returns the diagonal sum.</summary>
+    public bool TryGetTrace(out int trace) => _core.TryGetTrace(out trace);
+
+    /// <summary>Computes real eigenvalues and orthonormal eigenvector columns as doubles.</summary>
+    /// <remarks>
+    /// Requires exact symmetry. Integer matrices can have noninteger eigenvalues
+    /// and eigenvectors. The input is unchanged; this method uses approximate
+    /// double arithmetic with a relative Frobenius-norm tolerance.
+    /// </remarks>
+    public SymmetricEigenDecomposition GetSymmetricEigenDecomposition(double tolerance = 1e-12, int maxSweeps = 50)
+    {
+        if (!IsSquare()) throw new NotSquareMatrixException();
+        var values = new double[RowCount, ColumnCount];
+        for (var row = 0; row < RowCount; row++)
+            for (var column = 0; column < ColumnCount; column++)
+                values[row, column] = _core.Items[row, column];
+        return SymmetricEigenSolver.Solve(values, tolerance, maxSweeps);
+    }
+
+    /// <summary>Computes approximate complex right eigenpairs of a real square matrix.</summary>
+    /// <remarks>Values sort by real part then imaginary part; unit vectors are columns.
+    /// Defective matrices need not have an independent eigenbasis. Nonconvergence
+    /// and nonfinite results throw. The iteration limit must be in 1..100000.</remarks>
+    public EigenDecomposition GetEigenDecomposition(int maxIterations = 1000)
+    {
+        var values = new double[RowCount, ColumnCount];
+        for (var row = 0; row < RowCount; row++)
+            for (var column = 0; column < ColumnCount; column++) values[row, column] = _core.Items[row, column];
+        return GeneralEigenSolver.Solve(values, maxIterations);
+    }
+
+    /// <summary>This legacy integer result cannot represent general eigenvalues.</summary>
+    [Obsolete("Use GetSymmetricEigenDecomposition(), which returns real-valued eigenpairs.")]
+    public int[] GetEigenValues() => throw new NotSupportedException("Integer eigenvalue arrays cannot represent general spectra. Use GetSymmetricEigenDecomposition().");
+
+    /// <summary>This legacy integer result cannot represent normalized eigenvectors.</summary>
+    [Obsolete("Use GetSymmetricEigenDecomposition(), which returns real-valued eigenpairs.")]
+    public int[] GetEigenVectors() => throw new NotSupportedException("Integer arrays cannot represent normalized eigenvectors. Use GetSymmetricEigenDecomposition().");
 
     /// <summary>
-    ///     A matrix of integers with basic matrix operations.
+    ///     The TryGetEigenValues method.
     /// </summary>
-    /// <remarks>
-    ///     Addition, subtraction, scaling, multiplication and trace retain unchecked 32-bit
-    ///     arithmetic. Determinants use exact intermediates and report an out-of-range result.
-    /// </remarks>
-    public class IntegerMatrix
+    /// <param name="eigenValues">
+    ///     An out variable for the eigen values.
+    /// </param>
+    /// <returns>
+    ///     Always false because this legacy signature cannot represent general real spectra.
+    /// </returns>
+    [Obsolete("Use GetSymmetricEigenDecomposition(), which returns real-valued eigenpairs.")]
+    public bool TryGetEigenValues(out int[] eigenValues)
     {
-        /// <summary>
-        ///     The integer byte size. Used for fast array copying.
-        /// </summary>
-        private const int IntegerByteSize = 4;
-
-        /// <summary>
-        ///     The items stored in the matrix.
-        /// </summary>
-        private readonly int[,] _items;
-
-        /// <summary>
-        ///     Gets the row count.
-        /// </summary>
-        public int RowCount { get; }
-
-        /// <summary>
-        ///     Gets the column count.
-        /// </summary>
-        public int ColumnCount { get; }
-
-        /// <summary>
-        ///     The index accessor method.
-        /// <param name="rowIndex">
-        ///     The row index.
-        /// </param>
-        /// <param name="columnIndex">
-        ///     The column index.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="int" />.
-        /// </returns>
-        /// </summary>
-        public int this[int rowIndex, int columnIndex]
-        {
-            get => _items[rowIndex, columnIndex];
-            set => _items[rowIndex, columnIndex] = value;
-        }
-
-        /// <summary>
-        ///     The is fixed size.
-        /// </summary>
-        public bool IsFixedSize => true;
-
-        /// <summary>
-        ///     The is read only.
-        /// </summary>
-        public bool IsReadOnly => false;
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="IntegerMatrix" /> class.
-        /// </summary>
-        /// <param name="squareDimensions">
-        ///     The dimension for both rows and columns for a square matrix.
-        /// </param>
-        /// <param name="initializeAsIdentity">
-        ///     The initialize as identity flag
-        ///     Creates a matrix with default zero values if false
-        ///     Or an identity matrix with dimensions specified by the squareDimensions param
-        /// </param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// </exception>
-        public IntegerMatrix(int squareDimensions, bool initializeAsIdentity)
-        {
-            if (squareDimensions < 1)
-                throw new ArgumentOutOfRangeException(nameof(squareDimensions), "Dimensions must be greater than zero");
-
-            RowCount = squareDimensions;
-            ColumnCount = squareDimensions;
-            _items = new int[RowCount, ColumnCount];
-
-            if (!initializeAsIdentity) return;
-
-            for (var i = 0; i < RowCount; i++)
-                _items[i, i] = 1;
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="IntegerMatrix" /> class.
-        /// </summary>
-        /// <param name="rowCount">
-        ///     The row count.
-        /// </param>
-        /// <param name="columnCount">
-        ///     The column count.
-        /// </param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// </exception>
-        public IntegerMatrix(int rowCount, int columnCount)
-        {
-            if (rowCount < 1 || columnCount < 1)
-            {
-                if (rowCount < 1 && columnCount < 1)
-                    throw new ArgumentOutOfRangeException(
-                        $"{nameof(rowCount)} & {nameof(columnCount)}",
-                        "Dimensions must be greater than zero");
-
-                if (rowCount < 1)
-                    throw new ArgumentOutOfRangeException(nameof(rowCount), "Dimensions must be greater than zero");
-
-                throw new ArgumentOutOfRangeException(nameof(columnCount), "Dimensions must be greater than zero");
-            }
-
-            RowCount = rowCount;
-            ColumnCount = columnCount;
-            _items = new int[RowCount, ColumnCount];
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="IntegerMatrix" /> class as a duplicate of the provided matrix.
-        /// </summary>
-        /// <param name="matrixToCopy">Matrix to copy</param>
-        public IntegerMatrix(IntegerMatrix? matrixToCopy)
-        {
-            if (matrixToCopy == null)
-            {
-                _items = new int[0, 0];
-                return;
-            }
-
-            RowCount = matrixToCopy.RowCount;
-            ColumnCount = matrixToCopy.ColumnCount;
-            _items = (int[,])matrixToCopy._items.Clone();
-        }
-
-        /// <summary>
-        ///     Initializes a default instance of the <see cref="IntegerMatrix" /> class.
-        /// </summary>
-        public IntegerMatrix()
-        {
-            _items = new int[0, 0];
-        }
-
-        /// <summary>
-        ///     The TrySubtract method.
-        ///     Returns false without changing this matrix if the argument is null or the dimensions do not match.
-        ///     Otherwise subtracts the provided matrix from this matrix.
-        /// </summary>
-        /// <param name="matrixToSubtract">
-        ///     The matrix to subtract.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="bool" />.
-        /// </returns>
-        public bool TrySubtractMatrix(IntegerMatrix? matrixToSubtract)
-        {
-            if (matrixToSubtract == null || matrixToSubtract.RowCount != RowCount || matrixToSubtract.ColumnCount != ColumnCount) return false;
-
-            SubtractMatrix(matrixToSubtract);
-
-            return true;
-        }
-
-        /// <summary>
-        ///     The unsafe subtract method.
-        ///     Only works if the matrices are of the correct dimensions.
-        /// </summary>
-        /// <param name="matrixToSubtract"></param>
-        private void SubtractMatrix(IntegerMatrix matrixToSubtract)
-        {
-            for (var i = 0; i < RowCount; i++)
-                for (var j = 0; j < ColumnCount; j++)
-                    _items[i, j] -= matrixToSubtract[i, j];
-        }
-
-        /// <summary>
-        ///     The TryAdd method.
-        ///     Returns false and leaves this matrix unchanged if the argument is null or has different dimensions.
-        ///     Otherwise returns true and adds the values from the provided matrix to this matrix.
-        /// </summary>
-        /// <param name="matrixToAdd">
-        ///     The matrix to add to this matrix.
-        /// </param>
-        /// <returns>
-        ///     The success status, which returns false when matrices are not the same size <see cref="bool" />.
-        /// </returns>
-        public bool TryAddMatrix(IntegerMatrix? matrixToAdd)
-        {
-            if (matrixToAdd == null || matrixToAdd.RowCount != RowCount || matrixToAdd.ColumnCount != ColumnCount) return false;
-
-            AddMatrix(matrixToAdd);
-
-            return true;
-        }
-
-        /// <summary>
-        ///     The unsafe add method. Only works correctly if the matrices are of the same dimensions.
-        /// </summary>
-        /// <param name="matrixToAdd"></param>
-        private void AddMatrix(IntegerMatrix matrixToAdd)
-        {
-            for (var i = 0; i < RowCount; i++)
-                for (var j = 0; j < ColumnCount; j++)
-                    _items[i, j] += matrixToAdd[i, j];
-        }
-
-        /// <summary>
-        ///     The transpose method.
-        /// </summary>
-        /// <returns>
-        ///     A newly instantiated matrix consisting of the transpose of this matrix <see cref="IntegerMatrix" />.
-        /// </returns>
-        public IntegerMatrix Transpose()
-        {
-            if (RowCount == 0) return new IntegerMatrix();
-
-            var result = new IntegerMatrix(ColumnCount, RowCount);
-            for (var i = 0; i < RowCount; i++)
-                for (var j = 0; j < ColumnCount; j++)
-                    result[j, i] = _items[i, j];
-
-            return result;
-        }
-
-        /// <summary>
-        ///     The scale method. Multiplies each element of the matrix by the provided scalar.
-        /// </summary>
-        /// <param name="scalar">
-        ///     The scalar.
-        /// </param>
-        public void Scale(int scalar)
-        {
-            for (var i = 0; i < RowCount; i++)
-                for (var j = 0; j < ColumnCount; j++)
-                    _items[i, j] *= scalar;
-        }
-
-        /// <summary>
-        ///     The dot product method.
-        /// </summary>
-        /// <param name="multiplicand">
-        ///     The multiplicand.
-        /// </param>
-        /// <returns>
-        ///     A newly instantiated matrix <see cref="IntegerMatrix" />. consisting of the dot product
-        /// of this matrix and the provided multiplicand
-        /// </returns>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// </exception>
-        public IntegerMatrix DotProduct(IntegerMatrix multiplicand)
-        {
-            if (multiplicand == null) throw new ArgumentNullException(nameof(multiplicand));
-            if (ColumnCount != multiplicand.RowCount)
-                throw new ArgumentOutOfRangeException(nameof(multiplicand), "The left column count must equal the right row count.");
-
-            if (RowCount == 0) return new IntegerMatrix();
-
-            var result = new IntegerMatrix(RowCount, multiplicand.ColumnCount);
-
-            for (var i = 0; i < RowCount; i++)
-                for (var j = 0; j < multiplicand.ColumnCount; j++)
-                    for (var k = 0; k < ColumnCount; k++)
-                        result._items[i, j] += _items[i, k] * multiplicand._items[k, j];
-
-            return result;
-        }
-
-        /// <summary>
-        ///     The cross product.
-        /// </summary>
-        /// <param name="multiplicand">
-        ///     The multiplicand.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="bool" />.
-        /// </returns>
-        public bool CrossProduct(IntegerMatrix multiplicand) => false;
-
-        /// <summary>
-        ///     The get enumerator method for implementing the IEnumerable interface.
-        /// </summary>
-        /// <returns>
-        ///     The the enumerator for the underlying matrix <see cref="IEnumerator" />.
-        /// </returns>
-        public IEnumerator GetEnumerator() => _items.GetEnumerator();
-
-        /// <summary>
-        ///     The get row method.
-        /// </summary>
-        /// <param name="rowNumber">
-        ///     The row number.
-        /// </param>
-        /// <returns>
-        ///     Returns an array of <see cref="int" /> corresponding to the requested row in the matrix.
-        /// </returns>
-        public int[] GetRow(int rowNumber)
-        {
-            if (rowNumber < 0 || rowNumber >= RowCount) throw new ArgumentOutOfRangeException(nameof(rowNumber));
-
-            var result = new int[ColumnCount];
-            Buffer.BlockCopy(
-                _items,
-                IntegerByteSize * ColumnCount * rowNumber,
-                result,
-                0,
-                IntegerByteSize * ColumnCount);
-            return result;
-        }
-
-        /// <summary>
-        ///     The get column method.
-        /// </summary>
-        /// <param name="columnNumber">
-        ///     The column number.
-        /// </param>
-        /// <returns>
-        ///     Returns an array of <see cref="int" /> corresponding to the requested column in the matrix.
-        /// </returns>
-        public int[] GetColumn(int columnNumber)
-        {
-            if (columnNumber < 0 || columnNumber >= ColumnCount) throw new ArgumentOutOfRangeException(nameof(columnNumber));
-
-            var result = new int[RowCount];
-            for (var i = 0; i < RowCount; i++) result[i] = _items[i, columnNumber];
-
-            return result;
-        }
-
-        /// <summary>
-        ///     The IsSquare property.
-        /// </summary>
-        /// <returns>
-        ///     A <see cref="bool" /> indicating whether the matrix is square.
-        /// </returns>
-        public bool IsSquare() => RowCount == ColumnCount;
-
-        /// <summary>
-        ///     The IsTriangular property.
-        /// </summary>
-        /// <returns>
-        ///     A <see cref="bool" />  indicating whether the matrix is triangular.
-        /// </returns>
-        public bool IsTriangular() => IsSquare() && (IsUpperTriangularUnsafe() || IsLowerTriangularUnsafe());
-
-        /// <summary>
-        ///     The IsUpperTriangular property.
-        /// </summary>
-        /// <returns>
-        ///     A <see cref="bool" />  indicating whether the matrix is upper triangular.
-        /// </returns>
-        public bool IsUpperTriangular() => IsSquare() && IsUpperTriangularUnsafe();
-
-        /// <summary>
-        ///     The IsLowerTriangular property.
-        /// </summary>
-        /// <returns>
-        ///     A <see cref="bool" />  indicating whether the matrix is lower triangular.
-        /// </returns>
-        public bool IsLowerTriangular() => IsSquare() && IsLowerTriangularUnsafe();
-
-        /// <summary>
-        ///     Determines whether this matrix has an inverse over the rational or real numbers.
-        ///     The inverse need not have integer entries.
-        /// </summary>
-        /// <returns>True for a square matrix with a nonzero exact determinant.</returns>
-        public bool IsInvertible()
-        {
-            if (!IsSquare()) return false;
-
-            return !GetDeterminantUnsafe(_items).IsZero;
-        }
-
-        /// <summary>
-        ///     Unsafe method for checking if the matrix is lower triangular.
-        /// </summary>
-        /// <returns>
-        ///     A <see cref="bool" />  indicating whether the matrix is lower triangular.
-        /// </returns>
-        private bool IsLowerTriangularUnsafe()
-        {
-            for (var i = 0; i < RowCount; i++)
-                for (var j = i + 1; j < ColumnCount; j++)
-                    if (_items[i, j] != 0)
-                        return false;
-
-            return true;
-        }
-
-        /// <summary>
-        ///     Unsafe method for checking if the matrix is upper triangular.
-        /// </summary>
-        /// <returns>
-        ///     A <see cref="bool" />  indicating whether the matrix is upper triangular.
-        /// </returns>
-        private bool IsUpperTriangularUnsafe()
-        {
-            for (var i = 0; i < RowCount; i++)
-                for (var j = i + 1; j < ColumnCount; j++)
-                    if (_items[j, i] != 0)
-                        return false;
-
-            return true;
-        }
-
-        /// <summary>
-        ///     The GetTrace method.
-        /// </summary>
-        /// <returns>
-        ///     An <see cref="int" /> corresponding to the matrix's trace.
-        /// </returns>
-        public int GetTrace()
-        {
-            if (!IsSquare()) throw new NotSquareMatrixException();
-
-            return GetTraceUnsafe();
-        }
-
-        /// <summary>
-        ///     Unsafe GetTrace method.
-        /// </summary>
-        /// <returns>
-        ///     An <see cref="int" /> corresponding to the matrix's trace.
-        /// </returns>
-        private int GetTraceUnsafe()
-        {
-            var result = 0;
-            for (var i = 0; i < RowCount; i++)
-                result += _items[i, i];
-            return result;
-        }
-
-        /// <summary>
-        ///     The TryGet trace method.
-        /// </summary>
-        /// <param name="trace">
-        ///     The out variable for returning trace.
-        /// </param>
-        /// <returns>
-        ///     Flag <see cref="bool" /> indicating whether the trace can be calculated.
-        /// </returns>
-        public bool TryGetTrace(out int trace)
-        {
-            trace = 0;
-
-            if (!IsSquare()) return false;
-
-            trace = GetTraceUnsafe();
-
-            return true;
-        }
-
-        /// <summary>
-        ///     The get eigen values method.
-        /// </summary>
-        /// <returns>
-        ///     An array of <see cref="int" /> corresponding to the matrix eigenvalues.
-        /// </returns>
-        public int[] GetEigenValues()
-        {
-            if (!IsSquare()) throw new NotSquareMatrixException();
-
-            return GetEigenValuesUnsafe();
-        }
-
-        /// <summary>
-        ///     The unsafe get eigen values method.
-        /// </summary>
-        /// <returns>
-        ///     An array of <see cref="int" /> corresponding to the matrix eigenvalues.
-        /// </returns>
-        private static int[] GetEigenValuesUnsafe() => throw new NotImplementedException();
-
-        /// <summary>
-        ///     The get eigen vectors method.
-        /// </summary>
-        /// <returns>
-        ///     An array of <see cref="int" /> corresponding to the matrix eigen vectors.
-        /// </returns>
-        public int[] GetEigenVectors() => throw new NotImplementedException();
-
-        /// <summary>
-        ///     The TryGetEigenValues method.
-        /// </summary>
-        /// <param name="eigenValues">
-        ///     An out variable for the eigen values.
-        /// </param>
-        /// <returns>
-        ///     Flag indicating whether the values were retrieved <see cref="bool" />.
-        /// </returns>
-        public bool TryGetEigenValues(out int[] eigenValues)
-        {
-            eigenValues = new int[0];
-
-            if (!IsSquare()) return false;
-
-            eigenValues = GetEigenValuesUnsafe();
-
-            return true;
-        }
-
-        /// <summary>
-        ///     The TryGetDeterminant method.
-        /// </summary>
-        /// <param name="determinant">
-        ///     An out variable for the determinant.
-        /// </param>
-        /// <returns>
-        ///     True if this matrix is square and its exact determinant fits in an <see cref="int" />.
-        ///     Otherwise returns false and sets <paramref name="determinant" /> to zero.
-        /// </returns>
-        public bool TryGetDeterminant(out int determinant)
-        {
-            determinant = 0;
-
-            if (!IsSquare()) return false;
-
-            var exactDeterminant = GetDeterminantUnsafe(_items);
-            if (exactDeterminant < int.MinValue || exactDeterminant > int.MaxValue) return false;
-
-            determinant = (int)exactDeterminant;
-            return true;
-        }
-
-        /// <summary>
-        ///     The GetDeterminant method.
-        /// </summary>
-        /// <returns>
-        ///     The exact determinant, with the determinant of the empty matrix defined as one.
-        /// </returns>
-        /// <exception cref="OverflowException">The determinant is outside the range of <see cref="int" />.</exception>
-        public int GetDeterminant()
-        {
-            if (!IsSquare()) throw new NotSquareMatrixException();
-
-            return (int)GetDeterminantUnsafe(_items);
-        }
-
-        /// <summary>
-        ///     Computes an exact determinant using fraction-free Bareiss elimination.
-        ///     Arbitrary-precision intermediates prevent overflow even when large terms cancel.
-        /// </summary>
-        private static BigInteger GetDeterminantUnsafe(int[,] matrix)
-        {
-            var size = matrix.GetLength(0);
-            if (size == 0) return BigInteger.One;
-            if (size == 1) return matrix[0, 0];
-
-            var work = new BigInteger[size, size];
-            for (var row = 0; row < size; row++)
-                for (var column = 0; column < size; column++)
-                    work[row, column] = matrix[row, column];
-
-            var previousPivot = BigInteger.One;
-            var sign = 1;
-            for (var pivotColumn = 0; pivotColumn < size - 1; pivotColumn++)
-            {
-                var pivotRow = pivotColumn;
-                while (pivotRow < size && work[pivotRow, pivotColumn].IsZero) pivotRow++;
-                if (pivotRow == size) return BigInteger.Zero;
-
-                if (pivotRow != pivotColumn)
-                {
-                    for (var column = pivotColumn; column < size; column++)
-                    {
-                        var temporary = work[pivotColumn, column];
-                        work[pivotColumn, column] = work[pivotRow, column];
-                        work[pivotRow, column] = temporary;
-                    }
-                    sign = -sign;
-                }
-
-                var pivot = work[pivotColumn, pivotColumn];
-                for (var row = pivotColumn + 1; row < size; row++)
-                {
-                    for (var column = pivotColumn + 1; column < size; column++)
-                        work[row, column] =
-                            (pivot * work[row, column] - work[row, pivotColumn] * work[pivotColumn, column]) /
-                            previousPivot;
-                    work[row, pivotColumn] = BigInteger.Zero;
-                }
-                previousPivot = pivot;
-            }
-
-            return sign * work[size - 1, size - 1];
-        }
-
-        /// <summary>
-        ///     Overloads * operator for matrix class
-        /// </summary>
-        /// <param name="a">The left side matrix</param>
-        /// <param name="b">The right matrix</param>
-        /// <returns>The dot product</returns>
-        public static IntegerMatrix operator *(IntegerMatrix a, IntegerMatrix b)
-        {
-            if (a == null) throw new ArgumentNullException(nameof(a));
-            if (b == null) throw new ArgumentNullException(nameof(b));
-
-            return a.DotProduct(b);
-        }
-
-        /// <summary>
-        ///     Overloads + operator for addition
-        /// </summary>
-        /// <param name="a">The left side matrix</param>
-        /// <param name="b">The right side matrix</param>
-        /// <returns></returns>
-        public static IntegerMatrix operator +(IntegerMatrix a, IntegerMatrix b)
-        {
-            if (a == null) throw new ArgumentNullException(nameof(a));
-            if (b == null) throw new ArgumentNullException(nameof(b));
-
-            var result = new IntegerMatrix(a);
-            if (result.TryAddMatrix(b)) return result;
-
-            throw new ArgumentOutOfRangeException();
-        }
-
-        /// <summary>
-        ///     Overloads - operator for subtraction
-        /// </summary>
-        /// <param name="a">The left side matrix</param>
-        /// <param name="b">The right side matrix</param>
-        /// <returns></returns>
-        public static IntegerMatrix operator -(IntegerMatrix a, IntegerMatrix b)
-        {
-            if (a == null) throw new ArgumentNullException(nameof(a));
-            if (b == null) throw new ArgumentNullException(nameof(b));
-
-            var result = new IntegerMatrix(a);
-            if (result.TrySubtractMatrix(b)) return result;
-
-            throw new ArgumentOutOfRangeException();
-        }
+        eigenValues = Array.Empty<int>();
+        return false;
     }
+
+    /// <summary>Tests for a nonzero exact determinant over the rational or real numbers.</summary>
+    /// <remarks>The inverse need not contain integers. A nonsquare matrix returns false.</remarks>
+    public bool IsInvertible() => IsSquare() && !DeterminantKernels.Bareiss(_core.Items).IsZero;
+
+    /// <summary>Returns the exact determinant using Bareiss elimination; the empty determinant is one.</summary>
+    /// <exception cref="OverflowException">The final determinant is outside the int range.</exception>
+    public int GetDeterminant()
+    {
+        if (!IsSquare()) throw new NotSquareMatrixException();
+        return (int)DeterminantKernels.Bareiss(_core.Items);
+    }
+
+    /// <summary>Returns false and zero for a nonsquare matrix or a determinant outside the int range.</summary>
+    public bool TryGetDeterminant(out int determinant)
+    {
+        determinant = 0;
+        if (!IsSquare()) return false;
+        var exact = DeterminantKernels.Bareiss(_core.Items);
+        if (exact < int.MinValue || exact > int.MaxValue) return false;
+        determinant = (int)exact;
+        return true;
+    }
+
+    /// <summary>Returns the product without modifying either operand.</summary>
+    public static IntegerMatrix operator *(IntegerMatrix a, IntegerMatrix b)
+    {
+        if (a == null) throw new ArgumentNullException(nameof(a));
+        if (b == null) throw new ArgumentNullException(nameof(b));
+        return a.DotProduct(b);
+    }
+
+    /// <summary>Returns the sum without modifying either operand.</summary>
+    public static IntegerMatrix operator +(IntegerMatrix a, IntegerMatrix b) => Combine(a, b, false);
+
+    /// <summary>Returns the difference without modifying either operand.</summary>
+    public static IntegerMatrix operator -(IntegerMatrix a, IntegerMatrix b) => Combine(a, b, true);
+
+    private static IntegerMatrix Combine(IntegerMatrix a, IntegerMatrix b, bool subtract)
+    {
+        if (a == null) throw new ArgumentNullException(nameof(a));
+        if (b == null) throw new ArgumentNullException(nameof(b));
+        var result = a._core.Copy();
+        if (!result.TryCombine(b._core, subtract)) throw new ArgumentOutOfRangeException();
+        return new IntegerMatrix(result);
+    }
+
+    /// <summary>Enumerates entries in row-major order, retaining the original public return type.</summary>
+    public IEnumerator GetEnumerator() => _core.Items.GetEnumerator();
+
+    IEnumerator<int> IEnumerable<int>.GetEnumerator() => _core.GetTypedEnumerator();
 }

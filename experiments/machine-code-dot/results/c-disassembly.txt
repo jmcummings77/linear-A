@@ -1,0 +1,54 @@
+
+experiments/machine-code-dot/.build/c.o:	file format mach-o arm64
+
+Disassembly of section __TEXT,__text:
+
+0000000000000000 <ltmp0>:
+       0: b40000c2     	cbz	x2, 0x18 <ltmp0+0x18>
+       4: f100205f     	cmp	x2, #0x8
+       8: 540000c2     	b.hs	0x20 <ltmp0+0x20>
+       c: d2800008     	mov	x8, #0x0                ; =0
+      10: 6f00e400     	movi.2d	v0, #0000000000000000
+      14: 14000020     	b	0x94 <ltmp0+0x94>
+      18: 6f00e400     	movi.2d	v0, #0000000000000000
+      1c: d65f03c0     	ret
+      20: 927df048     	and	x8, x2, #0xfffffffffffffff8
+      24: 91008009     	add	x9, x0, #0x20
+      28: 9100802a     	add	x10, x1, #0x20
+      2c: 6f00e400     	movi.2d	v0, #0000000000000000
+      30: aa0803eb     	mov	x11, x8
+      34: ad7f0921     	ldp	q1, q2, [x9, #-0x20]
+      38: acc21123     	ldp	q3, q4, [x9], #0x40
+      3c: ad7f1945     	ldp	q5, q6, [x10, #-0x20]
+      40: acc24147     	ldp	q7, q16, [x10], #0x40
+      44: 6e65dc21     	fmul.2d	v1, v1, v5
+      48: 5e180425     	mov	d5, v1[1]
+      4c: 6e66dc42     	fmul.2d	v2, v2, v6
+      50: 5e180446     	mov	d6, v2[1]
+      54: 6e67dc63     	fmul.2d	v3, v3, v7
+      58: 5e180467     	mov	d7, v3[1]
+      5c: 6e70dc84     	fmul.2d	v4, v4, v16
+      60: 5e180490     	mov	d16, v4[1]
+      64: 1e612800     	fadd	d0, d0, d1
+      68: 1e652800     	fadd	d0, d0, d5
+      6c: 1e622800     	fadd	d0, d0, d2
+      70: 1e662800     	fadd	d0, d0, d6
+      74: 1e632800     	fadd	d0, d0, d3
+      78: 1e672800     	fadd	d0, d0, d7
+      7c: 1e642800     	fadd	d0, d0, d4
+      80: 1e702800     	fadd	d0, d0, d16
+      84: f100216b     	subs	x11, x11, #0x8
+      88: 54fffd61     	b.ne	0x34 <ltmp0+0x34>
+      8c: eb08005f     	cmp	x2, x8
+      90: 54000160     	b.eq	0xbc <ltmp0+0xbc>
+      94: cb080049     	sub	x9, x2, x8
+      98: d37df10a     	lsl	x10, x8, #3
+      9c: 8b0a0028     	add	x8, x1, x10
+      a0: 8b0a000a     	add	x10, x0, x10
+      a4: fc408541     	ldr	d1, [x10], #0x8
+      a8: fc408502     	ldr	d2, [x8], #0x8
+      ac: 1e620821     	fmul	d1, d1, d2
+      b0: 1e612800     	fadd	d0, d0, d1
+      b4: f1000529     	subs	x9, x9, #0x1
+      b8: 54ffff61     	b.ne	0xa4 <ltmp0+0xa4>
+      bc: d65f03c0     	ret

@@ -1,0 +1,18 @@
+[package]
+name = "linear-a-rust"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.69"
+description = "A small, dependency-free row-major matrix library"
+license = "MIT"
+
+[lib]
+name = "linear_a"
+path = "src/lib.rs"
+
+[[bin]]
+name = "linear-a-rust"
+path = "src/main.rs"
+
+[profile.release]
+debug = 1

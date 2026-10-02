@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "FSharp.Core": {
+        "type": "Direct",
+        "requested": "[10.1.401, )",
+        "resolved": "10.1.401",
+        "contentHash": "Cy8Hc/RlNIXGmpgjq/IAZLIybsS06YbXLlCj/qT+RhPeU8Nm+vg5Kj1l2Y3RE4teQXLOX8IgSoXxVS5XvDYIRA=="
+      },
+      "lineara.fsharp": {
+        "type": "Project",
+        "dependencies": {
+          "FSharp.Core": "[10.1.401, )"
+        }
+      }
+    }
+  }
+}

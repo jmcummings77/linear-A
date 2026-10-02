@@ -1,0 +1,92 @@
+# Python float64 matrix
+
+Python 3.9 or newer; standard library only. `Matrix` owns a flat row-major list of
+Python floats (IEEE float64 on supported CPython platforms). Indices are zero-based.
+Construction, copies, rows, columns, and exported values have independent storage.
+Arithmetic returns new matrices. Invalid dimensions, shapes, and nonfinite input
+or results raise exceptions.
+
+`matrix.determinant()` defaults to `"auto"`: bounded, exactly representable small
+matrices and triangular matrices have shortcuts; other inputs use partial-pivot
+LU. Pass `"lu"` to select LU explicitly, or `"cholesky"` for an exactly symmetric
+positive-definite matrix. Cholesky rejects nonsymmetric inputs and nonpositive
+computed pivots. All methods preserve the input and return one for an empty
+matrix. LU uses power-of-two row scaling where entries round-trip unchanged;
+determinant products accumulate exponents separately. Rounding and conditioning
+still matter: final underflow may return zero, and final overflow raises an
+exception. A computed zero is not an exact singularity test.
+
+`matrix.eigen_symmetric(tolerance=1e-12, max_sweeps=50)` returns a
+`SymmetricEigenDecomposition` named tuple: `values` is an ascending list of real
+eigenvalues and column `j` of `vectors` is the corresponding unit eigenvector.
+It accepts exactly symmetric square matrices, including empty matrices, and
+preserves the input. Cyclic Jacobi rotations stop when the off-diagonal
+Frobenius norm is within `tolerance` times the original norm; nonconvergence
+raises `ValueError`. Repeated eigenvalues can have different valid orthonormal
+bases. Accuracy is relative to the matrix norm, so a tiny eigenvalue in a
+mixed-scale matrix may have large relative error. Use `eigen_general()` below for nonsymmetric inputs and complex eigenpairs.
+
+`a.cross(b)` computes the right-handed 3D vector cross product. Each operand may
+be a `3 × 1` column or `1 × 3` row; the result retains the left operand's shape.
+It preserves both inputs and rejects other shapes or a nonfinite result.
+
+`Matrix.rotation2d(radians)`, `rotation_x`, `rotation_y`, and `rotation_z` construct
+active rotations acting on column vectors. Positive 3D angles follow the
+right-hand rule; positive 2D angles are counterclockwise. All angles are radians.
+`Matrix.rotation_axis_angle(axis, radians)` accepts a nonzero `3 × 1` or `1 × 3`
+axis and normalizes it safely even at very large or subnormal magnitudes.
+All rotation constructors return new matrices; a zero axis or nonfinite angle
+raises `ValueError`.
+
+From the repository root:
+
+```sh
+python3 -m unittest discover -s ports/python -p 'test_*.py'
+printf '1 2 3 4' | python3 ports/python/runner.py check determinant 2 2
+python3 ports/python/runner.py bench multiply 32 10 42
+python3 ports/python/runner.py bench determinant_cholesky 16 10 42
+```
+
+Import `Matrix` from `matrix.py`; an optional local installation is available via
+`python3 -m pip install ./ports/python`. Its methods are `identity`, `copy`, `row`,
+`column`, `add`, `subtract`, `scale`, `transpose`, `multiply`, `trace`,
+`determinant`, `eigen_symmetric`, and `triangular`; indexing uses `matrix[row, column]`.
+The runner follows [the shared protocol](../../benchmarks/PROTOCOL.md), uses
+`perf_counter_ns`, and includes result allocation, consumption, and immediate
+reference-count cleanup in its timed loop. Garbage-collector work, if triggered,
+is also included. No NumPy or BLAS is used.
+
+The runner also accepts `determinant_lu`, `determinant_cholesky`, and
+`determinant_spd_lu`. The two SPD benchmark operations use the same symmetrized,
+strictly diagonally dominant input so Cholesky and LU can be compared fairly.
+The ordinary determinant and explicit LU use the original general input.
+`determinant_cofactor` is unsupported by this port.
+`eigen_symmetric` checks return both eigenvalues and eigenvectors; its benchmark
+uses a shared symmetric tridiagonal matrix with an analytic spectrum and
+consumes the weighted spectrum and squared norm of every eigenvector entry.
+
+The runner also accepts `check cross AR AC BR BC`, `check rotation2d 0 0 ANGLE`
+(empty input), and `check rotation3d AR AC ANGLE` (axis input). Their benchmark
+sizes are fixed at 3, 2, and 3 respectively. Rotation benchmarks use angle `0.5`;
+3D rotation uses axis `[1, 2, 3]`. Cross inputs use the first three seeded entries,
+with the third entry of the right operand negated to avoid a trivial checksum.
+
+## General real eigenpairs
+
+`matrix.eigen_general(max_iterations=1000)` accepts any finite real square matrix, including
+nonsymmetric, singular and defective inputs. It returns separate real/imaginary
+value arrays and real/imaginary matrix objects containing unit right eigenvector
+columns. Values are sorted by real part then imaginary part. The result fields are
+`values_real`, `values_imag`, `vectors_real`, `vectors_imag`.
+
+The solver uses power-of-two similarity balancing and real Hessenberg/double-shift
+QR adapted from public-domain [NIST/MathWorks JAMA](https://math.nist.gov/javanumerics/jama/).
+The iteration limit bounds steps between deflations (1–100000). Input storage is
+unchanged and outputs are independent. Invalid inputs, nonconvergence and
+nonfinite outputs fail explicitly. General columns need not be orthogonal or
+independent: defective matrices do not have a complete eigenbasis. Ill-conditioned
+roots can be sensitive despite small residuals; complex matrix inputs are not
+part of this API. The existing symmetric solver retains its stricter contract.
+
+The runner's `eigen_general` operation supports both correctness checks and the
+shared block-triangular benchmark described in `benchmarks/PROTOCOL.md`.

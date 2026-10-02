@@ -1,0 +1,27 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1650 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1650 start  (in dyld) + 6992  [0x18068be00]
+        1650 main  (in runner) + 804  [0x1029c24a8]  runner.c:139
+          1646 one_iteration  (in runner) + 48  [0x1029c2c40]  runner.c:103
+          + 1645 execute  (in runner) + 268  [0x1029c2bac]  runner.c:57
+          + ! 1582 m_multiply  (in runner) + 300  [0x1029c140c]  matrix.c:174
+          + ! : 1500 m_multiply  (in runner) + 872,876,...  [0x1029c1648,0x1029c164c,...]  matrix.c:182
+          + ! : 57 m_multiply  (in runner) + 900  [0x1029c1664]  matrix.c:183
+          + ! : 11 m_multiply  (in runner) + 856  [0x1029c1638]  matrix.c:0
+          + ! : 9 _platform_memset  (in libsystem_platform.dylib) + 140  [0x180a5311c]
+          + ! : 5 m_multiply  (in runner) + 920,936  [0x1029c1678,0x1029c1688]  matrix.c:179
+          + ! 49 execute  (in runner) + 268  [0x1029c2bac]  runner.c:57
+          + ! : 26 m_multiply  (in runner) + 160,144  [0x1029c1380,0x1029c1370]  matrix.c:168
+          + ! : 23 m_multiply  (in runner) + 216,232,...  [0x1029c13b8,0x1029c13c8,...]  matrix.c:170
+          + ! 14 m_multiply  (in runner) + 1160  [0x1029c1768]  matrix.c:186
+          + !   14 finish  (in runner) + 76,92  [0x1029c0f20,0x1029c0f30]  matrix.c:102
+          + 1 execute  (in runner) + 100  [0x1029c2b04]  runner.c:57
+          +   1 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 0  [0x180a54730]
+          4 one_iteration  (in runner) + 152  [0x1029c2ca8]  runner.c:108
+            4 m_free  (in runner) + 32  [0x1029c05a4]  matrix.c:56
+              2 _xzm_free_outlined  (in libsystem_malloc.dylib) + 64,92  [0x18086f454,0x18086f470]
+              1 _xzm_free  (in libsystem_malloc.dylib) + 1580  [0x180867698]
+              1 _xzm_xzone_free_freelist  (in libsystem_malloc.dylib) + 760  [0x18086fdd0]
+                1 mach_absolute_time  (in libsystem_kernel.dylib) + 108  [0x180a0610c]

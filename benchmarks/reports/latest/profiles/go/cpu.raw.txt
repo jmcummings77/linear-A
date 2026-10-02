@@ -1,0 +1,134 @@
+PeriodType: cpu nanoseconds
+Period: 10000000
+Time: 2026-10-02 02:41:59.480309 -0700 PDT
+Duration: 4.65
+Samples:
+samples/count cpu/nanoseconds
+          2   20000000: 1 2 3 4 5 6 7 
+          1   10000000: 1 2 8 4 5 6 7 
+          7   70000000: 9 10 11 12 13 2 8 4 5 6 7 
+         15  150000000: 14 2 8 4 5 6 7 
+        101 1010000000: 15 2 8 4 5 6 7 
+         18  180000000: 16 2 8 4 5 6 7 
+         29  290000000: 17 2 8 4 5 6 7 
+         33  330000000: 18 2 8 4 5 6 7 
+         17  170000000: 19 2 8 4 5 6 7 
+         11  110000000: 20 2 8 4 5 6 7 
+         29  290000000: 21 2 8 4 5 6 7 
+         14  140000000: 22 2 8 4 5 6 7 
+         20  200000000: 23 2 8 4 5 6 7 
+          1   10000000: 24 25 26 27 28 29 30 31 32 
+          1   10000000: 33 34 2 8 4 5 6 7 
+          1   10000000: 35 2 8 4 5 6 7 
+          2   20000000: 36 2 8 4 5 6 7 
+         20  200000000: 34 2 8 4 5 6 7 
+          2   20000000: 33 15 2 8 4 5 6 7 
+          5   50000000: 33 14 2 8 4 5 6 7 
+          1   10000000: 33 23 2 8 4 5 6 7 
+          3   30000000: 37 38 39 40 41 
+          1   10000000: 33 42 2 8 4 5 6 7 
+          1   10000000: 42 2 8 4 5 6 7 
+          1   10000000: 43 2 8 4 5 6 7 
+          1   10000000: 44 45 41 46 47 48 49 50 51 11 12 13 2 8 4 5 6 7 
+          1   10000000: 52 2 8 4 5 6 7 
+          2   20000000: 53 2 8 4 5 6 7 
+          1   10000000: 54 55 56 57 58 4 5 6 7 
+          1   10000000: 59 2 8 4 5 6 7 
+          3   30000000: 33 21 2 8 4 5 6 7 
+          1   10000000: 60 2 8 4 5 6 7 
+          1   10000000: 24 25 26 61 62 63 31 32 
+          2   20000000: 64 2 8 4 5 6 7 
+          1   10000000: 65 2 8 4 5 6 7 
+          1   10000000: 66 67 68 69 11 12 13 2 8 4 5 6 7 
+          1   10000000: 70 71 72 73 74 75 41 
+          1   10000000: 76 2 8 4 5 6 7 
+Locations
+     1: 0x104e3a104 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:205:0 s=189
+     2: 0x104e3abc3 M=1 main.execute ports/go/cmd/runner/main.go:51:0 s=38
+     3: 0x104e3bfcf M=1 main.measure ports/go/cmd/runner/main.go:256:0 s=254
+     4: 0x104e3c5e3 M=1 main.bench ports/go/cmd/runner/main.go:341:0 s=283
+     5: 0x104e3c7f3 M=1 main.run ports/go/cmd/runner/main.go:362:0 s=354
+     6: 0x104e3c913 M=1 main.main ports/go/cmd/runner/main.go:368:0 s=367
+     7: 0x104da1003 M=1 runtime.main src/runtime/proc.go:283:0 s=147
+     8: 0x104e3c0af M=1 main.measure ports/go/cmd/runner/main.go:267:0 s=254
+     9: 0x104dd8920 M=1 runtime.memclrNoHeapPointers src/runtime/memclr_arm64.s:179:0 s=11
+    10: 0x104d7a52f M=1 runtime.mallocgcSmallNoscan src/runtime/malloc.go:1287:0 s=1254
+    11: 0x104dcf797 M=1 runtime.mallocgc src/runtime/malloc.go:1055:0 s=1010
+    12: 0x104dd292f M=1 runtime.makeslice src/runtime/slice.go:116:0 s=101
+    13: 0x104e39f9f M=1 github.com/jmcummings77/linear-A/ports/go.Zeros ports/go/matrix.go:55:0 s=50
+             github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:193:0 s=189
+    14: 0x104e3a13c M=1 math.IsInf src/math/bits.go:51:0 s=46
+             github.com/jmcummings77/linear-A/ports/go.isFinite ports/go/matrix.go:28:0 s=27
+             github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:206:0 s=189
+    15: 0x104e3a12c M=1 math.IsInf src/math/bits.go:51:0 s=46
+             github.com/jmcummings77/linear-A/ports/go.isFinite ports/go/matrix.go:28:0 s=27
+             github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:206:0 s=189
+    16: 0x104e3a0c8 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:200:0 s=189
+    17: 0x104e3a140 M=1 math.IsInf src/math/bits.go:51:0 s=46
+             github.com/jmcummings77/linear-A/ports/go.isFinite ports/go/matrix.go:28:0 s=27
+             github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:206:0 s=189
+    18: 0x104e3a130 M=1 math.IsInf src/math/bits.go:51:0 s=46
+             github.com/jmcummings77/linear-A/ports/go.isFinite ports/go/matrix.go:28:0 s=27
+             github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:206:0 s=189
+    19: 0x104e3a0d4 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:204:0 s=189
+    20: 0x104e3a0c4 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:200:0 s=189
+    21: 0x104e3a110 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:206:0 s=189
+    22: 0x104e3a0ec M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:204:0 s=189
+    23: 0x104e3a0f0 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:205:0 s=189
+    24: 0x104dbe39f M=1 runtime.pthread_cond_signal src/runtime/sys_darwin.go:568:0 s=567
+    25: 0x104d9bb17 M=1 runtime.semawakeup src/runtime/os_darwin.go:85:0 s=78
+    26: 0x104d78553 M=1 runtime.notewakeup src/runtime/lock_sema.go:42:0 s=23
+    27: 0x104da639b M=1 runtime.startm src/runtime/proc.go:3020:0 s=2934
+    28: 0x104dd1143 M=1 runtime.wakep src/runtime/proc.go:3142:0 s=3111
+    29: 0x104da8f73 M=1 runtime.resetspinning src/runtime/proc.go:3882:0 s=3869
+    30: 0x104da9447 M=1 runtime.schedule src/runtime/proc.go:4035:0 s=3988
+    31: 0x104da98cf M=1 runtime.park_m src/runtime/proc.go:4141:0 s=4090
+    32: 0x104dd5c93 M=1 runtime.mcall src/runtime/asm_arm64.s:193:0 s=167
+    33: 0x104dd8bb0 M=1 runtime.asyncPreempt src/runtime/preempt_arm64.s:7:0 s=6
+    34: 0x104e3a120 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:206:0 s=189
+    35: 0x104e3a0d0 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:200:0 s=189
+    36: 0x104e3a148 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:206:0 s=189
+    37: 0x104dbe1ef M=1 runtime.kevent src/runtime/sys_darwin.go:498:0 s=497
+    38: 0x104d9b467 M=1 runtime.netpoll src/runtime/netpoll_kqueue.go:110:0 s=90
+    39: 0x104da40bb M=1 runtime.startTheWorldWithSema src/runtime/proc.go:1681:0 s=1676
+    40: 0x104d822ff M=1 runtime.gcStart.func4 src/runtime/mgc.go:803:0 s=802
+    41: 0x104dd5d2b M=1 runtime.systemstack src/runtime/asm_arm64.s:244:0 s=207
+    42: 0x104e3a0e4 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:204:0 s=189
+    43: 0x104e3a0dc M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:201:0 s=189
+    44: 0x104d914fc M=1 runtime.(*mheap).allocSpan src/runtime/mheap.go:1192:0 s=1177
+    45: 0x104d9112b M=1 runtime.(*mheap).alloc.func1 src/runtime/mheap.go:970:0 s=964
+    46: 0x104d91093 M=1 runtime.(*mheap).alloc src/runtime/mheap.go:964:0 s=959
+    47: 0x104d7e4fb M=1 runtime.(*mcentral).grow src/runtime/mcentral.go:254:0 s=250
+    48: 0x104d7e36b M=1 runtime.(*mcentral).cacheSpan src/runtime/mcentral.go:170:0 s=81
+    49: 0x104d7d82b M=1 runtime.(*mcache).refill src/runtime/mcache.go:183:0 s=148
+    50: 0x104d79ee3 M=1 runtime.(*mcache).nextFree src/runtime/malloc.go:964:0 s=954
+    51: 0x104d7a4eb M=1 runtime.mallocgcSmallNoscan src/runtime/malloc.go:1283:0 s=1254
+    52: 0x104e3a0d8 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:204:0 s=189
+    53: 0x104e3a0cc M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:200:0 s=189
+    54: 0x104da32b8 M=1 runtime.casgstatus src/runtime/proc.go:1285:0 s=1193
+    55: 0x104da999f M=1 runtime.goschedImpl src/runtime/proc.go:4161:0 s=4144
+    56: 0x104db9a0b M=1 runtime.gopreempt_m src/runtime/proc.go:4192:0 s=4191
+             runtime.newstack src/runtime/stack.go:1074:0 s=966
+    57: 0x104e3afbb M=1 main.outcome.checksum ports/go/cmd/runner/main.go:67:0 s=67
+    58: 0x104e3c0ef M=1 main.measure ports/go/cmd/runner/main.go:271:0 s=254
+    59: 0x104e3a098 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:198:0 s=189
+    60: 0x104e3a138 M=1 math.IsInf src/math/bits.go:51:0 s=46
+             github.com/jmcummings77/linear-A/ports/go.isFinite ports/go/matrix.go:28:0 s=27
+             github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:206:0 s=189
+    61: 0x104da4f23 M=1 runtime.runSafePointFn src/runtime/proc.go:2157:0 s=2145
+    62: 0x104da6f6b M=1 runtime.findRunnable src/runtime/proc.go:3285:0 s=3271
+    63: 0x104da93d3 M=1 runtime.schedule src/runtime/proc.go:4017:0 s=3988
+    64: 0x104e3a0e8 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:204:0 s=189
+    65: 0x104e3a0fc M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:205:0 s=189
+    66: 0x104d8a6a8 M=1 runtime.(*gcControllerState).heapGoalInternal src/runtime/mgcpacer.go:962:0 s=920
+    67: 0x104d8a7cf M=1 runtime.(*gcControllerState).trigger src/runtime/mgcpacer.go:1109:0 s=1108
+    68: 0x104d81b6f M=1 runtime.gcTrigger.test src/runtime/mgc.go:608:0 s=602
+    69: 0x104d7a603 M=1 runtime.mallocgcSmallNoscan src/runtime/malloc.go:1333:0 s=1254
+    70: 0x104dbe35f M=1 runtime.pthread_cond_timedwait_relative_np src/runtime/sys_darwin.go:557:0 s=556
+    71: 0x104d9ba3b M=1 runtime.semasleep src/runtime/os_darwin.go:66:0 s=40
+    72: 0x104d78817 M=1 runtime.notetsleep_internal src/runtime/lock_sema.go:113:0 s=75
+    73: 0x104d789db M=1 runtime.notetsleep src/runtime/lock_sema.go:164:0 s=158
+    74: 0x104da4d3f M=1 runtime.forEachPInternal src/runtime/proc.go:2112:0 s=2046
+    75: 0x104d8299f M=1 runtime.gcMarkDone.forEachP.func5 src/runtime/proc.go:2032:0 s=2021
+    76: 0x104e3a0f4 M=1 github.com/jmcummings77/linear-A/ports/go.(*Matrix).Multiply ports/go/matrix.go:204:0 s=189
+Mappings

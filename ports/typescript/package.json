@@ -1,0 +1,17 @@
+{
+  "name": "linear-a-typescript",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./dist/matrix.js",
+  "types": "./dist/matrix.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/*.test.js"
+  },
+  "engines": { "node": ">=22" },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2"
+  }
+}

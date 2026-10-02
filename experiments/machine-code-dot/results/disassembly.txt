@@ -1,0 +1,14 @@
+experiments/machine-code-dot/.build/assembly.o:	file format mach-o arm64
+
+Disassembly of section __TEXT,__text:
+
+0000000000000000 <ltmp0>:
+       0: 9e6703e0     	fmov	d0, xzr
+       4: b40000e2     	cbz	x2, 0x20 <ltmp0+0x20>
+       8: fc408401     	ldr	d1, [x0], #0x8
+       c: fc408422     	ldr	d2, [x1], #0x8
+      10: 1e620821     	fmul	d1, d1, d2
+      14: 1e612800     	fadd	d0, d0, d1
+      18: f1000442     	subs	x2, x2, #0x1
+      1c: 54ffff61     	b.ne	0x8 <ltmp0+0x8>
+      20: d65f03c0     	ret

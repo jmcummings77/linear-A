@@ -142,6 +142,32 @@ public class Matrix<T> : IEnumerable<T> where T : INumber<T>
         return result;
     }
 
+    /// <summary>Returns the right-handed cross product of two three-component vectors.</summary>
+    /// <remarks>
+    /// Each operand may be 3-by-1 or 1-by-3; the result retains this matrix's shape.
+    /// Inputs are unchanged. Arithmetic is checked, and nonfinite inputs/results fail.
+    /// </remarks>
+    public Matrix<T> CrossProduct(Matrix<T> multiplicand)
+    {
+        ArgumentNullException.ThrowIfNull(multiplicand);
+        if (!MatrixRotation.IsVector3(RowCount, ColumnCount) || !MatrixRotation.IsVector3(multiplicand.RowCount, multiplicand.ColumnCount))
+            throw new ArgumentException("Cross product requires two 3-by-1 or 1-by-3 vectors.", nameof(multiplicand));
+        var a = RowCount == 1 ? GetRow(0) : GetColumn(0);
+        var b = multiplicand.RowCount == 1 ? multiplicand.GetRow(0) : multiplicand.GetColumn(0);
+        for (var i = 0; i < 3; i++)
+            if (!T.IsFinite(a[i]) || !T.IsFinite(b[i])) throw new ArgumentException("Cross product requires finite components.");
+        var result = new Matrix<T>(RowCount, ColumnCount);
+        for (var i = 0; i < 3; i++)
+        {
+            var j = (i + 1) % 3;
+            var k = (i + 2) % 3;
+            var value = checked(checked(a[j] * b[k]) - checked(a[k] * b[j]));
+            if (!T.IsFinite(value)) throw new ArithmeticException("Cross product produced a nonfinite component.");
+            result[RowCount == 1 ? 0 : i, RowCount == 1 ? i : 0] = value;
+        }
+        return result;
+    }
+
     /// <summary>Returns a copy of one row.</summary>
     public T[] GetRow(int rowNumber)
     {
@@ -213,32 +239,99 @@ public class Matrix<T> : IEnumerable<T> where T : INumber<T>
 
     /// <summary>Returns the determinant; the empty matrix has determinant one.</summary>
     /// <remarks>
-    /// Uses division-free cofactor expansion, so integer division cannot truncate results.
-    /// Its factorial running time makes it suitable only for small matrices. Exactness
-    /// requires exact arithmetic without intermediate overflow; use BigInteger for
-    /// unbounded integer calculations. An intermediate may overflow even when the final
-    /// result would fit. Floating-point rounding, cancellation, NaN, and infinity still
-    /// apply. A computed nonzero determinant is not a numerical conditioning test or a
-    /// guarantee that an inverse can be represented by T.
+    /// Auto uses cubic-time elimination for built-in numeric types: exact BigInteger
+    /// Bareiss for integers and decimal, and partial-pivoting LU with double working
+    /// precision for double, float, and Half. Integers convert back with overflow checks;
+    /// decimal rounds only the final result to nearest, ties to even. Custom types use
+    /// checked cofactor expansion. Floating results remain subject to rounding and
+    /// conditioning; nonfinite LU inputs or elimination values produce NaN. A nonzero
+    /// determinant is not a guarantee that an inverse can be represented by T.
     /// </remarks>
     /// <exception cref="NotSquareMatrixException">The matrix is not square.</exception>
-    public T GetDeterminant()
+    public T GetDeterminant() => GetDeterminant(DeterminantAlgorithm.Auto);
+
+    /// <summary>Returns the determinant using the selected algorithm without changing this matrix.</summary>
+    /// <remarks>
+    /// Cofactor uses checked arithmetic with factorial cost and can overflow in intermediate
+    /// steps. Bareiss uses exact BigInteger intermediates for built-in integers and decimal;
+    /// its cubic arithmetic-operation count excludes the cost of growing integer operands.
+    /// LU and Cholesky support only double, float, and Half. Cholesky additionally requires
+    /// finite, exactly symmetric input and finite positive pivots; floating-point rounding
+    /// can cause it to reject an ill-conditioned positive-definite matrix. Auto chooses
+    /// according to the numeric type and does not automatically select Cholesky.
+    /// </remarks>
+    /// <exception cref="NotSupportedException">The algorithm does not support T.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The algorithm is not a defined value.</exception>
+    /// <exception cref="NotSquareMatrixException">The matrix is not square.</exception>
+    /// <exception cref="InvalidOperationException">Cholesky's symmetry, finiteness, or positive-pivot requirements failed.</exception>
+    public T GetDeterminant(DeterminantAlgorithm algorithm)
     {
+        algorithm = MatrixDeterminant<T>.Resolve(algorithm);
         if (!IsSquare()) throw new NotSquareMatrixException();
-        return Determinant(_items);
+        return algorithm switch
+        {
+            DeterminantAlgorithm.Lu => MatrixDeterminant<T>.Lu(_items),
+            DeterminantAlgorithm.Bareiss => MatrixDeterminant<T>.Bareiss(_items),
+            DeterminantAlgorithm.Cholesky => MatrixDeterminant<T>.Cholesky(_items),
+            _ => CofactorDeterminant(_items),
+        };
     }
 
     /// <summary>Returns false with determinant zero for a non-square matrix.</summary>
-    /// <remarks>Uses <see cref="GetDeterminant"/>; arithmetic exceptions propagate.</remarks>
-    public bool TryGetDeterminant(out T determinant)
+    /// <remarks>Uses Auto; arithmetic exceptions propagate.</remarks>
+    public bool TryGetDeterminant(out T determinant) => TryGetDeterminant(DeterminantAlgorithm.Auto, out determinant);
+
+    /// <summary>Returns false with determinant zero for a non-square matrix, using the selected algorithm.</summary>
+    /// <remarks>Invalid algorithms, unsupported numeric types, and arithmetic exceptions propagate.</remarks>
+    public bool TryGetDeterminant(DeterminantAlgorithm algorithm, out T determinant)
     {
         determinant = T.Zero;
+        MatrixDeterminant<T>.Resolve(algorithm);
         if (!IsSquare()) return false;
-        determinant = GetDeterminant();
+        determinant = GetDeterminant(algorithm);
         return true;
     }
 
-    private static T Determinant(T[,] values)
+    /// <summary>Computes real eigenvalues and orthonormal eigenvector columns for a symmetric matrix.</summary>
+    /// <remarks>
+    /// Entries must be finite and exactly symmetric before conversion to double.
+    /// Numeric values are approximated as doubles; conversion can lose precision.
+    /// The Jacobi iteration uses a relative Frobenius-norm tolerance, so tiny
+    /// eigenvalues in a matrix with much larger entries need not have small relative error.
+    /// The input is unchanged. Nonconvergence or unrepresentable eigenvalues throw.
+    /// </remarks>
+    public SymmetricEigenDecomposition GetSymmetricEigenDecomposition(double tolerance = 1e-12, int maxSweeps = 50)
+    {
+        if (!IsSquare()) throw new NotSquareMatrixException();
+        var values = new double[RowCount, ColumnCount];
+        for (var row = 0; row < RowCount; row++)
+            for (var column = 0; column < ColumnCount; column++)
+            {
+                if (!T.IsFinite(_items[row, column]))
+                    throw new ArgumentException("Eigendecomposition requires finite entries.");
+                if (_items[row, column] != _items[column, row])
+                    throw new ArgumentException("Eigendecomposition requires an exactly symmetric matrix.");
+                values[row, column] = double.CreateChecked(_items[row, column]);
+            }
+        return SymmetricEigenSolver.Solve(values, tolerance, maxSweeps);
+    }
+
+    /// <summary>Computes approximate complex right eigenpairs of a real square matrix.</summary>
+    /// <remarks>Entries are converted to double and can lose precision. Values sort
+    /// by real part then imaginary part; normalized right eigenvectors are columns.
+    /// No orthogonality or independent basis is promised for defective matrices.
+    /// Nonconvergence and nonfinite input/results throw. The bounded QR iteration
+    /// limit applies per unresolved root and must be in 1..100000.</remarks>
+    public EigenDecomposition GetEigenDecomposition(int maxIterations = 1000)
+    {
+        if (!IsSquare()) throw new NotSquareMatrixException();
+        var values = new double[RowCount, ColumnCount];
+        for (var row = 0; row < RowCount; row++)
+            for (var column = 0; column < ColumnCount; column++) values[row, column] = double.CreateChecked(_items[row, column]);
+        return GeneralEigenSolver.Solve(values, maxIterations);
+    }
+
+    private static T CofactorDeterminant(T[,] values)
     {
         var size = values.GetLength(0);
         if (size == 0) return T.One;
@@ -259,7 +352,7 @@ public class Matrix<T> : IEnumerable<T> where T : INumber<T>
                     minor[row - 1, minorColumn++] = values[row, column];
                 }
             }
-            var term = checked(values[0, excludedColumn] * Determinant(minor));
+            var term = checked(values[0, excludedColumn] * CofactorDeterminant(minor));
             result = excludedColumn % 2 == 0 ? checked(result + term) : checked(result - term);
         }
         return result;

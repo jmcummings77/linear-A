@@ -1,0 +1,31 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1647 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1647 start  (in dyld) + 6992  [0x18068be00]
+        1647 main  (in runner) + 860  [0x102468844]  runner.c:139
+          1640 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 52  [0x10246b598]  runner.c:103
+          + 1639 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 448  [0x1024693e4]  runner.c:57
+          + ! 1638 guarded<m_multiply(matrix const*, matrix const*, matrix*)::'lambda'()>(m_multiply(matrix const*, matrix const*, matrix*)::'lambda'())  (in runner) + 40  [0x10246a18c]  bridge.hpp:33
+          + ! : 1464 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 712,708,...  [0x10246a554,0x10246a550,...]  matrix.hpp:115
+          + ! : 71 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 736  [0x10246a56c]  matrix.hpp:116
+          + ! : 38 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 48,104,...  [0x10246a2bc,0x10246a2f4,...]  matrix.hpp:109
+          + ! : 30 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 1016,1000  [0x10246a684,0x10246a674]  matrix.hpp:118
+          + ! : 13 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 692  [0x10246a540]  matrix.hpp:0
+          + ! : 13 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 144  [0x10246a31c]  matrix.hpp:111
+          + ! : | 10 linear_a::Matrix::Matrix(unsigned long, unsigned long)  (in runner) + 104  [0x1024698b4]  matrix.hpp:55
+          + ! : | + 10 _platform_memset  (in libsystem_platform.dylib) + 140,148,...  [0x180a5311c,0x180a53124,...]
+          + ! : | 3 linear_a::Matrix::Matrix(unsigned long, unsigned long)  (in runner) + 80  [0x10246989c]  matrix.hpp:55
+          + ! : |   2 DYLD-STUB$$operator new(unsigned long)  (in runner) + 4  [0x10246b7f8]
+          + ! : |   1 operator new(unsigned long)  (in libc++abi.dylib) + 52  [0x180a007e8]
+          + ! : |     1 _xzm_xzone_malloc_small_freelist  (in libsystem_malloc.dylib) + 832  [0x18086c610]
+          + ! : 4 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 756  [0x10246a580]  matrix.hpp:112
+          + ! : 4 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 748,740,...  [0x10246a578,0x10246a570,...]  matrix.hpp:113
+          + ! : 1 linear_a::Matrix::operator*(linear_a::Matrix const&) const  (in runner) + 1024  [0x10246a68c]  matrix.hpp:120
+          + ! 1 guarded<m_multiply(matrix const*, matrix const*, matrix*)::'lambda'()>(m_multiply(matrix const*, matrix const*, matrix*)::'lambda'())  (in runner) + 0  [0x10246a164]  bridge.hpp:32
+          + 1 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 20  [0x102469238]  runner.c:54
+          6 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 176  [0x10246b614]  runner.c:108
+          + 5 _xzm_free  (in libsystem_malloc.dylib) + 172,20  [0x180867118,0x180867080]
+          + 1 _xzm_free_outlined  (in libsystem_malloc.dylib) + 628  [0x18086f688]
+          1 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 68  [0x10246b5a8]  runner.c:104
+            1 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 0  [0x180a5790c]
