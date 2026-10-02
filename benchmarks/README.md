@@ -379,7 +379,10 @@ preferences pause auto-orbit; manual camera controls remain available.
 
 Play a 10, 20, or 30 second transformation, pause, or scrub to any point. Drag the
 plot to orbit and scroll to zoom; when the plot has keyboard focus, arrow keys
-rotate it and `+`/`-` zoom. The animation starts only when requested. The wire
+rotate it and `+`/`-` zoom. Zoom reaches 25× the fitted view, allowing close-ups
+that crop the scene. Hide **Axes** and **Bounding box** to fit the normalized
+vector field without the transformed overlays keeping it small. **Reset view**
+restores the initial zoom. The animation starts only when requested. The wire
 unit cube and RGB basis vectors show the same matrix acting on geometry; arrows
 show `A*x` anchored at `x`, with a fixed display scale. Column vectors mean that
 `(M*N)*x` applies `N` first. Ordinary operator interpolation is `(1-t)*M + t*R`,

@@ -1514,6 +1514,8 @@ addEventListener('matrix-profile-focus',()=>{const p=profiles.find(p=>p.implemen
   let arrowPhase = 0, arrowPreviousTime = null;
   let orbitPreviousTime = null;
   let yaw = -.68, pitch = .43, zoom = 1, drag = null;
+  const minZoom = .45, maxZoom = 25;
+  const changeZoom = factor => {zoom=Math.max(minZoom,Math.min(maxZoom,zoom*factor));render();};
   const fmt = value => Math.abs(value) >= 1e4 || (value !== 0 && Math.abs(value) < 1e-4)
     ? value.toExponential(2) : Number(value.toFixed(4)).toString();
   const determinant = a => a[0]*(a[4]*a[8]-a[5]*a[7])-a[1]*(a[3]*a[8]-a[5]*a[6])+a[2]*(a[3]*a[7]-a[4]*a[6]);
@@ -1661,10 +1663,15 @@ addEventListener('matrix-profile-focus',()=>{const p=profiles.find(p=>p.implemen
     get('geometry-orbit-note').textContent=reducedMotion.matches && autoOrbit.checked
       ? 'Auto-orbit is paused by your reduced-motion preference. Drag or use arrow keys to orbit.'
       : '30 seconds per orbit. Drag to pause; release to resume.';
-    let extent=Math.max(2,scene?.rotation_extent||0);
-    const visibleMatrices=scene?[scene.m,scene.result,...(isSteps()?scene.steps.map(s=>s.matrix):[])]:[];
     const rowBounds=matrix=>[0,1,2].map(r=>Math.abs(matrix[r*3])+Math.abs(matrix[r*3+1])+Math.abs(matrix[r*3+2]));
-    for(const matrix of visibleMatrices)extent=Math.max(extent,...rowBounds(matrix).map(x=>.55*x));
+    // Field arrows are normalized independently of the transformed overlays.
+    // Fit visible overlays across the whole animation so playback keeps a steady scale.
+    let extent=2;
+    if(scene&&(showBox||showAxes)){
+      extent=Math.max(extent,scene.rotation_extent||0);
+      const matrices=[scene.m,scene.result,...(isSteps()?scene.steps.map(s=>s.matrix):[])];
+      for(const matrix of matrices)extent=Math.max(extent,...rowBounds(matrix).map(x=>.55*x));
+    }
     const fit=Math.min(w,h)*.34/extent*zoom;
     const project=v=>{const x=v[0]*Math.cos(yaw)+v[2]*Math.sin(yaw),z=-v[0]*Math.sin(yaw)+v[2]*Math.cos(yaw),y=v[1]*Math.cos(pitch)-z*Math.sin(pitch),depth=v[1]*Math.sin(pitch)+z*Math.cos(pitch),p=1/(1+depth/(extent*7));return [w/2+x*fit*p,h/2-y*fit*p,depth];};
     const lines=[];
@@ -1778,8 +1785,8 @@ addEventListener('matrix-profile-focus',()=>{const p=profiles.find(p=>p.implemen
   canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];orbitPreviousTime=null;canvas.setPointerCapture(e.pointerId);syncAnimation();};
   canvas.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.009;pitch=Math.max(-1.3,Math.min(1.3,pitch+(e.clientY-drag[1])*.009));drag=[e.clientX,e.clientY];render();};
   canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=()=>{drag=null;orbitPreviousTime=null;syncAnimation();};
-  canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.45,Math.min(2.5,zoom*Math.exp(-e.deltaY*.001)));render();},{passive:false});
-  canvas.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowLeft')yaw-=.12;if(e.key==='ArrowRight')yaw+=.12;if(e.key==='ArrowUp')pitch=Math.min(1.3,pitch+.12);if(e.key==='ArrowDown')pitch=Math.max(-1.3,pitch-.12);if(e.key==='+')zoom=Math.min(2.5,zoom*1.1);if(e.key==='-')zoom=Math.max(.45,zoom/1.1);render();};
+  canvas.addEventListener('wheel',e=>{e.preventDefault();changeZoom(Math.exp(-e.deltaY*.001));},{passive:false});
+  canvas.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(e.key))return;e.preventDefault();if(e.key==='+'){changeZoom(1.1);return;}if(e.key==='-'){changeZoom(1/1.1);return;}if(e.key==='ArrowLeft')yaw-=.12;if(e.key==='ArrowRight')yaw+=.12;if(e.key==='ArrowUp')pitch=Math.min(1.3,pitch+.12);if(e.key==='ArrowDown')pitch=Math.max(-1.3,pitch-.12);render();};
   document.addEventListener('visibilitychange',()=>{arrowPreviousTime=null;orbitPreviousTime=null;if(document.hidden)stopAnimation();else render();});
   reducedMotion.addEventListener('change',()=>{arrowPreviousTime=null;orbitPreviousTime=null;render();});
   new ResizeObserver(()=>render()).observe(canvas);

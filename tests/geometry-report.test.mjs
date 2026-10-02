@@ -174,6 +174,64 @@ function assertSameCamera(actual,expected){
   for(let index=0;index<actual.length;index++)for(const coordinate of ['x','y'])assert.ok(Math.abs(actual[index][coordinate]-expected[index][coordinate])<1e-7,`${actual[index].text} ${coordinate} changed from ${expected[index][coordinate]} to ${actual[index][coordinate]}`);
 }
 
+test('wheel and keyboard zoom crop past the old limit and share limits and reset behavior',()=>{
+  const page=report(),canvas=page.get('geometry-canvas'),initial=axisLabels(page),state=page.snapshot();
+  const magnified=factor=>initial.map(label=>({...label,x:360+(label.x-360)*factor,y:215+(label.y-215)*factor}));
+  canvas.dispatch('wheel',{deltaY:-1e5});
+  assertSameCamera(axisLabels(page),magnified(25));
+  assert.ok(axisLabels(page).some(({x,y})=>x<0||x>720||y<0||y>430),'close-ups must allow cropping');
+  canvas.dispatch('keydown',{key:'+'});assertSameCamera(axisLabels(page),magnified(25));
+  assert.equal(page.snapshot(),state);
+  page.click('geometry-reset');assertSameCamera(axisLabels(page),initial);
+  for(let i=0;i<100;i++)canvas.dispatch('keydown',{key:'+'});
+  assertSameCamera(axisLabels(page),magnified(25));
+  canvas.dispatch('wheel',{deltaY:1e5});assertSameCamera(axisLabels(page),magnified(.45));
+  canvas.dispatch('keydown',{key:'-'});assertSameCamera(axisLabels(page),magnified(.45));
+  canvas.dispatch('keydown',{key:'+'});assertSameCamera(axisLabels(page),magnified(.45*1.1));
+  page.click('geometry-reset');assertSameCamera(axisLabels(page),initial);
+  assert.equal(page.workers.length,1);
+});
+
+test('hidden transformed overlays do not shrink the field in morph, rotation, or calculation views',()=>{
+  const baseline=report();for(const id of ['geometry-show-axes','geometry-show-box','geometry-show-ellipse','geometry-show-grid'])baseline.check(id,false);
+  baseline.choose('geometry-arrow-style','solid');
+  const anchors=page=>page.ctx.strokes.filter(stroke=>stroke.color.startsWith('rgb(')).map(stroke=>stroke.path[0]);
+  const expected=anchors(baseline);
+  for(const mode of ['morph','rotation','steps']){
+    const scene=sceneFixture();scene.m=scene.m.map(value=>value*10);scene.result=scene.result.map(value=>value*10);
+    scene.input_vectors=scene.input_vectors.map(vector=>vector.map(value=>value*10));
+    scene.output_vectors=scene.output_vectors.map(vector=>vector.map(value=>value*10));
+    scene.steps=scene.steps.map(frame=>({...frame,matrix:frame.matrix.map(value=>value*10)}));
+    if(mode==='rotation'){scene.rotation_extent=40;scene.rotation_frames=[scene.m,scene.result];}
+    if(mode==='steps')scene.steps[0].matrix=scene.m;
+    const page=report({scene});page.choose('geometry-arrow-style','solid');
+    if(mode==='steps'){page.choose('geometry-mode','steps');page.input('geometry-step','1');}
+    for(const id of ['geometry-show-axes','geometry-show-box','geometry-show-ellipse','geometry-show-grid'])page.check(id,false);
+    assert.deepEqual(anchors(page),expected,`${mode}: hidden matrices must not change field projection`);
+    const state=page.snapshot();
+    for(const id of ['geometry-show-box','geometry-show-axes']){
+      page.check(id,true);assert.notDeepEqual(anchors(page),expected,`${mode}: visible geometry should affect fitting`);
+      page.check(id,false);assert.deepEqual(anchors(page),expected);assert.equal(page.snapshot(),state);
+    }
+  }
+});
+
+test('close-up orbit stays finite for every arrow style with overlays visible or hidden',()=>{
+  for(const overlays of [true,false]){
+    const page=report(),canvas=page.get('geometry-canvas');
+    for(const id of ['geometry-show-axes','geometry-show-box','geometry-show-ellipse','geometry-show-grid'])page.check(id,overlays);
+    page.input('geometry-progress','420');const state=page.snapshot();
+    canvas.dispatch('wheel',{deltaY:-1e5});page.check('geometry-auto-orbit',true);
+    for(const style of styles){
+      page.choose('geometry-arrow-style',style);page.choose('geometry-arrow-motion','flow');
+      for(let i=0;i<=300;i++)page.frame(i*100);
+      canvas.dispatch('pointerdown',{clientX:100,clientY:100,pointerId:1});
+      canvas.dispatch('pointermove',{clientX:400,clientY:300});canvas.dispatch('pointerup');
+      assert.equal(page.ctx.stack.length,0);assert.equal(page.snapshot(),state);
+    }
+  }
+});
+
 test('auto-orbit starts off and completes a full camera turn in thirty active seconds without changing the matrix',()=>{
   const page=report();assert.equal(page.get('geometry-auto-orbit').checked,false);assert.equal(page.frames.size,0);
   assert.ok(page.get('geometry-orbit-note').textContent.length>0);
