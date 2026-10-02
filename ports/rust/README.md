@@ -1,4 +1,4 @@
-# Rust port
+# Rust float64 matrices
 
 A dependency-free `f64` matrix library and comparison runner. Requires Rust and
 Cargo 1.69 or newer; uses edition 2021. See the shared
@@ -79,9 +79,9 @@ so the ordinary three-entry checksum is informative.
 
 `eigen_symmetric()` returns `SymmetricEigenDecomposition { eigenvalues,
 eigenvectors }`: ascending real eigenvalues and corresponding unit eigenvectors
-as columns of a matrix. Input must be exactly symmetric; nonsymmetric matrices
-return an error, including matrices whose eigenvalues would be complex. The
-cyclic Jacobi solver supports indefinite, singular, repeated-eigenvalue and empty
+as columns of a matrix. Input must be exactly symmetric; use `eigen_general()`
+for nonsymmetric matrices and complex eigenpairs. The cyclic Jacobi solver
+supports indefinite, singular, repeated-eigenvalue and empty
 matrices. Repeated eigenspaces may have any orthonormal basis.
 `eigen_symmetric_with(tolerance, max_sweeps)` controls the relative Frobenius-norm
 tolerance and positive sweep limit (defaults `1e-12`, `50`). Nonconvergence and

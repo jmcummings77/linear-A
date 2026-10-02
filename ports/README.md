@@ -1,106 +1,143 @@
-# Matrix implementations
+# Matrix implementations and shared contract
 
-These ports are small, reusable implementations of the same float64 matrix API.
-The comparison includes the existing C# library and ten ports. They provide
-matrix construction, identity matrices, dimensions, indexed access, independent
-copying, row/column extraction, addition, subtraction, scaling, transpose,
-multiplication, trace, determinant, real symmetric eigendecomposition, 3D vector
-cross products, rotation matrix construction, and triangular classification.
+Eleven reusable implementations provide the same float64 matrix operations:
+construction, identity matrices, dimensions, indexed access, independent copying,
+row/column extraction, addition, subtraction, scaling, transpose, multiplication,
+trace, determinant, symmetric and general real eigendecomposition, 3D vector
+cross products, rotation factories, and triangular classification. Each has its
+own public API, tests, and runner for the [shared protocol](../benchmarks/PROTOCOL.md).
 
-The shared contract covers IEEE 754 double precision. It does not reproduce the
-C# generic library's integer, decimal, or `BigInteger` behavior.
+The comparison contract uses IEEE 754 double precision. Language-specific APIs
+may offer additional numeric types or compatibility methods outside that contract.
 
 | Implementation | Reusable API and storage | Toolchain |
 | --- | --- | --- |
-| [C# baseline](../README.md) | Existing `Matrix<double>`; rectangular managed arrays | .NET SDK from `global.json` |
-| [F#](fsharp/README.md) | `LinearA.Matrix`; flat managed row-major array | .NET 10 SDK |
-| [Rust](rust/README.md) | `linear_a::Matrix`; owned row-major `Vec<f64>` | Rust/Cargo 1.69+ |
-| [Go](go/README.md) | `matrix.Matrix`; row-major `[]float64` | Go 1.22+ |
-| [TypeScript](typescript/README.md) | `Matrix`; row-major `Float64Array` | Node.js 22+, npm; pinned TypeScript compiler |
-| [Python](python/README.md) | `Matrix`; row-major list of Python floats | Python 3.9+ |
-| [C++](cpp/README.md) | `linear_a::Matrix`; owned row-major `std::vector<double>` | C++17 compiler |
-| [C](c/README.md) | `matrix` and `m_*` functions; owned row-major allocation | C11 compiler |
 | [ARM64 assembly/C](assembly/README.md) | C matrix API with ARM64 arithmetic kernels | ARM64 host and C11 compiler/assembler |
+| [C](c/README.md) | `matrix` and `m_*` functions; owned row-major allocation | C11 compiler |
+| [C#](../linear-A/README.md) | `Matrix<double>`; rectangular managed arrays | .NET SDK from `global.json` |
+| [C++](cpp/README.md) | `linear_a::Matrix`; owned row-major `std::vector<double>` | C++17 compiler |
+| [F#](fsharp/README.md) | `LinearA.Matrix`; flat managed row-major array | .NET 10 SDK |
+| [Go](go/README.md) | `matrix.Matrix`; row-major `[]float64` | Go 1.22+ |
 | [Julia](julia/README.md) | `Matrix64`; row-major `Vector{Float64}` | Julia 1.10+ |
-| [WebAssembly](wasm/README.md) | C matrix kernels in WebAssembly memory; JavaScript `Matrix` API | Emscripten SDK and Node.js 22+ for the runner |
+| [Python](python/README.md) | `Matrix`; row-major list of Python floats | Python 3.9+ |
+| [Rust](rust/README.md) | `linear_a::Matrix`; owned row-major `Vec<f64>` | Rust/Cargo 1.69+ |
+| [TypeScript](typescript/README.md) | `Matrix`; row-major `Float64Array` | Node.js 22+, npm; pinned TypeScript compiler |
+| [WebAssembly](wasm/README.md) | C kernels in WebAssembly memory; JavaScript `Matrix` API | Emscripten SDK and Node.js 22+ for the runner |
 
-The assembly implementation uses assembly for the arithmetic kernels. C provides
-allocation, validation, ownership, indexing, row/column extraction, triangular
-checks, and determinant pivot control. Symmetric eigendecomposition uses the
-shared C Jacobi solver. Cross products use an ARM64 component kernel; rotation
-factories and axis normalization use C. Its measurements include these C support
-routines.
-No implementation calls BLAS, NumPy, or another numeric library.
+No implementation calls BLAS, NumPy, or another numeric library. Some numerical
+code is deliberately shared:
 
-The WebAssembly target compiles the existing C implementation with Emscripten.
-It supplies a reusable asynchronous JavaScript module factory for Node.js and
-browsers, with explicit `dispose()` for matrix allocations. It compares the same
-C kernels in a WebAssembly runtime, including the JavaScript bridge, rather than
-introducing another independent arithmetic algorithm.
+- ARM64 uses assembly arithmetic kernels with C allocation, validation, ownership,
+  indexing, row/column extraction, triangular checks, and determinant pivot
+  control. Both eigensolvers and rotation factories execute in C; cross products
+  use an ARM64 component kernel. Timings include this support work.
+- C and C++ share the general Hessenberg/QR eigensolver's numerical kernel.
+  Their public APIs and storage management remain language-specific.
+- WebAssembly compiles the C implementation with Emscripten. Its asynchronous
+  JavaScript factory supports Node.js and browsers, with explicit `dispose()`
+  for allocations. Timings include JavaScript dispatch and the WASM bridge.
 
-## Contracts and differences
+## Shapes, ownership, and arithmetic
 
-The [runner protocol](../benchmarks/PROTOCOL.md) uses row-major values and finite
-float64 input/output. Addition/subtraction require equal shapes; multiplication
-requires matching inner dimensions. Trace and determinant require square
-matrices. Empty rectangular shapes are supported; the 0×0 determinant is one and
-trace is zero. Triangular checks use exact zeros.
+The runner protocol uses row-major values and finite float64 input/output.
+Addition/subtraction require equal shapes; multiplication requires matching inner
+dimensions. Trace and determinant require square matrices. Empty rectangular
+shapes are supported; the 0×0 determinant is one and trace is zero. Triangular
+checks use exact zeros.
 
-Arithmetic results returned by the ports do not mutate their inputs. Copies and
-row/column extraction own independent storage. Use each language's explicit
-copy operation: copying a C struct or assigning a Go struct can still share its
-underlying storage. Julia's public indices are one-based; the other APIs use
-zero-based indices. Each port's README describes its errors and ownership rules.
-The original C# library additionally retains its documented in-place methods;
-the comparison runner copies before invoking those methods.
+Results in the shared contract do not mutate their inputs. Copies and row/column
+extraction own independent storage. Use each API's explicit copy operation:
+copying a C struct or assigning a Go struct can still share underlying storage.
+Julia's public indices are one-based; the other APIs use zero-based indices.
+Each implementation guide describes errors and ownership. The C# API also has
+in-place methods; its comparison runner copies before invoking them.
 
-Each port offers Auto, partial-pivot LU, and Cholesky determinant selection.
-Auto may shortcut tiny or triangular matrices; it never assumes a matrix is
-positive definite. Cholesky explicitly requires exact symmetry and positive
-computed pivots. Both factorizations cost cubic arithmetic work; Cholesky uses
-roughly half as many factorization operations on its narrower input domain.
-Separate pivot mantissas and exponents prevent premature product overflow or
-underflow. Floating-point rounding, cancellation, and extreme dynamic-range
-limitations remain; no conditioning estimate is provided.
+Each implementation offers Auto, partial-pivot LU, and Cholesky determinant
+selection. Auto may shortcut tiny or triangular matrices and never assumes
+positive definiteness. Cholesky requires exact symmetry and positive computed
+pivots. Both factorizations cost cubic arithmetic work; Cholesky uses roughly
+half as many factorization operations on its narrower input domain. Separate
+pivot mantissas and exponents prevent premature product overflow or underflow.
+Rounding, cancellation, and extreme dynamic-range limitations remain; no
+conditioning estimate is provided.
 
-The C# runner now calls `Matrix<double>.GetDeterminant` directly. Generic C# also
-provides exact Bareiss elimination for integers and decimal, and an explicit
-cofactor baseline. See [determinant comparisons](../benchmarks/README.md#determinant-algorithm-comparisons)
-for identical-input comparisons between algorithms.
+C# additionally offers `Matrix<T>` with integer, decimal, and `BigInteger`
+behavior, exact Bareiss elimination, and explicit cofactor expansion. Those
+extensions are documented in the [C# guide](../linear-A/README.md). The
+[determinant suite](../benchmarks/README.md#determinant-algorithm-comparisons)
+compares algorithms on identical inputs, including a small cofactor comparison.
 
 ## Eigenvalues and eigenvectors
 
-All implementations solve finite, exactly symmetric square matrices with cyclic
-Jacobi rotations. They return ascending real eigenvalues and corresponding
-orthonormal **columns** of an eigenvector matrix: `A Q = Q diag(values)` and
-`Qᵀ Q = I`. Results own their storage and leave the input unchanged. Indefinite,
-singular, repeated-eigenvalue, and empty matrices are supported. Repeated
-eigenvalues can have any orthonormal basis of their eigenspace.
+Both eigensolver families return independent results and preserve the input.
+Empty matrices, singular matrices, and repeated eigenvalues are supported.
+Eigenvectors occupy **columns**, satisfying `A Q = Q diag(values)` up to
+floating-point error. Numeric accuracy is normwise: tiny eigenvalues beside
+much larger entries may have large relative errors.
+
+### Symmetric real matrices
+
+The symmetric solver requires finite, square, exactly symmetric input and uses
+cyclic Jacobi rotations. Real eigenvalues ascend and their corresponding columns
+are orthonormal: `Qᵀ Q = I`. Indefinite matrices are valid. Repeated eigenvalues
+can have any orthonormal basis of their eigenspace; individual signs are arbitrary.
 
 The default relative Frobenius-norm tolerance is `1e-12`, with at most 50 sweeps.
-APIs offer a finite tolerance strictly between zero and one and a positive sweep
-limit; see each port for its option syntax and limits. Nonconvergence, invalid
-input, and eigenvalues outside the finite float64 range fail explicitly.
-Accuracy is normwise: tiny eigenvalues beside much larger entries may have large
-relative errors. General nonsymmetric matrices and complex spectra are unsupported.
+APIs accept a finite tolerance strictly between zero and one and a positive sweep
+limit; see each implementation for option syntax and limits. Invalid input,
+nonconvergence, and eigenvalues outside the finite float64 range fail explicitly.
 
-| Implementation | Symmetric eigenpair API |
+| Implementation | Symmetric eigenpair API and result |
 | --- | --- |
-| [C#](../README.md#eigenvalues-and-eigenvectors) | `GetSymmetricEigenDecomposition()` → `EigenValues`, `EigenVectors` |
-| [F#](fsharp/README.md) | `EigenSymmetric()` → `(values, vectors)` |
-| [Rust](rust/README.md) | `eigen_symmetric()` → `eigenvalues`, `eigenvectors` |
-| [Go](go/README.md) | `EigenSymmetric()` → `Eigenvalues`, `Eigenvectors` |
-| [TypeScript](typescript/README.md) | `eigenSymmetric()` → `{ values, vectors }` |
-| [Python](python/README.md) | `eigen_symmetric()` → named tuple `values`, `vectors` |
+| [ARM64/C](assembly/README.md) | `m_eigen_symmetric(&a, &values, &vectors)` |
+| [C](c/README.md) | `m_eigen_symmetric(&a, &values, &vectors)` |
+| [C#](../linear-A/README.md) | `GetSymmetricEigenDecomposition()` → `EigenValues`, `EigenVectors` |
 | [C++](cpp/README.md) | `eigen_symmetric()` → `values`, `vectors` |
-| [C](c/README.md), [ARM64/C](assembly/README.md) | `m_eigen_symmetric(&a, &values, &vectors)`; free both outputs with `m_free` |
+| [F#](fsharp/README.md) | `EigenSymmetric()` → `(values, vectors)` |
+| [Go](go/README.md) | `EigenSymmetric()` → `Eigenvalues`, `Eigenvectors` |
 | [Julia](julia/README.md) | `eigen_symmetric(a)` → named tuple `values`, `vectors` |
-| [WebAssembly](wasm/README.md) | `eigenSymmetric()` → `{ values, vectors }`; dispose the returned vector matrix |
+| [Python](python/README.md) | `eigen_symmetric()` → named tuple `values`, `vectors` |
+| [Rust](rust/README.md) | `eigen_symmetric()` → `eigenvalues`, `eigenvectors` |
+| [TypeScript](typescript/README.md) | `eigenSymmetric()` → `{ values, vectors }` |
+| [WebAssembly](wasm/README.md) | `eigenSymmetric()` → `{ values, vectors }` |
 
-C# converts generic entries to double for this operation. Its old integer-array
-eigenvalue/eigenvector signatures are obsolete because general integer matrices
-do not have integer spectra or normalized integer eigenvectors. Use the new
-decomposition API on `IntegerMatrix` or `Matrix<T>` instead.
+Free both C/ARM64 outputs with `m_free`; dispose the WASM vector matrix.
+C# converts generic numeric entries to double for eigendecomposition.
+
+### General real matrices and complex eigenpairs
+
+The general solver accepts any finite real square input, including nonsymmetric
+and defective matrices. It returns eigenvalues sorted by real part, then imaginary
+part, and unit complex right eigenvector columns. These columns need not be
+orthogonal or independent; a defective matrix does not have a complete eigenbasis.
+Complex matrix inputs are outside the shared contract.
+
+Power-of-two similarity balancing precedes scaled Hessenberg reduction and real
+double-shift QR, followed by complex back-substitution and normalization. The
+iteration limit defaults to 1000 steps between root deflations and accepts
+1 through 100000. Deflation uses machine epsilon. Invalid options, nonconvergence,
+and nonfinite results fail explicitly. Exact triangular eigenvalues are retained
+before workspace scaling, while ill-conditioned eigenpairs can still be sensitive
+to rounding. The algorithms follow the public-domain JAMA/EISPACK routines cited
+in each implementation.
+
+| Implementation | General eigenpair API and result |
+| --- | --- |
+| [ARM64/C](assembly/README.md) | `m_eigen_general(&a, &real, &imag, &vectors_real, &vectors_imag)` |
+| [C](c/README.md) | `m_eigen_general(&a, &real, &imag, &vectors_real, &vectors_imag)` |
+| [C#](../linear-A/README.md) | `GetEigenDecomposition()` → complex `EigenValues`, `EigenVectors` |
+| [C++](cpp/README.md) | `eigen_general()` → `values_real`, `values_imag`, `vectors_real`, `vectors_imag` |
+| [F#](fsharp/README.md) | `EigenGeneral()` → complex `(values, vectors)` arrays |
+| [Go](go/README.md) | `EigenGeneral()` → `EigenvaluesReal`, `EigenvaluesImag`, `EigenvectorsReal`, `EigenvectorsImag` |
+| [Julia](julia/README.md) | `eigen_general(a)` → complex named tuple `values`, `vectors` |
+| [Python](python/README.md) | `eigen_general()` → `values_real`, `values_imag`, `vectors_real`, `vectors_imag` |
+| [Rust](rust/README.md) | `eigen_general()` → `eigenvalues_real`, `eigenvalues_imag`, `eigenvectors_real`, `eigenvectors_imag` |
+| [TypeScript](typescript/README.md) | `eigenGeneral()` → `valuesReal`, `valuesImag`, `vectorsReal`, `vectorsImag` |
+| [WebAssembly](wasm/README.md) | `eigenGeneral()` → `valuesReal`, `valuesImag`, `vectorsReal`, `vectorsImag` |
+
+The protocol always splits real and imaginary parts into separate arrays/matrices,
+regardless of the reusable API's complex representation. Free all four C/ARM64
+outputs; dispose both WASM vector matrices. See each guide for option syntax.
 
 ## Cross products and rotations
 
@@ -115,56 +152,59 @@ column-vector** rotations. Angles are finite radians. Positive 2D angles rotate
 counterclockwise. Arbitrary axes must be nonzero finite three-component row or
 column vectors; normalization is stable for extreme magnitudes and does not
 change the axis. Apply a rotation with `R * v` to a column, or `v * transpose(R)`
-to a row. Every port also offers rotations about the principal X, Y, and Z axes;
-these APIs do not expose Euler angles or quaternions.
+to a row. Every implementation also offers rotations about the principal X, Y,
+and Z axes; these APIs do not expose Euler angles or quaternions.
 
 | Implementation | Cross product | 2D / arbitrary-axis rotation factories |
 | --- | --- | --- |
-| [C#](../README.md#cross-products-and-rotations) | `a.CrossProduct(b)` on `Matrix<T>` | `MatrixRotation.Create2D(angle)` / `CreateAxisAngle(axis, angle)` |
-| [F#](fsharp/README.md) | `a.Cross(b)` | `Matrix.Rotation2D(angle)` / `RotationAxisAngle(axis, angle)` |
-| [Rust](rust/README.md) | `a.cross(&b)` | `Matrix::rotation_2d(angle)` / `rotation_axis_angle(&axis, angle)` |
-| [Go](go/README.md) | `a.Cross(b)` | `matrix.Rotation2D(angle)` / `RotationAxisAngle(axis, angle)` |
-| [TypeScript](typescript/README.md), [WASM](wasm/README.md) | `a.cross(b)` | `Matrix.rotation2D(angle)` / `rotationAxisAngle(axis, angle)` |
-| [Python](python/README.md) | `a.cross(b)` | `Matrix.rotation2d(angle)` / `rotation_axis_angle(axis, angle)` |
+| [ARM64/C](assembly/README.md) | `m_cross(&a, &b, &out)` | `m_rotation_2d(angle, &out)` / `m_rotation_axis_angle(&axis, angle, &out)` |
+| [C](c/README.md) | `m_cross(&a, &b, &out)` | `m_rotation_2d(angle, &out)` / `m_rotation_axis_angle(&axis, angle, &out)` |
+| [C#](../linear-A/README.md) | `a.CrossProduct(b)` on `Matrix<T>` | `MatrixRotation.Create2D(angle)` / `CreateAxisAngle(axis, angle)` |
 | [C++](cpp/README.md) | `a.cross(b)` | `Matrix::rotation_2d(angle)` / `rotation_axis_angle(axis, angle)` |
-| [C](c/README.md), [ARM64/C](assembly/README.md) | `m_cross(&a, &b, &out)` | `m_rotation_2d(angle, &out)` / `m_rotation_axis_angle(&axis, angle, &out)` |
+| [F#](fsharp/README.md) | `a.Cross(b)` | `Matrix.Rotation2D(angle)` / `RotationAxisAngle(axis, angle)` |
+| [Go](go/README.md) | `a.Cross(b)` | `matrix.Rotation2D(angle)` / `RotationAxisAngle(axis, angle)` |
 | [Julia](julia/README.md) | `cross(a, b)` | `rotation2d(angle)` / `rotation_axis_angle(axis, angle)` |
+| [Python](python/README.md) | `a.cross(b)` | `Matrix.rotation2d(angle)` / `rotation_axis_angle(axis, angle)` |
+| [Rust](rust/README.md) | `a.cross(&b)` | `Matrix::rotation_2d(angle)` / `rotation_axis_angle(&axis, angle)` |
+| [TypeScript](typescript/README.md) | `a.cross(b)` | `Matrix.rotation2D(angle)` / `rotationAxisAngle(axis, angle)` |
+| [WebAssembly](wasm/README.md) | `a.cross(b)` | `Matrix.rotation2D(angle)` / `rotationAxisAngle(axis, angle)` |
 
-Returned matrices follow each language's existing ownership rules; free C outputs
-and dispose WASM outputs. C# rotation factories return `DoubleMatrix`, while its
-generic cross product retains `T` and uses checked numeric operators. The legacy
-C# classes have an independent `GetCrossProduct` result and a boolean in-place
-`CrossProduct` that returns false without mutation on invalid input or overflow.
+Returned matrices follow each language's ownership rules; free C outputs and
+dispose WASM outputs. C# rotation factories return `DoubleMatrix`, while its
+generic cross product retains `T` and uses checked numeric operators. Its
+compatibility classes also have an independent `GetCrossProduct` result and a
+boolean in-place `CrossProduct` that returns false without mutation on failure.
 
 ## Build and check
 
-Each linked README contains standalone build, test, and runner commands. For an
-integrated check from the repository root:
+Each implementation guide contains standalone build, test, and runner commands.
+For an integrated check from the repository root:
 
 ```sh
-python3 benchmarks/run.py --verify-only --require-all
+python3 benchmarks/run.py --verify-only --require-all --output benchmarks/reports/verification
 ```
 
 All eleven implementations are selected by default. On a host without every
 toolchain, choose an explicit subset:
 
 ```sh
-python3 benchmarks/run.py --verify-only --implementations csharp python typescript
+python3 benchmarks/run.py --verify-only --implementations c go python --require-all --output benchmarks/reports/verification
 ```
 
-Verification covers 99 shared fixtures: 39 arithmetic, 23 eigenvalue, and 37
-cross-product/rotation cases.
-The eigenvalue tests compare independent spectra, eigenpair residuals, and
-orthogonality without requiring a particular sign or repeated-eigenspace basis.
-Create a separate eigendecomposition performance report with:
+Verification covers 119 shared fixtures: 39 arithmetic, 23 symmetric eigenvalue,
+20 general eigenvalue, and 37 cross-product/rotation cases. Eigenvalue tests
+compare independent spectra and residuals, plus orthogonality for symmetric
+results or unit complex column norms for general results. They do not require
+a particular sign, complex phase, or basis within a repeated eigenspace.
+Create separate performance reports with:
 
 ```sh
-python3 benchmarks/run.py --operations eigen_symmetric --output benchmarks/reports/eigen --require-all
+python3 benchmarks/run.py --operations eigen_symmetric eigen_general --output benchmarks/reports/eigen --require-all
 python3 benchmarks/run.py --operations cross rotation2d rotation3d --output benchmarks/reports/vectors --require-all
 ```
 
 The [benchmark guide](../benchmarks/README.md) explains executable overrides,
 reports, timing, and profiling. Toolchain minimums are compatibility floors;
 actual compiler/runtime versions are recorded in each report. Comparing an older
-local runtime with a newer one measures that version difference as well as the
+runtime with a newer one measures that version difference as well as the
 implementation.

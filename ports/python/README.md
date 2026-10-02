@@ -50,7 +50,8 @@ python3 ports/python/runner.py bench determinant_cholesky 16 10 42
 Import `Matrix` from `matrix.py`; an optional local installation is available via
 `python3 -m pip install ./ports/python`. Its methods are `identity`, `copy`, `row`,
 `column`, `add`, `subtract`, `scale`, `transpose`, `multiply`, `trace`,
-`determinant`, `eigen_symmetric`, and `triangular`; indexing uses `matrix[row, column]`.
+`cross`, `determinant`, `eigen_symmetric`, `eigen_general`, and `triangular`;
+indexing uses `matrix[row, column]`.
 The runner follows [the shared protocol](../../benchmarks/PROTOCOL.md), uses
 `perf_counter_ns`, and includes result allocation, consumption, and immediate
 reference-count cleanup in its timed loop. Garbage-collector work, if triggered,
@@ -60,7 +61,7 @@ The runner also accepts `determinant_lu`, `determinant_cholesky`, and
 `determinant_spd_lu`. The two SPD benchmark operations use the same symmetrized,
 strictly diagonally dominant input so Cholesky and LU can be compared fairly.
 The ordinary determinant and explicit LU use the original general input.
-`determinant_cofactor` is unsupported by this port.
+`determinant_cofactor` is unsupported by this implementation.
 `eigen_symmetric` checks return both eigenvalues and eigenvectors; its benchmark
 uses a shared symmetric tridiagonal matrix with an analytic spectrum and
 consumes the weighted spectrum and squared norm of every eigenvector entry.
@@ -89,4 +90,5 @@ roots can be sensitive despite small residuals; complex matrix inputs are not
 part of this API. The existing symmetric solver retains its stricter contract.
 
 The runner's `eigen_general` operation supports both correctness checks and the
-shared block-triangular benchmark described in `benchmarks/PROTOCOL.md`.
+shared block-triangular benchmark described in the
+[runner protocol](../../benchmarks/PROTOCOL.md).

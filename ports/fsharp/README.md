@@ -16,8 +16,9 @@ printfn "%A" (scaled.ToArray()) // [| 7.; 16.; 16.; 38.5 |]
 
 Construct a zero matrix with `Matrix(rows, cols)` and an identity matrix with
 `Matrix.Identity(size)`. The API provides `Rows`, `Cols`, `matrix[row, column]`,
-`Add`, `Subtract`, `Scale`, `Transpose`, `Multiply`, `Trace`, `Determinant`,
-`IsUpperTriangular`, `IsLowerTriangular`, and `IsTriangular`.
+`Add`, `Subtract`, `Scale`, `Transpose`, `Multiply`, `Cross`, `Trace`, `Determinant`,
+`EigenSymmetric`, `EigenGeneral`, `IsUpperTriangular`, `IsLowerTriangular`, and
+`IsTriangular`.
 
 Invalid dimensions, indices, and incompatible operands raise argument errors;
 trace and determinant require square matrices. Empty dimensions are supported:

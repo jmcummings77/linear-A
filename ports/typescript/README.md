@@ -50,8 +50,9 @@ node ports/typescript/dist/runner.js bench determinant_cholesky 16 10 42
 
 Import `Matrix` from `dist/matrix.js`. It exposes `rows`, `cols`, `get`, `set`,
 `identity`, `copy`, `row`, `column`, `add`, `subtract`, `scale`, `transpose`,
-`multiply`, `trace`, `determinant`, `eigenSymmetric`, and `triangular`. Declaration files are emitted
-alongside JavaScript. The CLI follows [the shared protocol](../../benchmarks/PROTOCOL.md)
+`multiply`, `cross`, `trace`, `determinant`, `eigenSymmetric`, `eigenGeneral`, and
+`triangular`. Declaration files are emitted alongside JavaScript. The CLI follows
+[the shared protocol](../../benchmarks/PROTOCOL.md)
 and uses `process.hrtime.bigint()`. Allocation and garbage-collection work triggered
 during the timed loop are included; compilation and process startup are excluded.
 No numeric libraries or BLAS are used.
@@ -60,7 +61,7 @@ The runner also accepts `determinant_lu`, `determinant_cholesky`, and
 `determinant_spd_lu`. The two SPD benchmark operations use the same symmetrized,
 strictly diagonally dominant input so Cholesky and LU can be compared fairly.
 The ordinary determinant and explicit LU use the original general input.
-`determinant_cofactor` is unsupported by this port.
+`determinant_cofactor` is unsupported by this implementation.
 `eigen_symmetric` checks return both eigenvalues and eigenvectors; its benchmark
 uses a shared symmetric tridiagonal matrix with an analytic spectrum and
 consumes the weighted spectrum and squared norm of every eigenvector entry.
@@ -89,4 +90,5 @@ roots can be sensitive despite small residuals; complex matrix inputs are not
 part of this API. The existing symmetric solver retains its stricter contract.
 
 The runner's `eigen_general` operation supports both correctness checks and the
-shared block-triangular benchmark described in `benchmarks/PROTOCOL.md`.
+shared block-triangular benchmark described in the
+[runner protocol](../../benchmarks/PROTOCOL.md).

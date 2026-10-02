@@ -1,14 +1,15 @@
 # Matrix runner protocol
 
-All comparison runners implement the same float64 API. Matrix values use contiguous
+The eleven [implementations](../ports/README.md) use this shared float64 contract
+for correctness and timing requests. Matrix values use contiguous
 row-major order in the protocol. Implementations own their storage. Matrix results
 must not mutate either input. Empty shapes are allowed; a 0x0 determinant is 1 and
 trace is 0. Invalid shapes/indices/input fail explicitly. Determinant defaults to
 Auto (safe shortcuts and partial-pivot elimination); explicit LU and Cholesky are
 also available. Cholesky requires exact symmetry and positive computed pivots.
 Symmetric eigendecomposition returns ascending real eigenvalues and orthonormal
-eigenvector columns. General real eigendecomposition accepts nonsymmetric inputs and returns complex
-right eigenpairs as separate real and imaginary arrays.
+eigenvector columns. General real eigendecomposition accepts nonsymmetric input
+and returns complex right eigenpairs as separate real and imaginary arrays.
 
 ## Correctness requests
 
@@ -26,7 +27,8 @@ numbers for binary operations. Separate values with whitespace. Operations:
 - `transpose`, `trace`, `determinant`, `eigen_symmetric`, `eigen_general`, `triangular`: no additional arguments.
 - `determinant_lu`, `determinant_spd_lu`, `determinant_cholesky`: no additional
   arguments. The two LU names are identical for correctness requests.
-- C# additionally supports `determinant_cofactor` for its small baseline.
+- The [C# implementation](../linear-A/README.md) also exposes `determinant_cofactor`
+  for the small algorithm comparison; this is outside the shared operation set.
 
 Write one JSON object to stdout:
 
@@ -73,20 +75,21 @@ eigenvalues outside the finite float64 range fail explicitly.
 
 Reusable library APIs must expose dimensions/indexed access, copying, add/subtract,
 scale, transpose, multiply, cross, rotation factories, row/column extraction,
-trace, determinant, symmetric eigendecomposition, and triangular classification. Use idiomatic error handling
-and no third-party numeric libraries.
-Assembly can use C allocation/validation and assembly arithmetic kernels; identify
-that boundary in documentation. The assembly implementation uses the shared C
-Jacobi eigensolver and C rotation factories; cross components use an ARM64 kernel.
+trace, determinant, symmetric/general real eigendecomposition, and triangular
+classification. Use idiomatic error handling and no third-party numeric libraries.
+Document shared numerical code and include its work in timings: ARM64 uses C
+allocation/validation, both C eigensolvers, and C rotation factories alongside
+assembly arithmetic and cross-product kernels. WebAssembly compiles the C kernels;
+C++ shares the general eigensolver kernel with C and owns its storage separately.
 
 ## Benchmark requests
 
 `runner bench OP SIZE ITERATIONS SEED`
 
 Supported operations: add, subtract, scale, transpose, multiply, cross, rotation2d,
-rotation3d, trace, determinant,
-determinant_lu, determinant_spd_lu, determinant_cholesky, eigen_symmetric, and eigen_general. C# also supports
-determinant_cofactor for the small comparison baseline.
+rotation3d, trace, determinant, determinant_lu, determinant_spd_lu,
+determinant_cholesky, eigen_symmetric, and eigen_general. The C# runner also exposes
+determinant_cofactor for the small algorithm comparison.
 SIZE and ITERATIONS must be positive. SEED is an integer in 0..2147483646.
 Except for the vector/rotation workloads below, create square A and B before timing:
 
@@ -115,8 +118,8 @@ The harness verifies the full eigenbasis for each exact timed input before
 calibration: check this independent spectrum, `A Q = Q diag(values)`, and
 `Qᵀ Q = I`. The quick suite uses eigenvalue sizes 8 and 16; the full suite uses
 16, 32, and 48. Shared correctness verification includes 119 fixtures: 39
-arithmetic, 23 symmetric eigenvalue, 20 general eigenvalue, and 37 cross-product/rotation cases, independently of
-selected timed operations.
+arithmetic, 23 symmetric eigenvalue, 20 general eigenvalue, and 37
+cross-product/rotation cases, independently of selected timed operations.
 
 Vector and rotation workloads use fixed sizes in both suites:
 
@@ -143,12 +146,13 @@ JSON serialization are excluded. Use the platform's monotonic high-resolution ti
 Warm up with `max(5, min(ITERATIONS, 100))` operations before starting the timer.
 During the timed loop accumulate a checksum from each result: for a matrix of L
 values use `values[0] + values[L/2] + values[L-1]` (integer division; empty -> 0);
-for a scalar use its value. For eigenpairs use
+for a scalar use its value. For symmetric eigenpairs use
 `sum((i+1)*eigenvalues[i]) + sum(Q[i,j]*Q[i,j])`, with zero-based i and every
 vector entry included. The independent reference is the weighted analytic
 spectrum plus n, since an orthonormal n-by-n basis has squared Frobenius norm n.
-Runners must consume the computed vectors rather than substitute n. Include this
-consumption in elapsed time. Write:
+Runners must consume the computed vectors rather than substitute n. The
+[general eigenpair checksum](#general-real-eigendecomposition) consumes both real
+and imaginary parts. Include this consumption in elapsed time. Write:
 
 `{"elapsed_ns":123456,"iterations":10,"checksum":42.0}`
 

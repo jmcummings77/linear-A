@@ -3,7 +3,8 @@
 The harness builds eleven float64 implementations, checks their results against
 independent references, and creates an offline performance report. Run commands
 from the repository root. Python 3.9+ runs the harness; the individual toolchains
-are listed in the [ports guide](../ports/README.md). ARM64 assembly requires a
+and shared API contract are listed in the
+[implementation guide](../ports/README.md). ARM64 assembly requires a
 native ARM64 host.
 
 [View the live comparison report](https://jmcummings77.github.io/linear-A/latest/)
@@ -23,8 +24,9 @@ the libraries or rerunning measurements. It can also be run manually from Action
 python3 benchmarks/run.py --suite quick --profiles --require-all
 ```
 
-All implementations are selected by default: `csharp`, `fsharp`, `rust`, `go`,
-`typescript`, `python`, `cpp`, `c`, `assembly`, `julia`, and `wasm`. The initial
+All implementations are selected by default: `assembly`, `c`, `csharp`, `cpp`,
+`fsharp`, `go`, `julia`, `python`, `rust`, `typescript`, and `wasm`. Each runner
+uses the same fixtures and timing contract. The initial
 build may download compiler/package dependencies. Matrix arithmetic itself uses no
 third-party numeric libraries or BLAS.
 
@@ -32,16 +34,16 @@ third-party numeric libraries or BLAS.
 
 ```sh
 # Build and verify every implementation, without performance measurements.
-python3 benchmarks/run.py --verify-only --require-all
+python3 benchmarks/run.py --verify-only --require-all --output benchmarks/reports/verification
 
 # Work with only the toolchains installed on this machine.
-python3 benchmarks/run.py --implementations csharp python typescript --suite quick
+python3 benchmarks/run.py --implementations c go python --suite quick --require-all
 
 # Reuse artifacts from a previous successful build.
 python3 benchmarks/run.py --no-build --suite quick --require-all
 
 # Select operations and a reproducible input seed; save a separate report.
-python3 benchmarks/run.py --implementations rust go cpp --operations multiply determinant --seed 42 --samples 5 --output benchmarks/reports/comparison
+python3 benchmarks/run.py --implementations cpp go rust --operations multiply determinant --seed 42 --samples 5 --require-all --output benchmarks/reports/comparison
 
 # Increase matrix sizes and the target duration per sample.
 python3 benchmarks/run.py --suite full --require-all
@@ -71,21 +73,21 @@ with extra arguments.
 
 | Variable | Default executable | Used for |
 | --- | --- | --- |
-| `DOTNET` | `dotnet` | C# and F# build/runtime |
 | `CARGO`, `RUSTC` | `cargo`, `rustc` | Rust build and version reporting |
+| `CC`, `CXX` | `clang`, `clang++` | C/ARM64 and C++ builds |
+| `DOTNET` | `dotnet` | C# and F# build/runtime |
+| `EMCC` | `emcc` | Emscripten compiler for WebAssembly |
 | `GO` | `go` | Go build/runtime tools |
+| `JULIA` | `julia` | Julia runtime |
 | `NODE`, `NPM` | `node`, `npm` | TypeScript builds; TypeScript/WebAssembly runtimes |
-| `EMCC` | `emcc` | Emscripten compiler for the WebAssembly target |
-| `PYTHON` | `python3` | Python port runtime |
-| `JULIA` | `julia` | Julia port runtime |
-| `CC`, `CXX` | `clang`, `clang++` | C/assembly and C++ builds |
+| `PYTHON` | `python3` | Python implementation runtime |
 
 For example, `CC=gcc CXX=g++ python3 benchmarks/run.py --implementations c cpp`
-uses GCC-compatible compilers. `PYTHON` selects the port runtime; the command
+uses GCC-compatible compilers. `PYTHON` selects the implementation runtime; the command
 used to launch `run.py` selects the harness runtime. Keep Rust/Cargo from the same
 toolchain. When `NODE` is set, the harness prepends that executable's directory
 to the TypeScript build's `PATH` so npm subprocesses use the intended runtime.
-The .NET SDK still follows `global.json`. Compiler/runtime ages can differ across
+The SDK for C# and F# follows `global.json`. Compiler/runtime ages can differ across
 local installations; the report records actual versions rather than assuming
 they are all current.
 
@@ -112,21 +114,22 @@ The [protocol](PROTOCOL.md) specifies all input generation and output rules.
 Correctness fixtures include rectangular and empty matrices, fractional values,
 shape errors, singular matrices, pivot changes, triangular checks, and seeded
 small determinants. Small determinant references use the independent permutation
-formula with rational arithmetic. These checks supplement each port's unit tests.
+formula with rational arithmetic. These checks supplement each implementation's unit tests.
 There are 119 shared fixtures: 39 arithmetic, 23 symmetric eigenvalue, 20 general
-eigenvalue, and 37
-cross-product/rotation cases. Eigenvalue cases cover known and repeated spectra, indefinite and singular
-matrices, extreme scales, empty results, and rejected unsupported inputs.
-Eigenvalue checks compare the spectrum and verify `A Q = Q diag(values)` and
-`Qᵀ Q = I`; they do not demand a particular eigenvector sign or basis within a
-repeated eigenspace.
+eigenvalue, and 37 cross-product/rotation cases. Eigenvalue cases cover known and
+repeated spectra, indefinite and singular matrices, extreme scales, empty results,
+and rejected invalid inputs. Symmetric checks compare the spectrum and verify
+`A Q = Q diag(values)` and `Qᵀ Q = I`. General checks compare the complete complex
+spectrum and verify unit right columns and `A v = λ v`; they allow dependent
+columns for defective inputs. Neither check fixes vector signs, complex phases,
+or a particular basis within a repeated eigenspace.
 Vector checks cover handedness, mixed row/column orientations, finite extreme
 magnitudes, invalid shapes, and zero axes. Cross references use rational
 arithmetic; rotation references independently act on basis vectors with
 quaternion multiplication. Quaternions are a test reference, not an exposed API.
 
 Timed operations are addition, subtraction, scale, transpose, multiplication,
-trace, determinant, symmetric eigendecomposition, cross products, and 2D/3D
+trace, determinant, symmetric/general real eigendecomposition, cross products, and 2D/3D
 rotation matrix construction. The quick suite uses matrix sizes
 16 and 48, determinant sizes 8 and 16, and eigenvalue sizes 8 and 16. The full
 suite uses 64, 128, and 256, determinant sizes 8, 24, and 48, and eigenvalue sizes
@@ -145,12 +148,13 @@ imaginary part; right eigenvectors are unit columns, potentially dependent for
 defective inputs. The shared analytic block-triangular workloads have known
 real/complex spectra; every exact timed input is checked for spectrum,
 normalization and complex residuals before measurement. C and C++ share their
-numerical kernel; ARM64 and WASM use that C kernel too. Other ports implement it
-in their own language. No external LAPACK/BLAS solver is used.
+numerical kernel; ARM64 and WASM use that C kernel too. The remaining
+implementations have solvers in their own languages. No external LAPACK/BLAS
+solver is used.
 Accuracy is normwise, so tiny eigenvalues in mixed-scale inputs can have large
 relative errors.
 
-The eigenvalue workload is a symmetric tridiagonal Toeplitz matrix with diagonal
+The symmetric eigenvalue workload is a tridiagonal Toeplitz matrix with diagonal
 `d = 2 + (seed % 17)/16` and adjacent off-diagonals `-1`. Its ascending spectrum
 is `d - 2 cos(k π/(n+1))`, for `k = 1..n`. Before calibration or timing, the
 harness validates the complete eigenbasis for that exact input against this
@@ -158,6 +162,11 @@ analytic spectrum, eigenpair residuals, and orthogonality. The timed checksum
 consumes every eigenvalue and vector entry: `sum((i+1)*values[i]) + sum(Q[i,j]^2)`.
 Its independent reference is the weighted analytic spectrum plus `n`. This
 checksum supplements the complete pre-timing validation; it does not replace it.
+The general workload uses the analytic real 2×2 blocks and upper-block coupling
+defined in the [protocol](PROTOCOL.md#general-real-eigendecomposition). Its checksum
+is `sum((i+1)*(real[i]+abs(imag[i]))) + sum(Vreal²+Vimag²)`, again consuming every
+returned entry. Unit columns contribute a total squared norm of `n`; independence
+or orthogonality is not needed for this checksum.
 
 `cross` uses 3×1 vectors containing the first three usual generated entries from
 `seed` and `seed+1`, with the right vector's third entry negated to avoid a
@@ -185,13 +194,14 @@ also affect results. The quick suite is a small smoke test, not a universal
 language ranking; shared CI machines are especially unsuitable for treating
 small timing differences as stable conclusions.
 
-The C# baseline uses the existing `Matrix<double>` API, with a copy before its
-mutating scale operation. Its determinant now calls the generic type-aware Auto
-algorithm directly; for double it uses scaled partial-pivot LU. Other ports use
-Auto, with safe tiny or triangular shortcuts and partial-pivot LU otherwise.
-Older saved reports retain their recorded implementation notes and measurements.
-No fast-math flags are used. ARM64 results include the assembly kernels and their
-C support code; they are not measurements of a standalone assembly runtime.
+Implementation details remain part of the measurement. The
+[C# runner](../linear-A/README.md) uses `Matrix<double>` and copies before its
+in-place scale operation. Its generic Auto determinant selects scaled partial-pivot
+LU for double; the other implementations' Auto paths can also use tiny or
+triangular shortcuts. ARM64 includes assembly kernels and C support code. C and
+C++ share the general eigensolver's arithmetic while managing storage through
+their own APIs. No fast-math flags are used. Older saved reports retain their
+recorded implementation notes and measurements.
 
 WebAssembly compiles the same float64 kernels as the C port. Its measured loop
 runs in Node.js and includes JavaScript-to-WebAssembly calls, matrix allocation,
@@ -219,9 +229,10 @@ names, source lines, measurements, compiler versions, basic OS/CPU information,
 timestamps, and Git provenance remain available. Raw profiles and the embedded
 JavaScript/WebAssembly bundle receive the same treatment before publication.
 
-Build artifacts under `.build/` and generated reports are ignored by Git. Keep
-the JSON with any exported chart so its environment and measurements remain
-reviewable. Use `--output` to preserve multiple runs.
+Build artifacts under `.build/` and new report directories are ignored by Git;
+the selected public snapshots listed above are tracked. Keep the JSON with any
+exported chart so its environment and measurements remain reviewable. Use
+`--output` to preserve multiple runs.
 
 Profiles come from separate, instrumented or sampled runs of 48×48 matrix
 multiplication and do not contribute to comparative benchmark timings. Each
@@ -257,7 +268,7 @@ locally. Matrix sizes are limited to 16, 48,
 4, 8, 16, 32, or 48. Cross/3D-rotation size is fixed at 3 and 2D-rotation size at
 2. Select three or five samples. A benchmark first passes all 119 fixtures, then
 validates each batch's checksum. Eigenvalue workloads also validate the exact
-timed input's complete eigenbasis before measurement; vector/rotation workloads
+timed input's complete eigensystem before measurement; vector/rotation workloads
 check the complete result matrix independently before starting the clock.
 
 Each run uses a fresh Web Worker so the page stays responsive. Stop terminates
@@ -359,8 +370,10 @@ library's vector cross product; it does not define a cross product of arbitrary
 matrices `M` and `N`. A zero cross direction is valid and collapses the field;
 a rotation axis must be nonzero.
 
-For every real input `M`, the view also computes its eigenpairs in
-WebAssembly and checks the residual and orthogonality independently. Choose
+For every real input `M`, the view also computes its eigenpairs in WebAssembly.
+Symmetric inputs receive independent residual and orthogonality checks; general
+inputs receive complex residual, unit-norm, and characteristic-coefficient checks
+to verify the complete spectrum. Choose
 **Symmetric stretch · eigenvectors** to see eigenvalues `0.5`, `1`, and `3`, with
 purple arrows along the corresponding unit eigenvectors. For nonsymmetric
 inputs, real eigenvectors remain purple arrows; each complex conjugate pair
@@ -400,8 +413,9 @@ other report assets; no external rendering library or network asset is needed.
 [The ports workflow](../.github/workflows/ports.yml) runs unit tests and all-runner
 verification on pull requests using the documented
 [`ubuntu-24.04-arm` GitHub-hosted runner](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
-This executes the ARM64 kernels natively on Linux. The existing C# workflow
-continues to test its supported operating systems.
+This executes the ARM64 kernels natively on Linux. The
+[C# workflow](../.github/workflows/ci.yml) also tests that implementation across
+its supported operating systems.
 
 A manual workflow run can enable the `performance` input to collect a quick
 benchmark report and available profiles. Reports are uploaded as workflow
@@ -428,7 +442,8 @@ Choose a workload in the report:
 
 - `determinant`: Auto versus explicit LU on identical general matrices.
 - `determinant_spd`: LU versus Cholesky on identical symmetric positive-definite matrices.
-- `determinant_small`: C# Auto, LU and the former cofactor algorithm at sizes 3, 5 and 7.
+- `determinant_small`: a small cofactor algorithm comparison against Auto and LU
+  at sizes 3, 5, and 7, using the C# implementation, which exposes all three.
 
 The positive-definite input is `(A + transpose(A))/2 + 4n I`, using the usual
 unshifted generated A. Its entries are exact multiples of 1/32. Symmetry, positive
