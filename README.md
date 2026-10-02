@@ -252,9 +252,13 @@ an ARM64 host, run:
 python3 benchmarks/run.py --suite quick --profiles --require-all
 ```
 
-The [saved comparison report](benchmarks/reports/latest/index.html) is included
-in the repository. Download the HTML file from GitHub and open it in a browser,
-or open it directly from a local clone; it works offline. Its sibling
+[View live report](https://jmcummings77.github.io/linear-A/latest/) ·
+[Browse all reports](https://jmcummings77.github.io/linear-A/)
+
+The reports are published to GitHub Pages whenever their saved files change on
+`main`; publishing does not rerun benchmarks. The
+[saved comparison HTML](benchmarks/reports/latest/index.html) is also included
+in the repository for downloading or opening offline from a local clone. Its sibling
 [`results.json`](benchmarks/reports/latest/results.json) contains the underlying
 measurements and toolchain versions. The command above regenerates these files.
 The quick suite is a small workload check, not a universal language ranking.

@@ -6,12 +6,18 @@ from the repository root. Python 3.9+ runs the harness; the individual toolchain
 are listed in the [ports guide](../ports/README.md). ARM64 assembly requires a
 native ARM64 host.
 
-The repository includes a [saved comparison report](reports/latest/index.html),
+[View the live comparison report](https://jmcummings77.github.io/linear-A/latest/)
+or [browse all reports](https://jmcummings77.github.io/linear-A/). The published
+pages include the interactive charts, live WebAssembly controls, and geometry view.
+Separate reports cover [determinants](https://jmcummings77.github.io/linear-A/determinants/),
+[eigenvalues](https://jmcummings77.github.io/linear-A/eigen/), and
+[vectors](https://jmcummings77.github.io/linear-A/vectors/).
+
+The repository also includes the [saved HTML](reports/latest/index.html),
 its [measurement data](reports/latest/results.json), and sanitized raw profiles.
-Download the HTML file and open it in a browser to use the interactive charts,
-live WebAssembly controls, and geometry view; GitHub's file view shows its source.
-Separate saved reports cover [determinants](reports/determinants/index.html),
-[eigenvalues](reports/eigen/index.html), and [vectors](reports/vectors/index.html).
+Download the HTML file to use it offline. The **Publish reports** workflow copies
+these saved files to GitHub Pages when they change on `main`, without rebuilding
+the libraries or rerunning measurements. It can also be run manually from Actions.
 
 ```sh
 python3 benchmarks/run.py --suite quick --profiles --require-all

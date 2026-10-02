@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Saved linear-A matrix benchmarks, algorithm comparisons, profiles, and live WebAssembly checks.">
+  <title>linear-A · Benchmark reports</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f4ed;
+      --card: #fffef9;
+      --ink: #192927;
+      --muted: #62716d;
+      --line: #d9ddd1;
+      --green: #24594b;
+      --orange: #b95122;
+      --tint: #e4eee5;
+      --primary: #24594b;
+      --primary-ink: #fffef9;
+      --primary-muted: #dce9dd;
+      --focus: #a14319;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --paper: #101a18;
+        --card: #182622;
+        --ink: #e5eee8;
+        --muted: #a6b8ad;
+        --line: #344c42;
+        --green: #86cbb0;
+        --orange: #f1ad75;
+        --tint: #263e31;
+        --primary: #284f40;
+        --primary-ink: #f0f6ed;
+        --primary-muted: #cadfce;
+        --focus: #f1ad75;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    main { width: min(1080px, 100%); margin: 0 auto; padding: 36px 32px 26px; }
+    a { color: var(--green); text-underline-offset: .2em; }
+    a:focus-visible, summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 5px; }
+    .topline { display: flex; justify-content: space-between; align-items: center; gap: 18px; }
+    .wordmark { font: 700 29px/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: -1.7px; }
+    .wordmark span { color: var(--orange); }
+    .source { font-size: 13px; }
+    header { padding: 66px 0 34px; max-width: 730px; }
+    .eyebrow { margin: 0 0 13px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0 0 20px; font-size: clamp(36px, 6vw, 61px); line-height: 1.05; font-weight: 600; letter-spacing: -.055em; }
+    header p:last-child { margin: 0; max-width: 640px; color: var(--muted); font-size: 17px; }
+    .reports { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .report {
+      display: flex; flex-direction: column; min-width: 0; padding: 25px;
+      border: 1px solid var(--line); border-radius: 12px;
+      color: var(--ink); background: var(--card); text-decoration: none;
+    }
+    .report:hover { border-color: var(--green); }
+    .report h2 { margin: 0 0 12px; font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -.025em; }
+    .report p { margin: 0 0 25px; color: var(--muted); font-size: 14px; }
+    .report .open { margin-top: auto; color: var(--green); font-size: 13px; font-weight: 650; }
+    .report .open span { margin-left: 5px; }
+    .primary { grid-column: 1 / -1; padding: 33px; color: var(--primary-ink); background: var(--primary); border-color: var(--primary); }
+    .primary h2 { font-size: 32px; margin-bottom: 10px; }
+    .primary p { max-width: 640px; margin-bottom: 22px; color: var(--primary-muted); font-size: 16px; }
+    .primary .eyebrow, .primary .open { color: var(--primary-ink); }
+    .primary .eyebrow { font-size: 10px; margin-bottom: 15px; }
+    .primary .open { align-self: flex-start; border-bottom: 1px solid var(--primary-muted); padding-bottom: 3px; }
+    .context { margin: 24px 0 35px; padding-left: 17px; border-left: 2px solid var(--line); color: var(--muted); font-size: 13px; max-width: 790px; }
+    .context strong { color: var(--ink); font-weight: 600; }
+    .secondary { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; border-top: 1px solid var(--line); padding-top: 27px; }
+    .experiment { padding: 0; border: 0; border-radius: 0; background: transparent; }
+    .experiment h2 { font-size: 19px; }
+    .experiment p { max-width: 390px; margin-bottom: 14px; }
+    .experiment .eyebrow { color: var(--muted); font-size: 10px; margin-bottom: 10px; }
+    details { align-self: start; padding: 17px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+    summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+    details p { margin: 12px 0 8px; font-size: 12px; color: var(--muted); }
+    details ul { margin: 0; padding-left: 20px; font-size: 13px; }
+    details li { margin: 7px 0; }
+    footer { margin-top: 42px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    footer p { margin: 0; }
+    @media (max-width: 700px) {
+      main { padding: 25px 21px; }
+      header { padding: 46px 0 27px; }
+      header p:last-child { font-size: 15px; }
+      .reports { grid-template-columns: 1fr; gap: 12px; }
+      .report { padding: 23px; }
+      .report p { margin-bottom: 18px; }
+      .primary { padding: 27px 23px; }
+      .primary h2 { font-size: 28px; }
+      .secondary { grid-template-columns: 1fr; gap: 27px; }
+      .experiment { padding: 0; }
+      .context { margin-bottom: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topline">
+      <div class="wordmark" aria-label="linear-A">linear-<span>A</span></div>
+      <a class="source" href="https://github.com/jmcummings77/linear-A">View repository <span aria-hidden="true">↗</span></a>
+    </div>
+    <header>
+      <p class="eyebrow">Benchmark reports</p>
+      <h1>Matrix performance lab.</h1>
+      <p>A hobby linear algebra library, across languages. Explore the recorded comparisons, look inside sampled profiles, and try the math in your browser.</p>
+    </header>
+
+    <nav class="reports" aria-label="Main benchmark reports">
+      <a class="report primary" href="latest/">
+        <p class="eyebrow">Start here</p>
+        <h2>Full comparison</h2>
+        <p>Cross-language matrix timings, sample variation, and flamecharts, with live WebAssembly checks and an interactive geometry view.</p>
+        <span class="open">Open the main report <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="report" href="determinants/">
+        <h2>Determinants</h2>
+        <p>Compare determinant algorithms on general, small, and positive-definite matrices.</p>
+        <span class="open">Explore algorithms <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="report" href="eigen/">
+        <h2>Eigenvalues &amp; eigenvectors</h2>
+        <p>Saved symmetric eigensolver timings, checked against independent analytic spectra.</p>
+        <span class="open">Explore eigensolvers <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="report" href="vectors/">
+        <h2>Vectors &amp; rotations</h2>
+        <p>Cross products, 2D rotations, and 3D axis-angle rotations across implementations.</p>
+        <span class="open">Explore vector operations <span aria-hidden="true">→</span></span>
+      </a>
+    </nav>
+
+    <p class="context"><strong>Saved measurements, live checks.</strong> Each report records its run, hardware, and source revision. Where embedded WebAssembly is available, live checks and browser timings run on your device; they do not replace the saved comparison.</p>
+
+    <section class="secondary" aria-label="Experiments and verification">
+      <a class="report experiment" href="machine-code-dot/">
+        <p class="eyebrow">Separate experiment</p>
+        <h2>Machine-code dot product</h2>
+        <p>A closer look at dot-product implementations and native machine-code execution.</p>
+        <span class="open">Open the experiment <span aria-hidden="true">→</span></span>
+      </a>
+      <details>
+        <summary>Validation snapshots</summary>
+        <p>Saved correctness and profiling checks from earlier runs.</p>
+        <ul>
+          <li><a href="validation/">Cross-language verification</a></li>
+          <li><a href="wasm-profile-check/">WebAssembly profiling check</a></li>
+          <li><a href="wasm-verification/">WebAssembly verification</a></li>
+        </ul>
+      </details>
+    </section>
+
+    <footer>
+      <p>linear-A · Hobby linear algebra, across languages.</p>
+      <p>No external assets or analytics. Appearance follows your device.</p>
+    </footer>
+  </main>
+</body>
+</html>
