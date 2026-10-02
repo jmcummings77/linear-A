@@ -48,6 +48,8 @@
 .timings-art{overflow:visible;z-index:1}.timing-filter{position:relative;margin:0}.timing-filter>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:144px;padding:9px 13px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font-size:12px;font-weight:600;list-style:none}.timing-filter>summary::-webkit-details-marker{display:none}.timing-filter>summary::after{content:"▾"}.timing-filter[open]>summary{border-color:var(--green)}.timing-filter[open]>summary::after{content:"▴"}.timing-language-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:2;width:240px;max-height:min(420px,70vh);overflow:auto;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px #0003}.timing-language-actions{display:flex;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line)}.timing-language-actions button{font-size:12px;padding:6px 10px;flex:1}.timing-language-panel fieldset{border:0;margin:10px 0 0;padding:0}.timing-language-panel legend{font-size:11px;color:var(--muted);margin-bottom:5px}.timing-language-panel label{display:flex;align-items:center;gap:10px;padding:6px 4px;font-size:13px;color:var(--ink);font-weight:400;cursor:pointer}.timing-language-panel label:hover{background:var(--track);border-radius:4px}.timing-language-panel input{width:16px;height:16px;margin:0;flex:none}@media(max-width:760px){.timing-filter{width:100%;max-width:260px}.timing-language-panel{left:0;right:0;width:100%}}
 #geometry-randomize{margin-top:10px;width:100%;max-width:460px;font-size:12px}
 .geometry-visibility{display:flex;flex-wrap:wrap;gap:8px 18px;margin:14px 0;padding:0;border:0}.geometry-visibility legend{padding:0;margin-bottom:7px;font-size:11px;font-weight:650;color:var(--muted)}.geometry-visibility label{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}.geometry-visibility input{margin:0}
+.geometry-appearance{margin:16px 0;padding:12px 14px;border:1px solid var(--line);border-radius:6px}.geometry-appearance legend{padding:0 5px;font-size:11px;font-weight:650;color:var(--muted)}.geometry-arrow-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.geometry-arrow-controls select{width:100%;min-width:0;font-size:12px;padding:8px}.geometry-appearance p{margin:10px 0 0;font-size:11px}@media(max-width:1200px){.geometry-arrow-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.geometry-camera{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin:14px 0}.geometry-camera label{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}.geometry-camera input{margin:0}
 </style>
 </head>
 <body>
@@ -81,11 +83,25 @@ __REPORT_ART__
     <div class="geometry-stage">
       <div class="geometry-stage-head"><span id="geometry-equation">Mx → (MN)x</span><span>DRAG TO ORBIT · SCROLL TO ZOOM</span></div>
       <canvas id="geometry-canvas" role="img" aria-label="Interactive 3D matrix vector field" tabindex="0"></canvas>
-      <div class="geometry-stage-foot"><span><i class="geometry-dot input"></i> M · input field</span><span><i class="geometry-dot output"></i> result · output field</span><span id="geometry-progress-label">t = 0.00</span></div>
+      <div class="geometry-stage-foot"><span><i class="geometry-dot input"></i> M · faint reference</span><span><i class="geometry-dot output" id="geometry-field-swatch"></i> current field</span><span id="geometry-progress-label">t = 0.00</span></div>
       <fieldset class="geometry-visibility"><legend>Show overlays</legend>
         <label title="Coordinate axes, labels, transformed basis vectors, and eigenvector directions"><input type="checkbox" id="geometry-show-axes" checked>Axes</label>
         <label title="The transformed unit cube before and during the operation"><input type="checkbox" id="geometry-show-box" checked>Bounding box</label>
         <label title="The invariant plane for a complex eigenvalue pair, when present"><input type="checkbox" id="geometry-show-ellipse" checked>Eigenvector ellipse</label>
+        <label title="The fixed reference grid beneath the vector field"><input type="checkbox" id="geometry-show-grid" checked>Plane grid</label>
+      </fieldset>
+      <div class="geometry-camera">
+        <label title="Orbit the camera continuously without changing the matrix"><input type="checkbox" id="geometry-auto-orbit" aria-describedby="geometry-orbit-note">Auto-orbit (360°)</label>
+        <span class="small" id="geometry-orbit-note">30 seconds per orbit. Drag to pause; release to resume.</span>
+      </div>
+      <fieldset class="geometry-appearance" aria-describedby="geometry-arrow-note"><legend>Field arrow appearance</legend>
+        <div class="geometry-arrow-controls">
+          <label>Arrow style<select id="geometry-arrow-style"><option value="open">Open arrow</option><option value="solid">Filled head</option><option value="chevron">Double chevron</option><option value="tapered">Tapered</option></select></label>
+          <label>Arrow color<select id="geometry-arrow-color"><option value="transition">Teal → gold</option><option value="cyan">Cyan</option><option value="blue">Blue</option><option value="coral">Coral</option><option value="violet">Violet</option><option value="white">White</option></select></label>
+          <label>Arrow motion<select id="geometry-arrow-motion"><option value="static">Static</option><option value="flow">Flowing dots</option><option value="pulse">Pulse</option></select></label>
+          <label>Arrow weight<select id="geometry-arrow-width"><option value="1">Fine</option><option value="1.5" selected>Medium</option><option value="2.25">Bold</option></select></label>
+        </div>
+        <p class="small" id="geometry-arrow-note">Arrow effects change appearance only; vector lengths and calculation progress stay fixed.</p>
       </fieldset>
       <div class="geometry-transport">
         <button id="geometry-play" disabled>Play transformation</button><button id="geometry-reset" disabled>Reset view</button>

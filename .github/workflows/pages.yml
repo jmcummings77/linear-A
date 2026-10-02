@@ -1,0 +1,47 @@
+name: Publish reports
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pages.yml'
+      - 'benchmarks/pages/**'
+      - 'benchmarks/reports/**'
+      - 'experiments/machine-code-dot/results/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+      - name: Assemble saved reports
+        run: |
+          mkdir -p .build/pages
+          cp -R benchmarks/reports/. .build/pages/
+          cp benchmarks/pages/index.html .build/pages/index.html
+          cp -R experiments/machine-code-dot/results .build/pages/machine-code-dot
+          rm -f .build/pages/.gitkeep .build/pages/machine-code-dot/.gitkeep
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: .build/pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

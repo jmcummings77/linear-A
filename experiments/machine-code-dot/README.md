@@ -5,6 +5,8 @@ compared with scalar implementations in C#, F#, Rust, Go, TypeScript, Python,
 Julia, C++, C, and assembly. This experiment is independent of the matrix ports
 and their shared harness.
 
+[View the recorded report](https://jmcummings77.github.io/linear-A/machine-code-dot/).
+
 The function computes `sum(a[i] * b[i])` for two arrays of float64 values. It
 accepts a count, handles zero length, and returns a double. It does not allocate,
 validate pointers, or check the arrays' lengths: the caller must provide at least

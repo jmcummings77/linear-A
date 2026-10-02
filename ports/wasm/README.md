@@ -1,10 +1,10 @@
 # WebAssembly float64 matrices
 
-This port compiles the [C matrix implementation](../c/matrix.c) to WebAssembly
+The WebAssembly build compiles the [C matrix implementation](../c/matrix.c)
 with Emscripten. The reusable ES module works in Node.js and modern browsers.
 Arithmetic runs in WebAssembly; JavaScript handles initialization, input/output
-copies, and object ownership. It uses float64 throughout, with the C port's
-determinant algorithms, finite-value checks, and floating-point limitations.
+copies, and object ownership. It uses float64 throughout, sharing C's determinant
+algorithms, finite-value checks, and floating-point limitations.
 This is a compiled C backend, not a separate matrix algorithm.
 
 Build from the repository root after activating Emscripten:
@@ -43,8 +43,9 @@ try {
 ```
 
 `Matrix` provides `rows`, `cols`, `get`, `set`, `copy`, `add`, `subtract`, `scale`,
-`transpose`, `multiply`, `row`, `column`, `trace`, `determinant`, `triangular`, and
-`toArray`; `Matrix.identity(size)` creates an identity matrix. Arithmetic creates
+`transpose`, `multiply`, `cross`, `row`, `column`, `trace`, `determinant`,
+`eigenSymmetric`, `eigenGeneral`, `triangular`, and `toArray`;
+`Matrix.identity(size)` creates an identity matrix. Arithmetic creates
 independent matrices. `row`, `column`, and `toArray` return independent
 `Float64Array` copies. Dimensions and indices are checked, and inputs must be
 finite JavaScript numbers. Zero-size dimensions are supported. The wasm32 address

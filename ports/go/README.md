@@ -1,4 +1,4 @@
-# Go port
+# Go float64 matrices
 
 A standard-library-only `float64` matrix package and comparison runner. Requires
 Go 1.22 or newer. See the shared [runner protocol](../../benchmarks/PROTOCOL.md)
@@ -31,9 +31,10 @@ fmt.Println(product.Values()) // [1 2 3 4]
 ```
 
 `Matrix` exposes `Rows`, `Cols`, `At`, `Set`, `Copy`, `Values`, `Row`, `Column`,
-`Add`, `Subtract`, `Scale`, `Transpose`, `Multiply`, `Cross`, `Trace`, `Determinant`, `DeterminantWith`, and
-`Triangular`. Constructors and `Values` copy their input/output slices. Use
-`Copy()` for an independent matrix; ordinary Go struct assignment copies a slice
+`Add`, `Subtract`, `Scale`, `Transpose`, `Multiply`, `Cross`, `Trace`, `Determinant`,
+`DeterminantWith`, `EigenSymmetric`, `EigenSymmetricWith`, `EigenGeneral`,
+`EigenGeneralWith`, and `Triangular`. Constructors and `Values` copy their
+input/output slices. Use `Copy()` for an independent matrix; ordinary Go struct assignment copies a slice
 header and shares storage. Operations return independent results and leave inputs
 unchanged. Invalid dimensions, indices and nonfinite arithmetic return errors.
 The zero value of `Matrix` is a valid empty 0x0 matrix.
@@ -76,9 +77,9 @@ so the ordinary three-entry checksum is informative.
 
 `EigenSymmetric()` returns a `SymmetricEigenDecomposition` with ascending
 `Eigenvalues` and corresponding unit eigenvectors as columns of `Eigenvectors`.
-Input must be exactly symmetric; nonsymmetric matrices return an error, including
-matrices whose eigenvalues would be complex. The cyclic Jacobi solver supports
-indefinite, singular, repeated-eigenvalue and empty matrices. Repeated eigenspaces
+Input must be exactly symmetric; use `EigenGeneral()` for nonsymmetric matrices
+and complex eigenpairs. The cyclic Jacobi solver supports indefinite, singular,
+repeated-eigenvalue and empty matrices. Repeated eigenspaces
 may have any orthonormal basis. `EigenSymmetricWith(tolerance, maxSweeps)` controls
 the relative Frobenius-norm tolerance and positive sweep limit (defaults `1e-12`,
 `50`). Nonconvergence and nonfinite eigenvalues return errors. Accuracy is
@@ -99,7 +100,7 @@ go tool pprof -top ./runner cpu.pprof
 Profiling covers warmup and timed operations, excludes input preparation, and
 flushes before JSON serialization. The profiler is disabled unless the environment
 variable is set. Profiling runs incur sampling overhead and should be kept separate
-from the baseline timing report. Use a long enough run to collect CPU samples.
+from unprofiled timing measurements. Use a long enough run to collect CPU samples.
 
 `a.EigenGeneral()` accepts any finite real square matrix and returns
 `GeneralEigenDecomposition`: `EigenvaluesReal`, `EigenvaluesImag`,

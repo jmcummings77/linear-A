@@ -5,7 +5,7 @@ This is an ARM64 assembly/C implementation with an explicit division of work:
 - `kernels.S` performs addition, subtraction, scalar multiplication, transpose,
   matrix multiplication, vector cross products, trace, and the row-update arithmetic in determinant
   elimination. It uses scalar double-precision instructions and separate
-  multiplication/addition to match the other ports' rounding order.
+  multiplication/addition to match the other implementations' rounding order.
 - The [C matrix API](../c/matrix.h) supplies allocation, ownership, copying,
   indexed access, row/column extraction, shape/finite-value validation, and
   triangular classification. C also controls Gaussian pivot selection, row
@@ -18,7 +18,7 @@ work as well as the assembly kernels. `MATRIX_USE_ASM` dispatches the listed
 matrix arithmetic and ordinary LU row updates to assembly; unsupported
 architectures fail to compile. Determinant Auto's tiny/triangular shortcuts and
 explicit Cholesky execute in C. Symmetric eigendecomposition also executes in C:
-its cyclic Jacobi rotations and eigenvector updates are shared with the C port;
+its cyclic Jacobi rotations and eigenvector updates use the shared C solver;
 there is no separate assembly eigen kernel. General eigendecomposition also
 uses the C balancing/Hessenberg/double-shift QR solver, including complex
 eigenpairs, normalization, and sorting; its timings include that C work. Rotation factories, trigonometric
@@ -38,8 +38,8 @@ clang -std=c11 -O3 -ffp-contract=off -DMATRIX_USE_ASM ports/c/matrix.c ports/ass
 /tmp/linear-a-assembly bench multiply 32 100 42
 ```
 
-The reusable API and its memory ownership are identical to the C port. Empty
-dimensions are supported. Float64 rounding, cancellation, underflow, and
-intermediate overflow limitations also match the C port. Tests exercise the
-same API with the assembly kernels linked. See the
+The reusable API and its memory ownership are identical to the C implementation.
+Empty dimensions are supported. Float64 rounding, cancellation, underflow, and
+intermediate overflow limitations also match the C implementation. Tests exercise
+the same API with the assembly kernels linked. See the
 [shared runner protocol](../../benchmarks/PROTOCOL.md) for check/bench requests.

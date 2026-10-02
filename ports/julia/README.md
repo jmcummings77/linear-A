@@ -15,7 +15,8 @@ julia --startup-file=no --project=ports/julia ports/julia/runner.jl bench multip
 ```
 
 The package exposes `Matrix64`, `identitymatrix`, `copy`, `row`, `column`, `scale`,
-`transpose`, `trace`, `determinant`, `triangular`, and the `+`, `-`, `*` operators.
+`transpose`, `cross`, `trace`, `determinant`, `eigen_symmetric`, `eigen_general`,
+`triangular`, and the `+`, `-`, `*` operators.
 Indexing uses `matrix[row, column]`; dimensions are available through `size` and
 `rows`/`cols`. Copies and arithmetic results own their storage. Invalid shapes,
 indices, nonfinite input, and nonfinite results throw explicit exceptions.
@@ -30,8 +31,8 @@ Rounding and extreme dynamic-range limitations apply.
 Values are ascending and the matching unit eigenvectors are **columns** of
 `vectors`. For `Matrix64(2, 2, [2., 1., 1., 2.])`, the values are `[1., 3.]`.
 Inputs must be finite, exactly symmetric, and square. Empty input returns empty
-values and a 0×0 matrix. General nonsymmetric matrices and complex eigenpairs
-are outside this API.
+values and a 0×0 matrix. Use `eigen_general` for nonsymmetric matrices and
+complex eigenpairs.
 
 The cyclic Jacobi iteration uses a Frobenius norm tolerance, finite and strictly
 between zero and one, and a positive integer sweep limit. Nonconvergence and

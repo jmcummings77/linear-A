@@ -3,8 +3,9 @@ const OPERATIONS = new Set(["add", "subtract", "scale", "transpose", "multiply",
 const SIZES = new Set([16, 48, 64, 128, 256]);
 const DETERMINANT_SIZES = new Set([4, 8, 16, 24, 48]);
 const EIGEN_SIZES = new Set([4, 8, 16, 32, 48]);
-const MAX_ITERATIONS = 4096;
+const MAX_ITERATIONS = 1_048_576;
 const TARGET_MS = 30;
+const MIN_SAMPLE_MS = TARGET_MS / 2;
 const MAX_RUN_MS = 15_000;
 
 function finite(value) { return typeof value === "number" && Number.isFinite(value); }
@@ -322,8 +323,17 @@ export async function runBenchmark(Matrix, config, onProgress = () => {}) {
   if (!allowedSizes.has(size)) throw new RangeError("unsupported benchmark size");
   if (samples !== 3 && samples !== 5) throw new RangeError("sample count must be 3 or 5");
   if (!Number.isSafeInteger(seed) || seed < 0 || seed > 2147483646) throw new RangeError("seed must be an integer in 0..2147483646");
-  const deadline = performance.now() + MAX_RUN_MS;
-  const bounded = () => { if (performance.now() > deadline) throw new Error("live benchmark exceeded its time budget; try a smaller size"); };
+  const startTime = performance.now(), wallStart = Date.now();
+  if (!finite(startTime) || !finite(wallStart)) throw new Error("browser clock produced an invalid time");
+  const deadline = startTime + MAX_RUN_MS;
+  // A privacy-reduced or frozen performance clock must not disable the budget.
+  // Wall time is only a safety guard; all reported timings use performance.now().
+  const wallDeadline = wallStart + MAX_RUN_MS;
+  const bounded = () => {
+    const time = performance.now(), wallTime = Date.now();
+    if (!finite(time) || !finite(wallTime)) throw new Error("browser clock produced an invalid time");
+    if (time > deadline || wallTime > wallDeadline) throw new Error("live benchmark exceeded its time budget; try a smaller size");
+  };
   onProgress({ message: "Preparing inputs and independent checksum", completed: 0, total: samples });
   await yieldBatch();
   const expected = expectedChecksum(op, size, seed);
@@ -403,9 +413,13 @@ export async function runBenchmark(Matrix, config, onProgress = () => {}) {
     function measure(iterations) {
       bounded();
       for (let i = 0; i < Math.max(5, Math.min(iterations, 100)); i++) consume();
+      bounded();
       let checksum = 0;
       const start = performance.now();
-      for (let i = 0; i < iterations; i++) checksum += consume();
+      for (let i = 0; i < iterations; i++) {
+        checksum += consume();
+        if ((i + 1) % 1024 === 0) bounded();
+      }
       const elapsed_ms = performance.now() - start;
       if (!finite(elapsed_ms) || elapsed_ms < 0) throw new Error("browser clock produced an invalid elapsed time");
       if (!close(checksum, expected * iterations, 1e-7, 1e-8 * iterations)) throw new Error("live benchmark checksum differs from the independent reference");
@@ -413,25 +427,37 @@ export async function runBenchmark(Matrix, config, onProgress = () => {}) {
       return { elapsed_ms, ns_per_op: elapsed_ms * 1e6 / iterations, checksum };
     }
 
-    onProgress({ message: "Warming up and calibrating the WASM workload", completed: 0, total: samples });
-    let probeIterations = 1, probe = measure(probeIterations);
-    while (probe.elapsed_ms === 0 && probeIterations < MAX_ITERATIONS) {
-      probeIterations = Math.min(MAX_ITERATIONS, probeIterations * 8);
-      await yieldBatch();
-      probe = measure(probeIterations);
+    function largerBatch(iterations, elapsed) {
+      if (iterations === MAX_ITERATIONS) throw new Error("browser timer resolution is too coarse for this workload within the iteration limit");
+      const growth = elapsed > 0 ? Math.max(2, Math.min(8, TARGET_MS / elapsed)) : 8;
+      return Math.min(MAX_ITERATIONS, Math.ceil(iterations * growth));
     }
-    if (probe.elapsed_ms === 0) throw new Error("browser timer resolution is too coarse for this workload");
-    let iterations = Math.max(1, Math.min(MAX_ITERATIONS, Math.round(TARGET_MS * 1e6 / probe.ns_per_op)));
-    await yieldBatch();
-    probe = measure(iterations);
-    if (probe.ns_per_op > 0) iterations = Math.max(1, Math.min(MAX_ITERATIONS, Math.round(TARGET_MS * 1e6 / probe.ns_per_op)));
+    async function calibrate(iterations) {
+      for (;;) {
+        await yieldBatch();
+        const probe = measure(iterations);
+        if (probe.elapsed_ms >= TARGET_MS
+            || (iterations === MAX_ITERATIONS && probe.elapsed_ms >= MIN_SAMPLE_MS)) return iterations;
+        iterations = largerBatch(iterations, probe.elapsed_ms);
+      }
+    }
+
+    onProgress({ message: "Warming up and calibrating the WASM workload", completed: 0, total: samples });
+    let iterations = await calibrate(1);
     const measured = [];
-    for (let index = 0; index < samples; index++) {
+    while (measured.length < samples) {
       await yieldBatch();
       const sample = measure(iterations);
-      if (sample.elapsed_ms === 0) throw new Error("browser timer resolution is too coarse for this workload");
+      if (sample.elapsed_ms < MIN_SAMPLE_MS) {
+        // A JIT speedup or coarse clock can invalidate the calibration. Discard
+        // the whole sample set so every returned sample uses the same batch size.
+        measured.length = 0;
+        onProgress({ message: "Recalibrating a longer timing batch; restarting samples", completed: 0, total: samples });
+        iterations = await calibrate(largerBatch(iterations, sample.elapsed_ms));
+        continue;
+      }
       measured.push(sample);
-      onProgress({ message: `Measured sample ${index + 1}/${samples}`, completed: index + 1, total: samples });
+      onProgress({ message: `Measured sample ${measured.length}/${samples}`, completed: measured.length, total: samples });
     }
     const times = measured.map(sample => sample.ns_per_op);
     const median_ns = median(times);

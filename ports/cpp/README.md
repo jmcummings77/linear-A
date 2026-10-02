@@ -7,7 +7,8 @@ source as a 0-by-0 matrix. Constructors accept dimensions and an optional vector
 of row-major values; `Matrix::identity` creates identity matrices.
 
 The public API provides `rows`, `cols`, `get`, `set`, `row`, `column`, `values`,
-`scale`, `transpose`, `trace`, `determinant`, `triangular`, and `+`, `-`, `*`.
+`scale`, `transpose`, `cross`, `trace`, `determinant`, `eigen_symmetric`,
+`eigen_general`, `triangular`, and `+`, `-`, `*`.
 Arithmetic returns independent matrices. Invalid dimensions throw
 `std::invalid_argument`, invalid indices throw `std::out_of_range`, oversized
 allocations throw `std::length_error` or `std::bad_alloc`, and nonfinite values
@@ -90,7 +91,7 @@ and must be from 1 through 100000. Invalid options or shape throw
 `std::invalid_argument`, failure to converge throws `EigenConvergenceError`, and
 nonfinite input or output throws `std::overflow_error`. Empty matrices work.
 
-The Hessenberg/double-shift QR arithmetic is shared with the C port in
+The Hessenberg/double-shift QR arithmetic is shared with the C implementation in
 `general_eigen.h`, adapted from [public-domain JAMA](https://math.nist.gov/javanumerics/jama/).
 The C++ API owns its `std::vector` workspace and results. Power-of-two similarity
 balancing and work scaling improve range handling; diagonal/triangular spectra
