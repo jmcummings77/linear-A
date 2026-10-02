@@ -73,7 +73,7 @@ test("live benchmarks check all seven operation checksums and report valid sampl
     assert.equal(result.operation, operation);
     assert.equal(result.checksum_verified, true);
     assert.equal(result.samples.length, 3);
-    assert.ok(Number.isSafeInteger(result.iterations) && result.iterations >= 1 && result.iterations <= 4096);
+    assert.ok(Number.isSafeInteger(result.iterations) && result.iterations >= 1 && result.iterations <= 1_048_576);
     assert.ok(result.median_ns > 0 && result.mad_ns >= 0);
     assert.ok(result.min_ns <= result.median_ns && result.max_ns >= result.median_ns);
     assert.ok(result.samples.every(sample => sample.elapsed_ms > 0 && sample.ns_per_op > 0 && Number.isFinite(sample.checksum)));

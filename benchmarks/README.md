@@ -276,7 +276,16 @@ the worker, and a 45-second timeout bounds each run. The live section needs a
 modern browser with WebAssembly and module-worker support. Browser restrictions
 or initialization failures are reported in the page.
 
-Live timings use the browser's `performance.now()` clock. Browser scheduling,
+Live timings use the browser's `performance.now()` clock. Calibration grows
+batches toward 30 ms, up to 1,048,576 iterations, so tiny vector and rotation
+operations remain measurable on coarse browser clocks. If a sample drops below
+15 ms after a speedup, the worker increases the batch and restarts the entire
+sample set. Every returned sample uses the same iteration count; discarded
+batches are still checksum-verified, and zero durations are never substituted
+with invented timings. Calibration and timing share a 15-second budget, with
+an independent wall-clock guard for stalled performance clocks.
+
+Browser scheduling,
 clock resolution, JIT compilation, and machine load affect them. They remain
 separate from the historical comparison charts and Node measurements. The live
 JSON export contains the current browser runs; it does not replace `results.json`

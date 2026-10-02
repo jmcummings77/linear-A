@@ -101,7 +101,7 @@ test("live cross and rotation benchmarks return verified samples at their fixed 
     assert.equal(result.size,size);
     assert.equal(result.checksum_verified,true);
     assert.equal(result.samples.length,3);
-    assert.ok(result.iterations >= 1 && result.iterations <= 4096 && result.median_ns > 0);
+    assert.ok(result.iterations >= 1 && result.iterations <= 1_048_576 && result.median_ns > 0);
     assert.ok(result.samples.every(sample => Number.isFinite(sample.checksum) && sample.elapsed_ms > 0));
     if (operation === "cross") assert.ok(result.samples.every(sample => sample.checksum !== 0));
     assert.ok(api.crossCalls+api.rotationAngles.length > 3*result.iterations, "probe, warmup and calibration also execute the operation");
