@@ -8,7 +8,7 @@ from matrix import Matrix, SymmetricEigenDecomposition, GeneralEigenDecompositio
 
 DETERMINANTS = {"determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"}
 OPERATIONS = {"add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
-              "cross", "rotation2d", "rotation3d"} | DETERMINANTS
+              "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d"} | DETERMINANTS
 
 
 def integer(text, minimum=0, maximum=None):
@@ -25,6 +25,14 @@ def operation(name, a, b=None, scalar=1.25):
         return a.subtract(b)
     if name == "multiply":
         return a.multiply(b)
+    if name == "solve":
+        return a.solve(b)
+    if name == "solve_cholesky":
+        return a.factor_cholesky().solve(b)
+    if name == "least_squares":
+        return a.least_squares(b)
+    if name == "rcond":
+        return a.factor_lu().reciprocal_condition()
     if name == "cross":
         return a.cross(b)
     if name == "rotation2d":
@@ -71,7 +79,7 @@ def check(args):
     if len(args) < 3 or args[0] not in OPERATIONS:
         raise ValueError("usage: check OP ROWS COLS [BROWS BCOLS | SCALAR]")
     name, rows, cols = args[0], integer(args[1]), integer(args[2])
-    binary = name in {"add", "subtract", "multiply", "cross"}
+    binary = name in {"add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares"}
     scalar_operation = name in {"scale", "rotation2d", "rotation3d"}
     expected_args = 5 if binary else 4 if scalar_operation else 3
     if len(args) != expected_args:

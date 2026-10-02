@@ -88,3 +88,9 @@ For use from another .NET project, reference `LinearA.FSharp.fsproj`. The runner
 implements the [shared protocol](../../benchmarks/PROTOCOL.md), uses .NET's
 monotonic `Stopwatch`, and includes allocation and naturally scheduled GC in the
 timed loop. It uses handwritten loops and no BLAS or third-party numeric library.
+
+## Linear systems
+
+See [the shared solver guide](../SOLVING.md) for this implementation’s reusable
+LU, Cholesky, and column-pivoted QR APIs, multiple right-hand sides, least squares,
+condition diagnostics, ownership, and numerical limits.

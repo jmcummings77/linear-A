@@ -111,4 +111,22 @@ inline matrix_status m_eigen_general(const matrix *a, matrix *values_real, matri
         *vectors_imag = matrix(std::move(result.vectors_imag));
     });
 }
+enum matrix_factor_algorithm { M_LU=1, M_CHOLESKY=2, M_QR=3 };
+using matrix_factor = linear_a::Factorization;
+inline matrix_status m_factorize(const matrix *a, matrix_factor_algorithm algorithm, matrix_factor **out) {
+    return guarded([&] { *out = new matrix_factor(a->owned, algorithm); });
+}
+inline void m_factor_free(matrix_factor **factor) { delete *factor; *factor = nullptr; }
+inline matrix_status m_factor_solve(const matrix_factor *factor, const matrix *rhs, matrix *out) {
+    return guarded([&] { *out = matrix(factor->solve(rhs->owned)); });
+}
+inline matrix_status m_factor_rcond(const matrix_factor *factor, double *out) {
+    return guarded([&] { *out = factor->reciprocal_condition(); });
+}
+inline matrix_status m_solve(const matrix *a, const matrix *b, matrix *out) {
+    return guarded([&] { *out = matrix(a->owned.solve(b->owned)); });
+}
+inline matrix_status m_least_squares(const matrix *a, const matrix *b, matrix *out) {
+    return guarded([&] { *out = matrix(a->owned.least_squares(b->owned)); });
+}
 #endif

@@ -40,6 +40,9 @@ const char *m_error(matrix_status status) {
         case M_NOT_POSITIVE_DEFINITE: return "Cholesky requires an exactly symmetric positive definite matrix";
         case M_NOT_SYMMETRIC: return "eigendecomposition requires an exactly symmetric matrix";
         case M_NO_CONVERGENCE: return "eigendecomposition did not converge";
+        case M_SINGULAR: return "singular matrix: zero computed LU pivot";
+        case M_RANK_DEFICIENT: return "QR input is numerically rank deficient";
+        case M_SOLVER_RANGE: return "solver scaling or arithmetic exceeds the float64 range";
     }
     return "unknown matrix error";
 }
@@ -668,3 +671,42 @@ cleanup:
     for (size_t i = 0; i < 8; i++) m_free(buffers[i]);
     return status;
 }
+
+#include "solve_core.h"
+struct matrix_factor { la_factor *core; };
+static matrix_status solver_status(int status) {
+    switch(status){
+        case LA_OK:return M_OK;case LA_SHAPE:return M_SHAPE;case LA_MEMORY:return M_MEMORY;
+        case LA_RANGE:return M_SOLVER_RANGE;case LA_SINGULAR:return M_SINGULAR;
+        case LA_NOT_SPD:return M_NOT_POSITIVE_DEFINITE;case LA_RANK:return M_RANK_DEFICIENT;
+        default:return M_ARGUMENT;
+    }
+}
+matrix_status m_factorize(const matrix *source,matrix_factor_algorithm algorithm,matrix_factor **out){
+    if(!out||*out)return M_ARGUMENT;
+    matrix_status status=validate(source);if(status!=M_OK)return status;
+    matrix_factor *factor=calloc(1,sizeof(matrix_factor));if(!factor)return M_MEMORY;
+    status=solver_status(la_factor_create(source->rows,source->cols,source->values,algorithm,&factor->core));
+    if(status!=M_OK){free(factor);return status;}*out=factor;return M_OK;
+}
+void m_factor_free(matrix_factor **factor){
+    if(factor&&*factor){la_factor_destroy((*factor)->core);free(*factor);*factor=NULL;}
+}
+matrix_status m_factor_solve(const matrix_factor *factor,const matrix *rhs,matrix *out){
+    if(!factor||!factor->core||!empty_output(out)||rhs==out)return M_ARGUMENT;
+    matrix_status status=validate(rhs);if(status!=M_OK)return status;
+    if(rhs->rows!=factor->core->rows)return M_SHAPE;
+    matrix result={0};status=m_create(factor->core->cols,rhs->cols,&result);if(status!=M_OK)return status;
+    status=solver_status(la_factor_solve(factor->core,rhs->rows,rhs->cols,rhs->values,result.values,1));
+    if(status!=M_OK){m_free(&result);return status;}*out=result;return M_OK;
+}
+matrix_status m_factor_rcond(const matrix_factor *factor,double *out){
+    if(!factor||!out)return M_ARGUMENT;return solver_status(la_factor_rcond(factor->core,out));
+}
+static matrix_status solve_with(const matrix *source,const matrix *rhs,matrix *out,matrix_factor_algorithm algorithm){
+    if(source==out||rhs==out||!empty_output(out))return M_ARGUMENT;
+    matrix_factor *factor=NULL;matrix_status status=m_factorize(source,algorithm,&factor);
+    if(status==M_OK)status=m_factor_solve(factor,rhs,out);m_factor_free(&factor);return status;
+}
+matrix_status m_solve(const matrix *source,const matrix *rhs,matrix *out){return solve_with(source,rhs,out,M_LU);}
+matrix_status m_least_squares(const matrix *source,const matrix *rhs,matrix *out){return solve_with(source,rhs,out,M_QR);}

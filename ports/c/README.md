@@ -101,3 +101,9 @@ The shared numerical kernel in `general_eigen.h` is adapted from the
 [public-domain JAMA orthes/hqr2 implementation](https://math.nist.gov/javanumerics/jama/),
 based on Martin/Wilkinson and EISPACK. C++ uses the same general QR arithmetic
 with its own storage and public API; WebAssembly and ARM64 use this C API.
+
+## Linear systems
+
+See [the shared solver guide](../SOLVING.md) for this implementation’s reusable
+LU, Cholesky, and column-pivoted QR APIs, multiple right-hand sides, least squares,
+condition diagnostics, ownership, and numerical limits.

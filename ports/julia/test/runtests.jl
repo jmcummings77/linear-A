@@ -189,3 +189,17 @@ end
 end
 
 include("general_eigen.jl")
+
+@testset "Reusable solver snapshots" begin
+    for factorize in (factor_lu, factor_cholesky, factor_qr)
+        a, b = Matrix64(2,2,[4,1,1,3]), Matrix64(2,2,[6,5,7,4])
+        f = factorize(a)
+        a[1,1] = 99
+        for _ in 1:3
+            @test rowmajor(solve(f,b)) ≈ [1,1,2,1] atol=1e-12
+        end
+        @test reciprocal_condition(f) ≈ 0.44 atol=1e-12
+        @test rowmajor(b) == [6,5,7,4]
+        @test_throws DimensionMismatch solve(f,Matrix64(1,1))
+    end
+end

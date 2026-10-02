@@ -1,6 +1,7 @@
 module LinearAMatrices
 
-export eigen_general, eigen_symmetric, cross, rotation2d, rotationx, rotationy, rotationz, rotation_axis_angle,
+export Factorization, factor_lu, factor_cholesky, factor_qr, solve, least_squares, reciprocal_condition,
+       eigen_general, eigen_symmetric, cross, rotation2d, rotationx, rotationy, rotationz, rotation_axis_angle,
        Matrix64, identitymatrix, row, column, scale, trace, determinant, triangular, rowmajor, checksum, finite
 
 function finite(value::Real)
@@ -366,5 +367,6 @@ function checksum(a::Matrix64)
 end
 
 include("eigen_general.jl")
+include("solve.jl")
 
 end

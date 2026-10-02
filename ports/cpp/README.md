@@ -98,3 +98,9 @@ balancing and work scaling improve range handling; diagonal/triangular spectra
 retain their exact input entries. General eigenvectors need not be orthogonal
 or independent for defective matrices, and ill-conditioned problems retain
 floating-point accuracy limitations. The symmetric Jacobi API is unchanged.
+
+## Linear systems
+
+See [the shared solver guide](../SOLVING.md) for this implementation’s reusable
+LU, Cholesky, and column-pivoted QR APIs, multiple right-hand sides, least squares,
+condition diagnostics, ownership, and numerical limits.

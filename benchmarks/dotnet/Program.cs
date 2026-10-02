@@ -147,6 +147,10 @@ internal static class Program
             "add" => () => new(a + b!),
             "subtract" => () => new(a - b!),
             "multiply" => () => new(a * b!),
+            "solve" => () => new(a.Solve(b!)),
+            "solve_cholesky" => () => new(a.FactorCholesky().Solve(b!)),
+            "least_squares" => () => new(a.LeastSquares(b!)),
+            "rcond" => () => new(null, a.FactorLu().ReciprocalCondition()),
             "cross" => () => new(a.CrossProduct(b!)),
             "transpose" => () => new(a.Transpose()),
             "scale" => () => { var result = new Matrix<double>(a); result.Scale(scalar); return new(result); }
@@ -168,7 +172,7 @@ internal static class Program
             {
                 var rows = Number(args[2]);
                 var cols = Number(args[3]);
-                var binary = op is "add" or "subtract" or "multiply" or "cross";
+                var binary = op is "add" or "subtract" or "multiply" or "cross" or "solve" or "solve_cholesky" or "least_squares";
                 var hasScalar = op is "scale" or "rotation2d" or "rotation3d";
                 if (args.Length != (binary ? 6 : hasScalar ? 5 : 4)) throw new ArgumentException("Wrong argument count.");
                 var br = binary ? Number(args[4]) : 0;

@@ -96,6 +96,8 @@
 .geometry-camera{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin:14px 0}.geometry-camera label{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}.geometry-camera input{margin:0}
 
 #geometry-settings-open{display:inline-flex;align-items:center;justify-content:center;flex:none;background:transparent;color:#a6c3c6;border-color:#52676b;padding:7px}#geometry-settings{width:min(620px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:24px;box-shadow:0 20px 80px #0006}#geometry-settings::backdrop{background:#071017aa}.geometry-settings-head{display:flex;align-items:center;justify-content:space-between;gap:16px}.geometry-settings-head h3{margin:0}.geometry-loop{display:flex;align-items:center;gap:6px;align-self:center}.geometry-sampling{border:1px solid var(--line);border-radius:6px;padding:12px;margin:16px 0}.geometry-sampling legend{font-size:11px;color:var(--muted);font-weight:650}.geometry-grid-inputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.geometry-grid-inputs input{width:100%;min-width:0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)}.geometry-stage-head>span:nth-child(2){margin-left:auto}@media(max-width:600px){.geometry-stage-head>span:nth-child(2){display:none}}
+
+.accuracy-layout{display:grid;grid-template-columns:minmax(240px,1fr) minmax(300px,2fr);gap:24px}.accuracy-inputs{display:flex;gap:20px;margin:14px 0}.accuracy-matrix{display:grid;grid-template-columns:repeat(2,minmax(70px,1fr));gap:5px}.accuracy-rhs{display:grid;gap:5px;max-width:120px}.accuracy-inputs input,#accuracy-delta{font:12px ui-monospace,monospace;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:4px;padding:8px 5px;width:100%;min-width:0}.accuracy-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.accuracy-options label{display:grid;gap:5px}.accuracy-results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}.accuracy-results dt{font-size:11px;color:var(--muted)}.accuracy-results dd{margin:4px 0;font-family:ui-monospace,monospace;font-size:12px;overflow-wrap:anywhere}#accuracy-canvas{display:block;width:100%;height:320px}#accuracy-status{min-height:2.5em}@media(max-width:760px){.accuracy-layout{grid-template-columns:1fr}.accuracy-options{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1067,6 +1069,20 @@
   <p id="live-bundle" class="small"></p>
   <details id="live-export-details" hidden><summary>Live results JSON — available to copy</summary><pre id="live-export-json"></pre></details>
 </section>
+<section class="panel" id="accuracy-panel" aria-busy="false">
+  <div class="panel-head"><div><div class="eyebrow">Live / numerical accuracy</div><h2>Small changes. Different answers.</h2></div><span class="badge">WASM SOLVERS</span></div>
+  <p class="small">Solve Ax = b, then perturb one coefficient. Each equation is a line; their intersection is the solution. Nearly parallel lines make that intersection sensitive to tiny changes.</p>
+  <div class="accuracy-layout"><div>
+    <label>System preset<select id="accuracy-preset"><option value="stable">Well-conditioned</option><option value="sensitive">Nearly parallel</option><option value="singular">Singular</option><option value="custom">Custom</option></select></label>
+    <div class="accuracy-inputs"><div><span class="small">A · 2 × 2</span><div id="accuracy-a" class="accuracy-matrix"></div></div><div><span class="small">b · 2 × 1</span><div id="accuracy-b" class="accuracy-rhs"></div></div></div>
+    <div class="accuracy-options"><label>Factorization<select id="accuracy-algorithm"><option value="lu">Pivoted LU</option><option value="cholesky">Cholesky · SPD only</option><option value="qr">Pivoted Householder QR</option></select></label><label>Perturb entry<select id="accuracy-target"><option value="5">b₂</option><option value="4">b₁</option><option value="0">A₁₁</option><option value="1">A₁₂</option><option value="2">A₂₁</option><option value="3">A₂₂</option></select></label><label>Added perturbation Δ<input id="accuracy-delta" type="number" value="0.0000001" min="-1" max="1" step="0.0000001"></label></div>
+    <p class="small">Updates after a 300 ms pause. Solid lines and the blue point show the baseline; dashed lines and the pink point show the perturbed system. The view fits both solutions, up to ±10⁶.</p>
+  </div><div><canvas id="accuracy-canvas" role="img" aria-label="Two linear equations and their baseline and perturbed solution intersections"></canvas>
+    <dl class="accuracy-results"><div><dt>Solution x · baseline → perturbed</dt><dd id="accuracy-solution">—</dd></div><div><dt>Relative solution change · infinity norm</dt><dd id="accuracy-change">—</dd></div><div><dt>Reciprocal condition · infinity norm</dt><dd id="accuracy-condition">—</dd></div><div><dt>Residual ‖b − Ax‖∞</dt><dd id="accuracy-residual">—</dd></div><div><dt>Normwise backward error</dt><dd id="accuracy-backward">—</dd></div></dl>
+  </div></div>
+  <p id="accuracy-status" class="small" role="status" aria-live="polite">Loading accuracy playground…</p>
+  <details><summary>What these numbers mean</summary><p class="small">A small residual says the computed solution almost satisfies these equations. It does not say the solution is insensitive to the inputs. Backward error is ‖b − Ax‖∞ / (‖A‖∞ ‖x‖∞ + ‖b‖∞), with a zero denominator reported as zero. Reciprocal condition is 1 / (‖A‖∞ ‖A⁻¹‖∞): a value near zero indicates sensitivity. It is computed through solves, costs O(n³), and is not a certified bound. The solution-change figure compares two computed answers; it is not forward error against an exact answer. QR rejects numerical rank deficiency; Cholesky requires exact symmetry and positive computed pivots. Diagnostics also have floating-point rounding error. These live values are separate from the saved performance measurements below.</p></details>
+</section>
 <section class="panel geometry-panel panel-art" id="geometry-panel">
   <div class="panel-head"><div class="section-title"><span class="section-symbol"><svg class="shape-icon" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#report-art-sphere" width="100" height="100"></use></svg></span><div><div class="eyebrow">Geometry / a matrix in motion</div><h2>Watch the operator change</h2></div></div><span class="badge" id="geometry-badge">3 × 3 · FLOAT64 WASM</span></div>
   <p class="small">A matrix acts on every vector in space. Explore the field <strong>F(x) = Mx</strong>, then watch it blend into the field produced by a second operation.</p>
@@ -1825,6 +1841,87 @@ addEventListener('matrix-profile-focus',()=>{const p=profiles.find(p=>p.implemen
   new ResizeObserver(()=>render()).observe(canvas);
   applyPreset();
   if(canCompute)compute();
+})();
+</script>
+<script>// Sensitivity is visible as a moving intersection, with independent residuals.
+(() => {
+  const get=id=>document.getElementById(id), panel=get('accuracy-panel');
+  if(!panel)return;
+  const bundle=JSON.parse(get('live-data').textContent), canvas=get('accuracy-canvas'), ctx=canvas.getContext('2d');
+  const controls=Array.from(panel.querySelectorAll('input,select')), fields=[];
+  const presets={stable:[4,1,1,3,6,7],sensitive:[1,1,1,1.000001,2,2.000001],singular:[1,1,2,2,2,4]};
+  let timer, worker, workerURL, watchdog, request=0, result=null;
+  const status=(text)=>{get('accuracy-status').textContent=text;};
+  const format=value=>value===null?'undefined (zero baseline)':!Number.isFinite(value)?'outside float64 range':value===0?'0':Math.abs(value)<.001||Math.abs(value)>1e4?value.toExponential(3):value.toPrecision(6);
+  const vector=values=>`[${values.map(format).join(', ')}]`;
+  function clearResult(){
+    result=null;
+    for(const id of ['solution','change','condition','residual','backward'])get(`accuracy-${id}`).textContent='—';
+    draw();
+  }
+  function stop(){worker?.terminate();worker=null;if(workerURL)URL.revokeObjectURL(workerURL);workerURL=null;clearTimeout(watchdog);panel.setAttribute('aria-busy','false');}
+  function draw(){
+    const width=Math.max(280,canvas.clientWidth||640),height=320,dpr=Math.min(2,devicePixelRatio||1);
+    canvas.width=width*dpr;canvas.height=height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
+    const style=getComputedStyle(panel), ink=style.getPropertyValue('--muted').trim()||'#75868b';
+    const solutions=result?[result.base.x,...(result.perturbed?[result.perturbed.x]:[])]:[];
+    const extent=Math.max(3,...solutions.flat().map(v=>Math.min(1e6,Math.abs(v)*1.25))), scale=Math.min(width,height)/2/extent*.86;
+    const point=([x,y])=>[width/2+x*scale,height/2-y*scale];
+    ctx.strokeStyle=ink;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(0,height/2);ctx.lineTo(width,height/2);ctx.moveTo(width/2,0);ctx.lineTo(width/2,height);ctx.stroke();
+    ctx.fillStyle=ink;ctx.font='11px ui-monospace,monospace';ctx.fillText(`x₁ / x₂ · ±${format(extent)} · auto fit`,10,18);
+    if(!result)return;
+    function equation(a,b,row,color,dashed){
+      const u=a[row*2],v=a[row*2+1],rhs=b[row]; if(u===0&&v===0)return;
+      // Clip in world coordinates, avoiding giant offscreen canvas coordinates.
+      const ends=[];
+      if(v!==0)for(const x of [-extent,extent]){const y=(rhs-u*x)/v;if(Number.isFinite(y)&&Math.abs(y)<=extent)ends.push([x,y]);}
+      if(u!==0)for(const y of [-extent,extent]){const x=(rhs-v*y)/u;if(Number.isFinite(x)&&Math.abs(x)<=extent)ends.push([x,y]);}
+      if(ends.length<2)return;
+      ctx.strokeStyle=color;ctx.lineWidth=1.8;ctx.setLineDash(dashed?[5,5]:[]);ctx.beginPath();ctx.moveTo(...point(ends[0]));ctx.lineTo(...point(ends.at(-1)));ctx.stroke();ctx.setLineDash([]);
+    }
+    const colors=['#2a9d8f','#e58b47'];
+    for(let row=0;row<2;row++){equation(result.a,result.b,row,colors[row],false);if(result.perturbed)equation(result.perturbed_a,result.perturbed_b,row,colors[row],true);}
+    solutions.forEach((x,index)=>{const p=point(x);if(!p.every(Number.isFinite)||Math.abs(p[0])>width*2||Math.abs(p[1])>height*2)return;ctx.fillStyle=index?'#e25492':'#528dec';ctx.beginPath();ctx.arc(...p,index?5:7,0,Math.PI*2);ctx.fill();ctx.fillText(index?'perturbed':'baseline',p[0]+10,p[1]+(index?16:-12));});
+  }
+  function show(data){
+    result=data.result;const r=result,b=r.base,p=r.perturbed;
+    get('accuracy-solution').textContent=p?`${vector(b.x)} → ${vector(p.x)}`:vector(b.x);
+    get('accuracy-change').textContent=p?format(r.relative_solution_change):'perturbed solve rejected';
+    get('accuracy-condition').textContent=`${format(b.reciprocal_condition)}${p?' → '+format(p.reciprocal_condition):''}`;
+    get('accuracy-residual').textContent=`${format(b.residual_infinity)}${p?' → '+format(p.residual_infinity):''}`;
+    get('accuracy-backward').textContent=`${format(b.backward_error)}${p?' → '+format(p.backward_error):''}`;
+    status(`${data.checks.passed}/${data.checks.total} shared checks passed. Applied Δ = ${format(r.actual_delta)}.${r.perturbed_error?' Perturbed system: '+r.perturbed_error:''}${r.actual_delta===0&&Number(get('accuracy-delta').value)!==0?' The requested change rounded away in float64.':''}`);
+    draw();
+  }
+  function compute(){
+    clearTimeout(timer);const id=++request;clearResult();
+    if(!bundle.available||!bundle.accuracy_worker_source||typeof Worker==='undefined'||typeof WebAssembly==='undefined'){
+      status(bundle.reason||'Regenerate this report with a current WASM build to enable the accuracy playground.');return;
+    }
+    const values=fields.map(input=>input.value.trim()===''?NaN:Number(input.value));
+    const input=get('accuracy-delta'),delta=input.value.trim()===''?NaN:Number(input.value);
+    if(values.some(v=>!Number.isFinite(v)||Math.abs(v)>1e6)||!Number.isFinite(delta)||Math.abs(delta)>1){status('Use finite matrix entries between −10⁶ and 10⁶ and a perturbation between −1 and 1.');return;}
+    try{
+      if(!worker){
+        workerURL=URL.createObjectURL(new Blob([bundle.accuracy_worker_source],{type:'text/javascript'}));worker=new Worker(workerURL,{type:'module',name:'matrix-accuracy'});
+        worker.onmessage=({data})=>{if(data.id!==request)return;clearTimeout(watchdog);panel.setAttribute('aria-busy','false');if(data.type==='accuracy')show(data);else{clearResult();status(data.message);}};
+        worker.onerror=()=>{stop();clearResult();status('The accuracy worker could not run. Reload the report to retry.');};
+      }
+      panel.setAttribute('aria-busy','true');status('Solving in WebAssembly…');
+      clearTimeout(watchdog);watchdog=setTimeout(()=>{++request;stop();clearResult();status('Accuracy calculation timed out. Change an input to retry.');},20000);
+      worker.postMessage({type:'accuracy',id,bundle,config:{a:values.slice(0,4),b:values.slice(4),delta,target:Number(get('accuracy-target').value),algorithm:get('accuracy-algorithm').value}});
+    }catch(error){stop();status(error.message);}
+  }
+  function schedule(){++request;clearTimeout(timer);clearTimeout(watchdog);panel.setAttribute('aria-busy','false');clearResult();status('Inputs changed; waiting for editing to pause…');timer=setTimeout(compute,300);}
+  for(let i=0;i<6;i++){
+    const input=document.createElement('input');input.type='number';input.step='any';input.min='-1000000';input.max='1000000';input.setAttribute('aria-label',i<4?`A row ${Math.floor(i/2)+1} column ${i%2+1}`:`b row ${i-3}`);input.addEventListener('input',()=>{get('accuracy-preset').value='custom';schedule();});fields.push(input);get(i<4?'accuracy-a':'accuracy-b').append(input);
+  }
+  function preset(){const values=presets[get('accuracy-preset').value];if(!values)return;fields.forEach((input,i)=>input.value=values[i]);schedule();}
+  get('accuracy-preset').addEventListener('change',preset);
+  controls.filter(input=>input.id!=='accuracy-preset').forEach(input=>input.addEventListener(input.tagName==='SELECT'?'change':'input',schedule));
+  addEventListener('resize',draw);addEventListener('pagehide',()=>{clearTimeout(timer);stop();});
+  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  preset();
 })();
 </script>
 </body></html>

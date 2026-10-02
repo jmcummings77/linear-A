@@ -176,3 +176,9 @@ not be orthogonal or independent for defective matrices; rounding and
 conditioning still limit accuracy. The symmetric `eigenSymmetric()` API remains
 available. The Node runner supports the `eigen_general` check and benchmark
 operation with split real/imaginary eigenvalues and eigenvector matrices.
+
+## Linear systems
+
+See [the shared solver guide](../SOLVING.md) for this implementation’s reusable
+LU, Cholesky, and column-pivoted QR APIs, multiple right-hand sides, least squares,
+condition diagnostics, ownership, and numerical limits.

@@ -52,6 +52,8 @@
 .geometry-camera{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin:14px 0}.geometry-camera label{display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}.geometry-camera input{margin:0}
 
 #geometry-settings-open{display:inline-flex;align-items:center;justify-content:center;flex:none;background:transparent;color:#a6c3c6;border-color:#52676b;padding:7px}#geometry-settings{width:min(620px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:24px;box-shadow:0 20px 80px #0006}#geometry-settings::backdrop{background:#071017aa}.geometry-settings-head{display:flex;align-items:center;justify-content:space-between;gap:16px}.geometry-settings-head h3{margin:0}.geometry-loop{display:flex;align-items:center;gap:6px;align-self:center}.geometry-sampling{border:1px solid var(--line);border-radius:6px;padding:12px;margin:16px 0}.geometry-sampling legend{font-size:11px;color:var(--muted);font-weight:650}.geometry-grid-inputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.geometry-grid-inputs input{width:100%;min-width:0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)}.geometry-stage-head>span:nth-child(2){margin-left:auto}@media(max-width:600px){.geometry-stage-head>span:nth-child(2){display:none}}
+
+.accuracy-layout{display:grid;grid-template-columns:minmax(240px,1fr) minmax(300px,2fr);gap:24px}.accuracy-inputs{display:flex;gap:20px;margin:14px 0}.accuracy-matrix{display:grid;grid-template-columns:repeat(2,minmax(70px,1fr));gap:5px}.accuracy-rhs{display:grid;gap:5px;max-width:120px}.accuracy-inputs input,#accuracy-delta{font:12px ui-monospace,monospace;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:4px;padding:8px 5px;width:100%;min-width:0}.accuracy-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.accuracy-options label{display:grid;gap:5px}.accuracy-results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}.accuracy-results dt{font-size:11px;color:var(--muted)}.accuracy-results dd{margin:4px 0;font-family:ui-monospace,monospace;font-size:12px;overflow-wrap:anywhere}#accuracy-canvas{display:block;width:100%;height:320px}#accuracy-status{min-height:2.5em}@media(max-width:760px){.accuracy-layout{grid-template-columns:1fr}.accuracy-options{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -77,6 +79,20 @@ __REPORT_ART__
   <p class="small live-result-note">Timing includes output allocation, calls between JavaScript and WASM, checksum consumption, and disposal. Browser timer resolution, JIT, scheduling, and other tabs can affect results. Live runs do not collect stack profiles.</p>
   <p id="live-bundle" class="small"></p>
   <details id="live-export-details" hidden><summary>Live results JSON — available to copy</summary><pre id="live-export-json"></pre></details>
+</section>
+<section class="panel" id="accuracy-panel" aria-busy="false">
+  <div class="panel-head"><div><div class="eyebrow">Live / numerical accuracy</div><h2>Small changes. Different answers.</h2></div><span class="badge">WASM SOLVERS</span></div>
+  <p class="small">Solve Ax = b, then perturb one coefficient. Each equation is a line; their intersection is the solution. Nearly parallel lines make that intersection sensitive to tiny changes.</p>
+  <div class="accuracy-layout"><div>
+    <label>System preset<select id="accuracy-preset"><option value="stable">Well-conditioned</option><option value="sensitive">Nearly parallel</option><option value="singular">Singular</option><option value="custom">Custom</option></select></label>
+    <div class="accuracy-inputs"><div><span class="small">A · 2 × 2</span><div id="accuracy-a" class="accuracy-matrix"></div></div><div><span class="small">b · 2 × 1</span><div id="accuracy-b" class="accuracy-rhs"></div></div></div>
+    <div class="accuracy-options"><label>Factorization<select id="accuracy-algorithm"><option value="lu">Pivoted LU</option><option value="cholesky">Cholesky · SPD only</option><option value="qr">Pivoted Householder QR</option></select></label><label>Perturb entry<select id="accuracy-target"><option value="5">b₂</option><option value="4">b₁</option><option value="0">A₁₁</option><option value="1">A₁₂</option><option value="2">A₂₁</option><option value="3">A₂₂</option></select></label><label>Added perturbation Δ<input id="accuracy-delta" type="number" value="0.0000001" min="-1" max="1" step="0.0000001"></label></div>
+    <p class="small">Updates after a 300 ms pause. Solid lines and the blue point show the baseline; dashed lines and the pink point show the perturbed system. The view fits both solutions, up to ±10⁶.</p>
+  </div><div><canvas id="accuracy-canvas" role="img" aria-label="Two linear equations and their baseline and perturbed solution intersections"></canvas>
+    <dl class="accuracy-results"><div><dt>Solution x · baseline → perturbed</dt><dd id="accuracy-solution">—</dd></div><div><dt>Relative solution change · infinity norm</dt><dd id="accuracy-change">—</dd></div><div><dt>Reciprocal condition · infinity norm</dt><dd id="accuracy-condition">—</dd></div><div><dt>Residual ‖b − Ax‖∞</dt><dd id="accuracy-residual">—</dd></div><div><dt>Normwise backward error</dt><dd id="accuracy-backward">—</dd></div></dl>
+  </div></div>
+  <p id="accuracy-status" class="small" role="status" aria-live="polite">Loading accuracy playground…</p>
+  <details><summary>What these numbers mean</summary><p class="small">A small residual says the computed solution almost satisfies these equations. It does not say the solution is insensitive to the inputs. Backward error is ‖b − Ax‖∞ / (‖A‖∞ ‖x‖∞ + ‖b‖∞), with a zero denominator reported as zero. Reciprocal condition is 1 / (‖A‖∞ ‖A⁻¹‖∞): a value near zero indicates sensitivity. It is computed through solves, costs O(n³), and is not a certified bound. The solution-change figure compares two computed answers; it is not forward error against an exact answer. QR rejects numerical rank deficiency; Cholesky requires exact symmetry and positive computed pivots. Diagnostics also have floating-point rounding error. These live values are separate from the saved performance measurements below.</p></details>
 </section>
 <section class="panel geometry-panel panel-art" id="geometry-panel">
   <div class="panel-head"><div class="section-title"><span class="section-symbol"><svg class="shape-icon" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#report-art-sphere" width="100" height="100"></use></svg></span><div><div class="eyebrow">Geometry / a matrix in motion</div><h2>Watch the operator change</h2></div></div><span class="badge" id="geometry-badge">3 × 3 · FLOAT64 WASM</span></div>
@@ -197,4 +213,5 @@ addEventListener('matrix-profile-focus',()=>{const p=profiles.find(p=>p.implemen
 <script id="live-data" type="application/json">__LIVE_DATA__</script>
 <script>__LIVE_SCRIPT__</script>
 <script>__GEOMETRY_SCRIPT__</script>
+<script>__ACCURACY_SCRIPT__</script>
 </body></html>

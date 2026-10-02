@@ -115,8 +115,8 @@ Correctness fixtures include rectangular and empty matrices, fractional values,
 shape errors, singular matrices, pivot changes, triangular checks, and seeded
 small determinants. Small determinant references use the independent permutation
 formula with rational arithmetic. These checks supplement each implementation's unit tests.
-There are 119 shared fixtures: 39 arithmetic, 23 symmetric eigenvalue, 20 general
-eigenvalue, and 37 cross-product/rotation cases. Eigenvalue cases cover known and
+There are 166 shared fixtures: 39 arithmetic, 23 symmetric eigenvalue, 20 general
+eigenvalue, 37 cross-product/rotation, and 47 solver cases. Eigenvalue cases cover known and
 repeated spectra, indefinite and singular matrices, extreme scales, empty results,
 and rejected invalid inputs. Symmetric checks compare the spectrum and verify
 `A Q = Q diag(values)` and `Qᵀ Q = I`. General checks compare the complete complex
@@ -260,13 +260,13 @@ exact durations for each JavaScript-to-WebAssembly call.
 ## Live WebAssembly in the report
 
 The live controls execute the C-backed WebAssembly API in your current browser.
-Choose the math checks to run all 119 shared fixtures, or choose addition,
+Choose the math checks to run all 166 shared fixtures, or choose addition,
 subtraction, scale, transpose, multiplication, trace, determinant, symmetric or general real
 eigenvalues/eigenvectors, cross products, or rotation construction to measure
 locally. Matrix sizes are limited to 16, 48,
 64, 128, or 256; determinant uses 4, 8, 16, 24, or 48, and eigendecomposition uses
 4, 8, 16, 32, or 48. Cross/3D-rotation size is fixed at 3 and 2D-rotation size at
-2. Select three or five samples. A benchmark first passes all 119 fixtures, then
+2. Select three or five samples. A benchmark first passes all 166 fixtures, then
 validates each batch's checksum. Eigenvalue workloads also validate the exact
 timed input's complete eigensystem before measurement; vector/rotation workloads
 check the complete result matrix independently before starting the clock.
@@ -504,3 +504,9 @@ is checked explicitly, and it is never selected automatically for arbitrary inpu
 The live report offers `determinant · Auto`, `determinant · LU`, `SPD determinant · LU`,
 and `SPD determinant · Cholesky`, using the same inputs and independent integer
 oracle in the browser. These live samples remain separate from saved measurements.
+
+The [accuracy playground](../ports/SOLVING.md) uses reusable WASM factors and
+independently recomputed residuals. Its perturbation experiments and shared
+solver correctness checks do not alter saved benchmark measurements. Solver
+operations are check-only additions to the harness; no solver timings have been
+added to the historical reports.

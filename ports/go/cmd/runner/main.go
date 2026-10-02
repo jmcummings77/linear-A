@@ -19,7 +19,7 @@ type operation string
 
 func parseOperation(value string) (operation, error) {
 	switch value {
-	case "add", "subtract", "scale", "transpose", "multiply", "cross", "rotation2d", "rotation3d", "trace", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "eigen_symmetric", "eigen_general", "triangular":
+	case "add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "eigen_symmetric", "eigen_general", "triangular":
 		return operation(value), nil
 	default:
 		return "", fmt.Errorf("unknown operation: %s", value)
@@ -27,7 +27,7 @@ func parseOperation(value string) (operation, error) {
 }
 
 func (op operation) binary() bool {
-	return op == "add" || op == "subtract" || op == "multiply" || op == "cross"
+	return op == "add" || op == "subtract" || op == "multiply" || op == "cross" || op == "solve" || op == "solve_cholesky" || op == "least_squares"
 }
 
 type outcome struct {
@@ -53,6 +53,24 @@ func execute(op operation, a, b *matrix.Matrix, scalar float64) (outcome, error)
 		result.matrix = a.Transpose()
 	case "multiply":
 		result.matrix, err = a.Multiply(b)
+	case "solve":
+		result.matrix, err = a.Solve(b)
+	case "least_squares":
+		result.matrix, err = a.LeastSquares(b)
+	case "solve_cholesky", "rcond":
+		var f *matrix.Factorization
+		if op == "rcond" {
+			f, err = a.FactorLU()
+		} else {
+			f, err = a.FactorCholesky()
+		}
+		if err == nil {
+			if op == "rcond" {
+				result.value, err = f.ReciprocalCondition()
+			} else {
+				result.matrix, err = f.Solve(b)
+			}
+		}
 	case "cross":
 		result.matrix, err = a.Cross(b)
 	case "rotation2d":

@@ -250,3 +250,9 @@ for the shared float64 workloads and copies inputs before calling mutating
 methods. The [benchmark guide](../benchmarks/README.md) describes verification,
 algorithm comparisons, timings, and profiles. Contribution guidance for every
 implementation is in [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## Linear systems
+
+`Matrix<double>` on .NET 10 provides solver extension methods. See the
+[shared solver guide](../ports/SOLVING.md) for reusable LU, Cholesky, and QR
+factors, multiple right-hand sides, least squares, and condition diagnostics.

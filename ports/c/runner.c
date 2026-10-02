@@ -43,7 +43,7 @@ static uint64_t now_ns(void) {
 #endif
 }
 static bool binary(const char *op) {
-    return !strcmp(op, "add") || !strcmp(op, "subtract") || !strcmp(op, "multiply") || !strcmp(op, "cross");
+    return !strcmp(op, "add") || !strcmp(op, "subtract") || !strcmp(op, "multiply") || !strcmp(op, "cross") || !strcmp(op,"solve") || !strcmp(op,"solve_cholesky") || !strcmp(op,"least_squares");
 }
 static bool rotation_operation(const char *op) { return !strcmp(op, "rotation2d") || !strcmp(op, "rotation3d"); }
 static bool determinant_operation(const char *op) {
@@ -51,7 +51,7 @@ static bool determinant_operation(const char *op) {
            !strcmp(op, "determinant_cholesky") || !strcmp(op, "determinant_spd_lu");
 }
 static bool spd_operation(const char *op) { return !strcmp(op, "determinant_cholesky") || !strcmp(op, "determinant_spd_lu"); }
-static bool scalar_result(const char *op) { return !strcmp(op, "trace") || determinant_operation(op); }
+static bool scalar_result(const char *op) { return !strcmp(op, "trace") || determinant_operation(op) || !strcmp(op,"rcond"); }
 static void read_values(matrix *value) {
     for (size_t i = 0; i < value->rows * value->cols; i++) {
         if (scanf("%lf", &value->values[i]) != 1 || !isfinite(value->values[i])) fail("expected exactly the requested finite matrix values");
@@ -61,6 +61,14 @@ static void execute(const char *op, const matrix *a, const matrix *b, double sca
     if (!strcmp(op, "add")) require(m_add(a, b, result));
     else if (!strcmp(op, "subtract")) require(m_subtract(a, b, result));
     else if (!strcmp(op, "multiply")) require(m_multiply(a, b, result));
+    else if (!strcmp(op, "solve")) require(m_solve(a,b,result));
+    else if (!strcmp(op, "least_squares")) require(m_least_squares(a,b,result));
+    else if (!strcmp(op, "solve_cholesky") || !strcmp(op,"rcond")) {
+        matrix_factor *factor = NULL;
+        require(m_factorize(a, !strcmp(op,"rcond") ? M_LU : M_CHOLESKY, &factor));
+        matrix_status status = !strcmp(op,"rcond") ? m_factor_rcond(factor,value) : m_factor_solve(factor,b,result);
+        m_factor_free(&factor); require(status);
+    }
     else if (!strcmp(op, "cross")) require(m_cross(a, b, result));
     else if (!strcmp(op, "rotation2d")) {
         if (a->rows || a->cols) fail("rotation2d requires empty 0 by 0 input");

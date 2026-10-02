@@ -1,5 +1,6 @@
 #load "GeneralEigen.fs"
 #load "Matrix.fs"
+#load "Solve.fs"
 open System.Numerics
 open System
 open LinearA
@@ -182,3 +183,16 @@ for invalid in [Double.NaN;Double.PositiveInfinity;Double.NegativeInfinity] do
 for limit in [0;-1;100001] do rejects (fun () -> generalRotation.EigenGeneral(maxIterations=limit) |> ignore)
 rejects (fun () -> Matrix.FromArray(3,3,[|1.;2.;3.;4.;5.;6.;7.;8.;10.|]).EigenGeneral(maxIterations=1) |> ignore)
 printfn "F# general eigenvalue and complex right-eigenvector checks passed"
+
+for algorithm in [Lu;Cholesky;Qr] do
+    let a = Matrix.FromArray(2,2,[|4.;1.;1.;3.|])
+    let b = Matrix.FromArray(2,2,[|6.;5.;7.;4.|])
+    let factor = Factorization(a,algorithm)
+    a[0,0] <- 99.
+    for _ in 1 .. 3 do
+        let x = factor.Solve(b).ToArray()
+        Array.iter2 near x [|1.;1.;2.;1.|]
+    near (factor.ReciprocalCondition()) 0.44
+    equal (b.ToArray()) [|6.;5.;7.;4.|]
+    rejects (fun () -> factor.Solve(Matrix(1,1)) |> ignore)
+printfn "F# reusable solver checks passed"

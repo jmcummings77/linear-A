@@ -1,7 +1,7 @@
 include(joinpath(@__DIR__, "src", "LinearAMatrices.jl"))
 using .LinearAMatrices
 
-const OPERATIONS = Set(["add", "subtract", "scale", "transpose", "multiply", "cross", "rotation2d", "rotation3d", "trace", "eigen_symmetric", "eigen_general", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "triangular"])
+const OPERATIONS = Set(["add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "eigen_symmetric", "eigen_general", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "triangular"])
 
 function integer(text, minimum=0, maximum=typemax(Int))
     value = parse(Int, text)
@@ -13,6 +13,10 @@ function operation(name, a, b=nothing, scalar=1.25)
     name == "add" && return a + b
     name == "subtract" && return a - b
     name == "multiply" && return a * b
+    name == "solve" && return solve(a,b)
+    name == "solve_cholesky" && return solve(factor_cholesky(a),b)
+    name == "least_squares" && return least_squares(a,b)
+    name == "rcond" && return reciprocal_condition(factor_lu(a))
     name == "cross" && return cross(a, b)
     if name == "rotation2d"
         size(a) == (0,0) || throw(ArgumentError("rotation2d expects an empty 0-by-0 input"))
@@ -34,7 +38,7 @@ end
 function check(args)
     (length(args) >= 3 && args[1] in OPERATIONS) || throw(ArgumentError("usage: check OP ROWS COLS [BROWS BCOLS | SCALAR]"))
     name, rows, cols = args[1], integer(args[2]), integer(args[3])
-    binary = name in ("add", "subtract", "multiply", "cross")
+    binary = name in ("add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares")
     has_scalar = name in ("scale", "rotation2d", "rotation3d")
     length(args) == (binary ? 5 : has_scalar ? 4 : 3) || throw(ArgumentError("incorrect number of operation arguments"))
     brows, bcols = binary ? (integer(args[4]), integer(args[5])) : (0, 0)

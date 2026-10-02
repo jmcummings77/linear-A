@@ -7,13 +7,29 @@
 typedef struct { size_t rows, cols; double *values; } matrix;
 typedef enum {
     M_OK, M_ARGUMENT, M_SHAPE, M_INDEX, M_MEMORY, M_NONFINITE,
-    M_ALGORITHM, M_NOT_POSITIVE_DEFINITE, M_NOT_SYMMETRIC, M_NO_CONVERGENCE
+    M_ALGORITHM, M_NOT_POSITIVE_DEFINITE, M_NOT_SYMMETRIC, M_NO_CONVERGENCE,
+    M_SINGULAR, M_RANK_DEFICIENT, M_SOLVER_RANGE
 } matrix_status;
 typedef enum {
     M_DETERMINANT_AUTO = 0,
     M_DETERMINANT_LU = 1,
     M_DETERMINANT_CHOLESKY = 2
 } matrix_determinant_algorithm;
+
+typedef enum { M_LU=1, M_CHOLESKY=2, M_QR=3 } matrix_factor_algorithm;
+typedef struct matrix_factor matrix_factor;
+/* Factors own a snapshot; initialize *out to NULL, then free with m_factor_free.
+ * QR uses column pivoting and requires rows >= cols and numerical full rank.
+ * LU requires square input and nonzero computed pivots; Cholesky additionally
+ * requires exact symmetry and positive computed pivots. Inputs are unchanged. */
+matrix_status m_factorize(const matrix *source, matrix_factor_algorithm algorithm, matrix_factor **out);
+void m_factor_free(matrix_factor **factor);
+matrix_status m_factor_solve(const matrix_factor *factor, const matrix *rhs, matrix *out);
+/* Computed infinity-norm reciprocal condition for square factors, O(n^3).
+ * Diagnostic only, not a certified bound. Empty returns 1; inverse overflow 0. */
+matrix_status m_factor_rcond(const matrix_factor *factor, double *out);
+matrix_status m_solve(const matrix *source, const matrix *rhs, matrix *out);
+matrix_status m_least_squares(const matrix *source, const matrix *rhs, matrix *out);
 
 /* Initialize every output with {0}; free it before reusing it as an output.
  * Successful outputs own their allocation. Errors leave outputs unchanged.

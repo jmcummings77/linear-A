@@ -92,3 +92,9 @@ part of this API. The existing symmetric solver retains its stricter contract.
 The runner's `eigen_general` operation supports both correctness checks and the
 shared block-triangular benchmark described in the
 [runner protocol](../../benchmarks/PROTOCOL.md).
+
+## Linear systems
+
+See [the shared solver guide](../SOLVING.md) for this implementation’s reusable
+LU, Cholesky, and column-pivoted QR APIs, multiple right-hand sides, least squares,
+condition diagnostics, ownership, and numerical limits.

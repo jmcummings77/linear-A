@@ -193,3 +193,17 @@ verify the complete spectrum with multiplicities and every complex residual
 `A v − λ v`, plus unit column norms. Consume all results with
 `sum((i+1)*(real[i]+abs(imag[i]))) + sum(Vreal²+Vimag²)` per iteration.
 The matrix sizes match the symmetric eigen workload.
+
+## Linear-system correctness operations
+
+`check solve ROWS COLS BROWS BCOLS`, `check solve_cholesky ...`, and
+`check least_squares ...` read row-major A followed by row-major B and return a
+matrix JSON object. BROWS must equal ROWS. The output shape is COLS × BCOLS.
+LU and Cholesky require square A; QR least squares requires ROWS ≥ COLS and
+numerical full column rank. `check rcond ROWS COLS` reads square A, factors it
+with LU, and returns a scalar JSON object. Singular or otherwise invalid inputs
+exit nonzero. Empty factors and zero-column right-hand sides are supported.
+
+These operations are added to shared correctness checking, not the selectable
+benchmark suites. The [solver guide](../ports/SOLVING.md) defines pivoting,
+QR rank thresholds, scaling failures, and the computed condition diagnostic.

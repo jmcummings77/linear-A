@@ -402,7 +402,38 @@ static int general_tests(void) {
     return 0;
 }
 
+static int solver_tests(void) {
+    for (int algorithm=M_LU; algorithm<=M_QR; algorithm++) {
+        matrix a={0}, b={0}, x={0}; matrix_factor *factor=NULL;
+        const double av[]={4,1,1,3}, bv[]={6,5,7,4}, expected[]={1,1,2,1};
+        OK(m_from_array(2,2,av,&a)); OK(m_from_array(2,2,bv,&b));
+        OK(m_factorize(&a,(matrix_factor_algorithm)algorithm,&factor));
+        CHECK(m_factorize(&a,M_LU,&factor)==M_ARGUMENT);
+        a.values[0]=99; m_free(&a);
+        for(int run=0;run<3;run++) {
+            OK(m_factor_solve(factor,&b,&x));
+            for(size_t i=0;i<4;i++)CHECK(fabs(x.values[i]-expected[i])<1e-12);
+            CHECK(m_factor_solve(factor,&b,&x)==M_ARGUMENT); m_free(&x);
+        }
+        CHECK(m_factor_solve(factor,&b,&b)==M_ARGUMENT);
+        CHECK(b.values[0]==6);
+        double rcond=-1; OK(m_factor_rcond(factor,&rcond)); CHECK(fabs(rcond-.44)<1e-12);
+        OK(m_create(1,1,&a)); CHECK(m_factor_solve(factor,&a,&x)==M_SHAPE); CHECK(x.values==NULL);
+        b.values[0]=INFINITY; CHECK(m_factor_solve(factor,&b,&x)==M_NONFINITE); CHECK(x.values==NULL);
+        m_factor_free(&factor); m_factor_free(&factor); CHECK(factor==NULL);
+        CHECK(m_factor_solve(factor,&a,&x)==M_ARGUMENT);
+        m_free(&a); m_free(&b);
+    }
+    matrix singular={0}; matrix_factor *factor=NULL;
+    const double values[]={1,2,2,4}; OK(m_from_array(2,2,values,&singular));
+    CHECK(m_factorize(&singular,M_LU,&factor)==M_SINGULAR); CHECK(factor==NULL);
+    CHECK(m_solve(&singular,&singular,&singular)==M_ARGUMENT); CHECK(singular.values[0]==1);
+    m_free(&singular);
+    return 0;
+}
+
 int main(void) {
+    CHECK(solver_tests() == 0);
     CHECK(general_tests() == 0);
     CHECK(determinant_tests() == 0);
     CHECK(eigen_tests() == 0);

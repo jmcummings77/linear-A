@@ -49,6 +49,8 @@ class LiveReportTests(unittest.TestCase):
         self.wrapper.write_text("export async function createMatrixAPI() {}\n")
         self.worker.write_text("self.onmessage = () => {};\n")
         self.ui.write_text("void 0;\n")
+        (self.root / "benchmarks/accuracy-worker.mjs").write_text("export function computeAccuracy() {}\n")
+        (self.root / "benchmarks/accuracy-report.mjs").write_text("void 0;\n")
         self.module = self.build / "matrix.mjs"
         self.module.write_text("export default async function createModule() { return {}; }\n")
         self.binary = self.build / "matrix.wasm"
@@ -80,7 +82,7 @@ class LiveReportTests(unittest.TestCase):
         self.assertEqual(base64.b64decode(bundle["wasm_base64"], validate=True), self.binary.read_bytes())
         self.assertEqual(bundle["byte_length"], len(self.binary.read_bytes()))
         self.assertRegex(bundle["sha256"], r"^[0-9a-f]{64}$")
-        self.assertEqual(len(bundle["fixtures"]), 39 + len(report.eigen_fixtures()) + len(report.general_eigen_fixtures()) + len(report.vector_fixtures()))
+        self.assertEqual(len(bundle["fixtures"]), 39 + len(report.eigen_fixtures()) + len(report.general_eigen_fixtures()) + len(report.vector_fixtures()) + len(report.solve_fixtures()))
         self.assertTrue(any(case["op"] == "eigen_symmetric" for case in bundle["fixtures"]))
         # The independent oracle returns Fraction values for multiplication.
         # Packaging must normalize them while retaining JSON booleans as bools.

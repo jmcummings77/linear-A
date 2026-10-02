@@ -3,5 +3,5 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-  <ItemGroup><Compile Include="GeneralEigen.fs" /><Compile Include="Matrix.fs" /></ItemGroup>
+  <ItemGroup><Compile Include="GeneralEigen.fs" /><Compile Include="Matrix.fs" /><Compile Include="Solve.fs" /></ItemGroup>
 </Project>

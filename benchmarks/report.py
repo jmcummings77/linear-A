@@ -9,6 +9,7 @@ import re
 from reference import fixtures as arithmetic_fixtures
 from eigen_reference import eigen_fixtures
 from general_eigen_reference import general_eigen_fixtures
+from solve_reference import solve_fixtures
 from vector_reference import vector_fixtures
 from publication import PublicSanitizer
 from wasm_publication import sanitize_live_sources
@@ -33,6 +34,7 @@ def live_bundle(data, wasm_directory=None, include_live=True, sanitizer=None, tr
             "module_source": (directory / "matrix.mjs").read_text(encoding="utf-8"),
             "wrapper_source": (ROOT / "ports/wasm/matrix.mjs").read_text(encoding="utf-8"),
             "worker_source": (ROOT / "benchmarks/live-worker.mjs").read_text(encoding="utf-8"),
+            "accuracy_worker_source": (ROOT / "benchmarks/accuracy-worker.mjs").read_text(encoding="utf-8"),
         }
     except (OSError, UnicodeError):
         return {"available": False, "reason": "The WebAssembly build is unavailable. Build the WASM port and regenerate this report to enable live tests."}
@@ -75,7 +77,7 @@ def live_bundle(data, wasm_directory=None, include_live=True, sanitizer=None, tr
             digest.update(json.dumps(extra["geometry_source"], sort_keys=True).encode("utf-8"))
         except (OSError, UnicodeError, ValueError, TypeError, AttributeError):
             pass
-    cases = json.loads(json.dumps(arithmetic_fixtures() + eigen_fixtures() + general_eigen_fixtures() + vector_fixtures(), default=float, allow_nan=False))
+    cases = json.loads(json.dumps(arithmetic_fixtures() + eigen_fixtures() + general_eigen_fixtures() + vector_fixtures() + solve_fixtures(), default=float, allow_nan=False))
     digest.update(b"fixtures\0")
     digest.update(json.dumps(cases, sort_keys=True, allow_nan=False).encode("utf-8"))
     return {"available": True, **sources, **extra, "wasm_base64": base64.b64encode(binary).decode("ascii"),
@@ -100,6 +102,7 @@ def render(data, destination, wasm_directory=None, include_live=True, trace_dire
                     "__TIMING_SCRIPT__": Path(__file__).with_name("timing-report.js").read_text(encoding="utf-8"),
                     "__THEME_SCRIPT__": Path(__file__).with_name("report-theme.js").read_text(encoding="utf-8"),
                     "__LIVE_SCRIPT__": script,
+                    "__ACCURACY_SCRIPT__": (ROOT / "benchmarks/accuracy-report.mjs").read_text(encoding="utf-8"),
                     "__GEOMETRY_SCRIPT__": geometry_script.read_text(encoding="utf-8") if geometry_script.is_file() else ""}
     html = re.sub("|".join(replacements), lambda match: replacements[match[0]], template)
     Path(destination).write_text(html, encoding="utf-8")

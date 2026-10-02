@@ -2,6 +2,8 @@
 #define LINEAR_A_CPP_MATRIX_HPP
 
 #include <algorithm>
+#include <memory>
+#include "../c/solve_core.h"
 #include "../c/general_eigen.h"
 #include <cmath>
 #include <cstddef>
@@ -14,6 +16,7 @@
 namespace linear_a {
 
 enum class DeterminantAlgorithm { Auto, Lu, Cholesky };
+class Factorization;
 struct SymmetricEigenResult;
 struct GeneralEigenResult;
 class NotSymmetricError : public std::invalid_argument {
@@ -314,6 +317,11 @@ public:
         return determinant_lu();
     }
     // Values ascend; corresponding unit eigenvectors are columns of vectors.
+    Factorization factor_lu() const;
+    Factorization factor_cholesky() const;
+    Factorization factor_qr() const;
+    Matrix solve(const Matrix& rhs) const;
+    Matrix least_squares(const Matrix& rhs) const;
     GeneralEigenResult eigen_general(std::size_t max_iterations = 1000) const;
     SymmetricEigenResult eigen_symmetric(double tolerance = 1e-12, std::size_t max_sweeps = 50) const;
     std::pair<bool, bool> triangular() const {
@@ -436,5 +444,39 @@ inline SymmetricEigenResult Matrix::eigen_symmetric(double tolerance, std::size_
     }
     return result;
 }
+class Factorization {
+    std::unique_ptr<la_factor,decltype(&la_factor_destroy)> factor_{nullptr,la_factor_destroy};
+    static void require(int status){
+        switch(status){
+            case LA_OK:return;
+            case LA_MEMORY:throw std::bad_alloc();
+            case LA_RANGE:throw std::overflow_error("solver scaling or arithmetic exceeds float64 range");
+            case LA_SINGULAR:throw std::invalid_argument("singular matrix: zero computed LU pivot");
+            case LA_NOT_SPD:throw std::invalid_argument("Cholesky requires exact symmetry and positive pivots");
+            case LA_RANK:throw std::invalid_argument("QR input is numerically rank deficient");
+            default:throw std::invalid_argument("invalid factorization or right-hand side shape");
+        }
+    }
+public:
+    Factorization(const Matrix& source,int algorithm){
+        la_factor *result=nullptr;
+        require(la_factor_create(source.rows(),source.cols(),source.values().data(),algorithm,&result));
+        factor_.reset(result);
+    }
+    Matrix solve(const Matrix& rhs) const {
+        if(!factor_)throw std::logic_error("factorization was moved");
+        if(rhs.rows()!=factor_->rows)throw std::invalid_argument("right-hand side row count must match factorization");
+        std::vector<double> values(factor_->cols*rhs.cols());
+        require(la_factor_solve(factor_.get(),rhs.rows(),rhs.cols(),rhs.values().data(),values.data(),1));
+        return Matrix(factor_->cols,rhs.cols(),values);
+    }
+    double reciprocal_condition() const {double result=0;require(la_factor_rcond(factor_.get(),&result));return result;}
+};
+inline Factorization Matrix::factor_lu() const{return Factorization(*this,LA_LU);}
+inline Factorization Matrix::factor_cholesky() const{return Factorization(*this,LA_CHOLESKY);}
+inline Factorization Matrix::factor_qr() const{return Factorization(*this,LA_QR);}
+inline Matrix Matrix::solve(const Matrix& rhs) const{return factor_lu().solve(rhs);}
+inline Matrix Matrix::least_squares(const Matrix& rhs) const{return factor_qr().solve(rhs);}
+
 }
 #endif

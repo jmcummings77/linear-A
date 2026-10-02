@@ -54,6 +54,8 @@ class GeometryReportTests(unittest.TestCase):
         (self.standard / "matrix.mjs").write_text("export default async function ordinary() {}\n")
         (self.trace / "matrix.mjs").write_text("export default async function instrumented() {}\n")
         files = {
+            "benchmarks/accuracy-worker.mjs": "export function computeAccuracy() {}\n",
+            "benchmarks/accuracy-report.mjs": "void 0;\n",
             "ports/wasm/matrix.mjs": "export async function createMatrixAPI() {}\n",
             "benchmarks/live-worker.mjs": "export async function runChecks() {}\n",
             "benchmarks/geometry-worker.mjs": "export async function computeGeometry() {}\n",
@@ -98,7 +100,7 @@ class GeometryReportTests(unittest.TestCase):
         self.assertEqual(bundle["geometry_source"], self.manifest)
         self.assertEqual(bundle["geometry_source"]["start_line"] + 2, 175)
         self.assertIn("m_trace_record", bundle["geometry_source"]["lines"][2])
-        self.assertEqual(len(bundle["fixtures"]), 39 + len(report.eigen_fixtures()) + len(report.general_eigen_fixtures()) + len(report.vector_fixtures()))
+        self.assertEqual(len(bundle["fixtures"]), 39 + len(report.eigen_fixtures()) + len(report.general_eigen_fixtures()) + len(report.vector_fixtures()) + len(report.solve_fixtures()))
         self.assertEqual(self.data, before)
 
     def test_hash_tracks_worker_trace_module_binary_and_build_source_manifest(self):

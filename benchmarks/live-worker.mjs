@@ -21,6 +21,10 @@ function operation(name, a, b, scalar = 1.25) {
     case "add": return a.add(b);
     case "subtract": return a.subtract(b);
     case "multiply": return a.multiply(b);
+    case "solve": return a.solve(b);
+    case "least_squares": return a.leastSquares(b);
+    case "solve_cholesky": { const f = a.factorCholesky(); try { return f.solve(b); } finally { f.dispose(); } }
+    case "rcond": { const f = a.factorLU(); try { return f.reciprocalCondition(); } finally { f.dispose(); } }
     case "cross": return a.cross(b);
     case "rotation2d":
       if (a.rows !== 0 || a.cols !== 0) throw new RangeError("rotation2d expects an empty 0-by-0 input");
@@ -211,7 +215,7 @@ export async function runChecks(Matrix, fixtures, onProgress = () => {}) {
     const check = { name: String(fixture.name), passed: false };
     let a, b, result;
     try {
-      if (!OPERATIONS.has(fixture.op) && fixture.op !== "triangular") throw new Error("fixture has an unsupported operation");
+      if (!OPERATIONS.has(fixture.op) && !["triangular", "solve", "solve_cholesky", "least_squares", "rcond"].includes(fixture.op)) throw new Error("fixture has an unsupported operation");
       if (typeof fixture.invalid !== "boolean") throw new Error("fixture invalid flag must be boolean");
       a = new Matrix(fixture.a.rows, fixture.a.cols, fixture.a.values);
       if (fixture.b !== null && fixture.b !== undefined) b = new Matrix(fixture.b.rows, fixture.b.cols, fixture.b.values);

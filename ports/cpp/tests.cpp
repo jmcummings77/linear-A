@@ -277,7 +277,26 @@ static void general_tests() {
     throws<std::overflow_error>([&] { (void)corrupt.eigen_general(); });
 }
 
+static void solver_tests() {
+    for(int algorithm=LA_LU; algorithm<=LA_QR; algorithm++) {
+        Matrix a(2,2,{4,1,1,3}), b(2,2,{6,5,7,4});
+        linear_a::Factorization factor(a,algorithm);
+        a.set(0,0,99);
+        for(int run=0;run<3;run++) {
+            auto x=factor.solve(b); const double expected[]={1,1,2,1};
+            for(size_t i=0;i<4;i++) CHECK(std::abs(x.values()[i]-expected[i])<1e-12);
+        }
+        CHECK(std::abs(factor.reciprocal_condition()-.44)<1e-12);
+        CHECK(b.values()[0]==6);
+        throws<std::invalid_argument>([&]{(void)factor.solve(Matrix(1,1));});
+        auto moved=std::move(factor);
+        throws<std::logic_error>([&]{(void)factor.solve(b);});
+        CHECK(std::abs(moved.solve(b).values()[0]-1)<1e-12);
+    }
+}
+
 int main() {
+    solver_tests();
     general_tests();
     determinant_tests();
     eigen_tests();

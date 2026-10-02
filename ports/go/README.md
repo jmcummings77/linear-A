@@ -127,3 +127,9 @@ vector components in the checksum.
 
 Exact triangular eigenvalues retain the original diagonal entries, including
 mixed huge/tiny values that cannot coexist in a uniformly scaled workspace.
+
+## Linear systems
+
+See [the shared solver guide](../SOLVING.md) for this implementation’s reusable
+LU, Cholesky, and column-pivoted QR APIs, multiple right-hand sides, least squares,
+condition diagnostics, ownership, and numerical limits.

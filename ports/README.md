@@ -4,7 +4,8 @@ Eleven reusable implementations provide the same float64 matrix operations:
 construction, identity matrices, dimensions, indexed access, independent copying,
 row/column extraction, addition, subtraction, scaling, transpose, multiplication,
 trace, determinant, symmetric and general real eigendecomposition, 3D vector
-cross products, rotation factories, and triangular classification. Each has its
+cross products, rotation factories, linear-system solves, reusable factors,
+QR least squares, and triangular classification. Each has its
 own public API, tests, and runner for the [shared protocol](../benchmarks/PROTOCOL.md).
 
 The comparison contract uses IEEE 754 double precision. Language-specific APIs
@@ -29,9 +30,9 @@ code is deliberately shared:
 
 - ARM64 uses assembly arithmetic kernels with C allocation, validation, ownership,
   indexing, row/column extraction, triangular checks, and determinant pivot
-  control. Both eigensolvers and rotation factories execute in C; cross products
+  control. Both eigensolvers, linear-system solvers, and rotation factories execute in C; cross products
   use an ARM64 component kernel. Timings include this support work.
-- C and C++ share the general Hessenberg/QR eigensolver's numerical kernel.
+- C and C++ share the general Hessenberg/QR eigensolver and system-factorization kernels.
   Their public APIs and storage management remain language-specific.
 - WebAssembly compiles the C implementation with Emscripten. Its asynchronous
   JavaScript factory supports Node.js and browsers, with explicit `dispose()`
@@ -58,8 +59,10 @@ positive definiteness. Cholesky requires exact symmetry and positive computed
 pivots. Both factorizations cost cubic arithmetic work; Cholesky uses roughly
 half as many factorization operations on its narrower input domain. Separate
 pivot mantissas and exponents prevent premature product overflow or underflow.
-Rounding, cancellation, and extreme dynamic-range limitations remain; no
-conditioning estimate is provided.
+Rounding, cancellation, and extreme dynamic-range limitations remain. Square
+solver factors expose a computed reciprocal condition diagnostic; see
+[linear systems and numerical accuracy](SOLVING.md) for all eleven APIs, shapes,
+rank decisions, ownership, and limitations.
 
 C# additionally offers `Matrix<T>` with integer, decimal, and `BigInteger`
 behavior, exact Bareiss elimination, and explicit cofactor expansion. Those
@@ -191,8 +194,8 @@ toolchain, choose an explicit subset:
 python3 benchmarks/run.py --verify-only --implementations c go python --require-all --output benchmarks/reports/verification
 ```
 
-Verification covers 119 shared fixtures: 39 arithmetic, 23 symmetric eigenvalue,
-20 general eigenvalue, and 37 cross-product/rotation cases. Eigenvalue tests
+Verification covers 166 shared fixtures: 39 arithmetic, 23 symmetric eigenvalue,
+20 general eigenvalue, 37 cross-product/rotation, and 47 solver cases. Eigenvalue tests
 compare independent spectra and residuals, plus orthogonality for symmetric
 results or unit complex column norms for general results. They do not require
 a particular sign, complex phase, or basis within a repeated eigenspace.

@@ -4,7 +4,7 @@ import { Matrix, finite, type GeneralEigenDecomposition, type SymmetricEigenDeco
 
 const determinants = new Set(["determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"]);
 const operations = new Set(["add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
-  "cross", "rotation2d", "rotation3d", ...determinants]);
+  "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", ...determinants]);
 
 function integer(text: string, minimum = 0, maximum = Number.MAX_SAFE_INTEGER): number {
   if (!/^[+-]?\d+$/.test(text)) throw new RangeError("expected an integer argument");
@@ -23,6 +23,10 @@ export function operation(name: string, a: Matrix, b?: Matrix, scalar = 1.25): M
     case "add": return a.add(b!);
     case "subtract": return a.subtract(b!);
     case "multiply": return a.multiply(b!);
+    case "solve": return a.solve(b!);
+    case "least_squares": return a.leastSquares(b!);
+    case "solve_cholesky": { return a.factorCholesky().solve(b!); }
+    case "rcond": { return a.factorLU().reciprocalCondition(); }
     case "cross": return a.cross(b!);
     case "rotation2d":
       if (a.rows !== 0 || a.cols !== 0) throw new RangeError("2D rotation construction expects a 0 by 0 input");
@@ -46,7 +50,7 @@ function check(args: string[]): object {
   if (args.length < 3 || !operations.has(args[0])) throw new RangeError("usage: check OP ROWS COLS [BROWS BCOLS | SCALAR]");
   const [name] = args;
   const rows = integer(args[1]), cols = integer(args[2]);
-  const binary = ["add", "subtract", "multiply", "cross"].includes(name);
+  const binary = ["add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares"].includes(name);
   const scalarOperation = ["scale", "rotation2d", "rotation3d"].includes(name);
   if (args.length !== (binary ? 5 : scalarOperation ? 4 : 3)) throw new RangeError("incorrect number of operation arguments");
   const brows = binary ? integer(args[3]) : 0, bcols = binary ? integer(args[4]) : 0;

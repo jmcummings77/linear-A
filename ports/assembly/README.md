@@ -43,3 +43,9 @@ Empty dimensions are supported. Float64 rounding, cancellation, underflow, and
 intermediate overflow limitations also match the C implementation. Tests exercise
 the same API with the assembly kernels linked. See the
 [shared runner protocol](../../benchmarks/PROTOCOL.md) for check/bench requests.
+
+## Linear systems
+
+See [the shared solver guide](../SOLVING.md) for this implementation’s reusable
+LU, Cholesky, and column-pivoted QR APIs, multiple right-hand sides, least squares,
+condition diagnostics, ownership, and numerical limits.

@@ -411,6 +411,24 @@ class Matrix:
                 vectors._values[row*n+col] = q._values[row*n+original]*sign/length
         return SymmetricEigenDecomposition([values[index] for index in order], vectors)
 
+    def factor_lu(self):
+        from solve import Factorization
+        return Factorization(self, "lu")
+
+    def factor_cholesky(self):
+        from solve import Factorization
+        return Factorization(self, "cholesky")
+
+    def factor_qr(self):
+        from solve import Factorization
+        return Factorization(self, "qr")
+
+    def solve(self, rhs):
+        return self.factor_lu().solve(rhs)
+
+    def least_squares(self, rhs):
+        return self.factor_qr().solve(rhs)
+
     def checksum(self):
         size = len(self._values)
         return finite(self._values[0] + self._values[size // 2] + self._values[-1]) if size else 0.0

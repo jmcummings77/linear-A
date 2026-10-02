@@ -205,3 +205,12 @@ double wm_checksum(const matrix *a) {
     last_status = isfinite(result) ? M_OK : M_NONFINITE;
     return result;
 }
+
+matrix_factor *wm_factorize(const matrix *source,int algorithm){
+    matrix_factor *factor=NULL;last_status=m_factorize(source,(matrix_factor_algorithm)algorithm,&factor);return factor;
+}
+void wm_factor_destroy(matrix_factor *factor){m_factor_free(&factor);}
+matrix *wm_factor_solve(const matrix_factor *factor,const matrix *rhs){
+    matrix *result=allocate_handle();return result?complete(result,m_factor_solve(factor,rhs,result)):NULL;
+}
+double wm_factor_rcond(const matrix_factor *factor){double result=0;last_status=m_factor_rcond(factor,&result);return result;}

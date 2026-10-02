@@ -15,6 +15,10 @@ enum Operation {
     Scale,
     Transpose,
     Multiply,
+    Solve,
+    SolveCholesky,
+    LeastSquares,
+    Rcond,
     Cross,
     Rotation2D,
     Rotation3D,
@@ -36,6 +40,10 @@ impl Operation {
             "scale" => Ok(Self::Scale),
             "transpose" => Ok(Self::Transpose),
             "multiply" => Ok(Self::Multiply),
+            "solve" => Ok(Self::Solve),
+            "solve_cholesky" => Ok(Self::SolveCholesky),
+            "least_squares" => Ok(Self::LeastSquares),
+            "rcond" => Ok(Self::Rcond),
             "cross" => Ok(Self::Cross),
             "rotation2d" => Ok(Self::Rotation2D),
             "rotation3d" => Ok(Self::Rotation3D),
@@ -54,7 +62,13 @@ impl Operation {
     fn binary(self) -> bool {
         matches!(
             self,
-            Self::Add | Self::Subtract | Self::Multiply | Self::Cross
+            Self::Add
+                | Self::Subtract
+                | Self::Multiply
+                | Self::Cross
+                | Self::Solve
+                | Self::SolveCholesky
+                | Self::LeastSquares
         )
     }
 }
@@ -150,6 +164,10 @@ fn execute(
         Operation::Scale => Outcome::Matrix(a.scale(scalar)?),
         Operation::Transpose => Outcome::Matrix(a.transpose()?),
         Operation::Multiply => Outcome::Matrix(a.multiply(second()?)?),
+        Operation::Solve => Outcome::Matrix(a.solve(second()?)?),
+        Operation::SolveCholesky => Outcome::Matrix(a.factor_cholesky()?.solve(second()?)?),
+        Operation::LeastSquares => Outcome::Matrix(a.least_squares(second()?)?),
+        Operation::Rcond => Outcome::Scalar(a.factor_lu()?.reciprocal_condition()?),
         Operation::Cross => Outcome::Matrix(a.cross(second()?)?),
         Operation::Rotation2D => {
             if a.rows() != 0 || a.cols() != 0 {

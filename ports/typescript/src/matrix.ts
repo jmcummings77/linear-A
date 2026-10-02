@@ -1,3 +1,5 @@
+import { Factorization } from "./solve.js";
+export { Factorization } from "./solve.js";
 import { generalEigen } from "./general-eigen.js";
 
 /** Dependency-free float64 matrix with owned, contiguous row-major storage. */
@@ -415,6 +417,12 @@ export class Matrix {
     }
     return { values: sorted, vectors };
   }
+
+  factorLU():Factorization { return new Factorization(this,"lu"); }
+  factorCholesky():Factorization { return new Factorization(this,"cholesky"); }
+  factorQR():Factorization { return new Factorization(this,"qr"); }
+  solve(rhs:Matrix):Matrix { return this.factorLU().solve(rhs); }
+  leastSquares(rhs:Matrix):Matrix { return this.factorQR().solve(rhs); }
 
   checksum(): number {
     const n = this.data.length;

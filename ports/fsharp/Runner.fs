@@ -49,6 +49,10 @@ let operation op (a: Matrix) (b: Matrix) scalar =
     | "add" -> MatrixResult(a.Add(b))
     | "subtract" -> MatrixResult(a.Subtract(b))
     | "multiply" -> MatrixResult(a.Multiply(b))
+    | "solve" -> MatrixResult(a.Solve(b))
+    | "solve_cholesky" -> MatrixResult(a.FactorCholesky().Solve(b))
+    | "least_squares" -> MatrixResult(a.LeastSquares(b))
+    | "rcond" -> ScalarResult(a.FactorLu().ReciprocalCondition())
     | "cross" -> MatrixResult(a.Cross(b))
     | "rotation2d" ->
         if a.Rows <> 0 || a.Cols <> 0 then invalidArg "matrix" "rotation2d expects an empty 0-by-0 input."
@@ -102,7 +106,7 @@ let main args =
         match args[0] with
         | "check" ->
             let rows, cols = number false args[2], number false args[3]
-            let binary = op = "add" || op = "subtract" || op = "multiply" || op = "cross"
+            let binary = op = "add" || op = "subtract" || op = "multiply" || op = "cross" || op = "solve" || op = "solve_cholesky" || op = "least_squares"
             let hasScalar = op = "scale" || op = "rotation2d" || op = "rotation3d"
             if args.Length <> (if binary then 6 elif hasScalar then 5 else 4) then
                 invalidArg "args" "Wrong argument count."

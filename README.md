@@ -38,7 +38,7 @@ compatibility APIs are described in the relevant language guide.
 
 Some numerical kernels are shared. ARM64 assembly uses C for allocation,
 validation, and selected algorithms; WebAssembly compiles the C implementation;
-C++ shares the general eigensolver kernel with C. These boundaries are included
+C++ shares the general eigensolver and linear-system factorization kernels with C. These boundaries are included
 in the documentation and benchmark notes. No implementation calls BLAS, NumPy,
 or another numerical library.
 
@@ -47,7 +47,8 @@ or another numerical library.
 The implementations provide construction and identity matrices, indexed access,
 independent copies, row/column extraction, addition, subtraction, scaling,
 transpose, matrix multiplication, trace, determinants, triangular classification,
-eigenvalues and eigenvectors, 3D vector cross products, and rotation matrices.
+eigenvalues and eigenvectors, linear-system solving, least squares, 3D vector
+cross products, and rotation matrices.
 Rectangular matrices are supported wherever the operation permits them.
 
 For example, multiplying this rectangular matrix by its transpose produces the
@@ -66,6 +67,9 @@ The shared shape and mathematical conventions are:
 - Determinants offer automatic selection, partial-pivot LU, and Cholesky.
   Cholesky requires finite, exactly symmetric positive-definite input. LU and
   Cholesky use cubic arithmetic work; automatic selection can take safe shortcuts.
+- Linear systems offer reusable pivoted LU and Cholesky factors, plus
+  column-pivoted Householder QR least squares. Multiple right-hand-side columns
+  share one factorization. See the [solver guide](ports/SOLVING.md).
 - Symmetric eigendecomposition uses cyclic Jacobi rotations and returns ascending
   real eigenvalues with orthonormal eigenvector columns. General real square
   matrices use balanced Hessenberg reduction and double-shift QR and can return
@@ -77,7 +81,8 @@ The shared shape and mathematical conventions are:
   rotates a row. Positive 2D angles rotate counterclockwise.
 
 Floating-point rounding, cancellation, overflow, and underflow still matter.
-No conditioning estimate is provided. Triangular and symmetry checks are exact;
+Square factors provide a computed reciprocal condition diagnostic, not a
+certified error bound. Triangular and symmetry checks are exact;
 eigensolver tolerances and iteration limits are explicit. See the
 [shared API guide](ports/README.md) for detailed contracts and language-specific
 differences, and the [runner protocol](benchmarks/PROTOCOL.md) for portable inputs,
@@ -101,10 +106,10 @@ python3 benchmarks/run.py --suite quick --profiles --require-all --output benchm
 ```
 
 The harness requires Python 3.9+ and the selected implementations' toolchains.
-ARM64 assembly requires a native ARM64 host. Verification uses 119 shared
+ARM64 assembly requires a native ARM64 host. Verification uses 166 shared
 fixtures: 39 arithmetic, 23 symmetric eigenvalue, 20 general eigenvalue, and 37
-cross-product/rotation cases. The references use worked examples, exact small
-determinants, analytic spectra, eigenpair residuals, and geometric identities;
+cross-product/rotation cases, plus 47 solver cases. The references use worked examples, exact small
+determinants and linear solves, analytic spectra, eigenpair residuals, and geometric identities;
 no language implementation serves as the correctness oracle for the others.
 
 The [benchmark guide](benchmarks/README.md) covers executable overrides, timing,
@@ -120,6 +125,8 @@ embedded WebAssembly library runs correctness checks and bounded benchmarks on
 your device. The geometry view animates matrix vector fields, shows real and
 complex eigendirections, and steps through captured multiplication updates.
 Matrices are editable or randomized, and geometric overlays can be hidden.
+An accuracy playground lets you perturb a linear system and compare solution
+sensitivity, residuals, backward error, and reciprocal condition.
 
 Browser runs and illustrative animation frames stay separate from the saved
 measurements and sampled profiles. Every report records its hardware, toolchain

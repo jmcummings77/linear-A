@@ -5,8 +5,8 @@ import { pathToFileURL } from "node:url";
 import { createMatrixAPI } from "./matrix.mjs";
 
 const determinants = new Set(["determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"]);
-const operations = new Set(["add", "subtract", "multiply", "cross", "rotation2d", "rotation3d", "scale", "transpose", "trace", ...determinants, "triangular", "eigen_symmetric", "eigen_general"]);
-const binary = new Set(["add", "subtract", "multiply", "cross"]);
+const operations = new Set(["add", "subtract", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "scale", "transpose", "trace", ...determinants, "triangular", "eigen_symmetric", "eigen_general"]);
+const binary = new Set(["add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares"]);
 const rotations = new Set(["rotation2d", "rotation3d"]);
 
 function integer(text, minimum = 0, maximum = Number.MAX_SAFE_INTEGER) {
@@ -36,6 +36,10 @@ function execute(op, a, b, scalar = 1.25) {
     case "add": return a.add(b);
     case "subtract": return a.subtract(b);
     case "multiply": return a.multiply(b);
+    case "solve": return a.solve(b);
+    case "least_squares": return a.leastSquares(b);
+    case "solve_cholesky": { const f = a.factorCholesky(); try { return f.solve(b); } finally { f.dispose(); } }
+    case "rcond": { const f = a.factorLU(); try { return f.reciprocalCondition(); } finally { f.dispose(); } }
     case "cross": return a.cross(b);
     case "rotation2d":
       if (a.rows || a.cols) throw new RangeError("rotation2d requires empty 0 by 0 input");

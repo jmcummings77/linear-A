@@ -15,10 +15,10 @@ function finite(value) {
 }
 
 /**
- * Initialize once, then use the returned { Matrix } class. moduleUrl points to
+ * Initialize once, then use the returned { Matrix, Factorization } classes. moduleUrl points to
  * the generated matrix.mjs; locateFile can locate its matrix.wasm in a browser.
  * wasmBinary optionally supplies Uint8Array bytes for an embedded/offline build.
- * Every Matrix owns its allocation and must be disposed explicitly.
+ * Every Matrix and Factorization owns its allocation and must be disposed explicitly.
  */
 export async function createMatrixAPI({
   moduleUrl = new URL("../../.build/wasm/matrix.mjs", import.meta.url),
@@ -43,6 +43,9 @@ export async function createMatrixAPI({
     if (!pointer) throw new RangeError("WebAssembly matrix allocation failed");
     return pointer >>> 0;
   }
+
+  let solveFactor;
+  const ownedFactor = Symbol("owned factor handle");
 
   class Matrix {
     #pointer = 0;
@@ -138,6 +141,18 @@ export async function createMatrixAPI({
     multiply(other) { return Matrix.#fromHandle(runtime._wm_multiply(this.#alive(), this.#other(other))); }
     /** Cross two 3D row/column vectors; the result retains this matrix's shape. */
     cross(other) { return Matrix.#fromHandle(runtime._wm_cross(this.#alive(), this.#other(other))); }
+
+    factorLU() { return new Factorization(runtime._wm_factorize(this.#alive(),1),ownedFactor); }
+    factorCholesky() { return new Factorization(runtime._wm_factorize(this.#alive(),2),ownedFactor); }
+    factorQR() { return new Factorization(runtime._wm_factorize(this.#alive(),3),ownedFactor); }
+    solve(rhs) { const factor=this.factorLU();try{return factor.solve(rhs);}finally{factor.dispose();} }
+    leastSquares(rhs) { const factor=this.factorQR();try{return factor.solve(rhs);}finally{factor.dispose();} }
+    static {
+      solveFactor=(pointer,rhs)=>{
+        if(!(rhs instanceof Matrix))throw new TypeError("right-hand side must be a Matrix from the same WebAssembly instance");
+        return Matrix.#fromHandle(runtime._wm_factor_solve(pointer,rhs.#alive()));
+      };
+    }
 
     static {
       // Only the separate trace build exposes this operation. The events come
@@ -271,8 +286,22 @@ export async function createMatrixAPI({
     }
   }
 
+  class Factorization {
+    #pointer=0;
+    constructor(pointer,token){
+      if(token!==ownedFactor)throw new TypeError("Create factors through a Matrix factor method");
+      this.#pointer=checkedHandle(pointer);
+    }
+    #alive(){if(!this.#pointer)throw new Error("factorization has been disposed");return this.#pointer;}
+    get disposed(){return this.#pointer===0;}
+    solve(rhs){return solveFactor(this.#alive(),rhs);}
+    reciprocalCondition(){const value=runtime._wm_factor_rcond(this.#alive());checkedStatus();return value;}
+    dispose(){if(this.#pointer)runtime._wm_factor_destroy(this.#pointer);this.#pointer=0;}
+  }
+
   if (typeof Symbol.dispose === "symbol") {
     Object.defineProperty(Matrix.prototype, Symbol.dispose, { value: Matrix.prototype.dispose });
+    Object.defineProperty(Factorization.prototype, Symbol.dispose, { value: Factorization.prototype.dispose });
   }
-  return { Matrix };
+  return { Matrix, Factorization };
 }

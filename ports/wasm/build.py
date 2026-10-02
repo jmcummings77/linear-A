@@ -9,6 +9,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPORTS = [
+    "wm_factorize", "wm_factor_destroy", "wm_factor_solve", "wm_factor_rcond",
     "wm_create", "wm_identity", "wm_destroy", "wm_rows", "wm_cols", "wm_data", "wm_copy",
     "wm_add", "wm_subtract", "wm_scale", "wm_transpose", "wm_multiply", "wm_cross", "wm_row", "wm_column",
     "wm_rotation_2d", "wm_rotation_x", "wm_rotation_y", "wm_rotation_z", "wm_rotation_axis_angle",
