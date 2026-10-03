@@ -1,0 +1,181 @@
+{
+  "version": "0.1.0",
+  "capabilities": [
+    "arithmetic",
+    "determinants",
+    "eigenpairs",
+    "geometry",
+    "linear-solves",
+    "least-squares"
+  ],
+  "ports": {
+    "assembly": {
+      "source_roots": [
+        "ports/assembly",
+        "ports/c"
+      ],
+      "example": "c.c",
+      "requires": "ARM64 + C11",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "c": {
+      "source_roots": [
+        "ports/c"
+      ],
+      "example": "c.c",
+      "requires": "C11",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "cpp": {
+      "source_roots": [
+        "ports/cpp",
+        "ports/c"
+      ],
+      "example": "cpp.cpp",
+      "requires": "C++17",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "csharp": {
+      "source_roots": [
+        "linear-A/linear-A"
+      ],
+      "example": "csharp.cs",
+      "requires": ".NET 10; legacy netstandard2.1",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "fsharp": {
+      "source_roots": [
+        "ports/fsharp"
+      ],
+      "example": "fsharp.fs",
+      "requires": ".NET 10",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "go": {
+      "source_roots": [
+        "ports/go"
+      ],
+      "example": "go.go",
+      "requires": "Go 1.22+",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "julia": {
+      "source_roots": [
+        "ports/julia"
+      ],
+      "example": "julia.jl",
+      "requires": "Julia 1.10+",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "python": {
+      "source_roots": [
+        "ports/python"
+      ],
+      "example": "python.py",
+      "requires": "Python 3.9+",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "rust": {
+      "source_roots": [
+        "ports/rust"
+      ],
+      "example": "rust.rs",
+      "requires": "Rust 1.69+",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "typescript": {
+      "source_roots": [
+        "ports/typescript"
+      ],
+      "example": "typescript.mts",
+      "requires": "Node 22+",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    },
+    "wasm": {
+      "source_roots": [
+        "ports/wasm",
+        "ports/c"
+      ],
+      "example": "wasm.mjs",
+      "requires": "Emscripten; Node 22+ or browser",
+      "capabilities": [
+        "arithmetic",
+        "determinants",
+        "eigenpairs",
+        "geometry",
+        "linear-solves",
+        "least-squares"
+      ]
+    }
+  }
+}

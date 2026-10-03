@@ -281,3 +281,13 @@ benchmarks/reports/*
 !benchmarks/reports/wasm-profile-check/
 !benchmarks/reports/wasm-verification/
 !benchmarks/reports/*/profiles/**/*.cpuprofile
+
+# Release tooling is source, not a .NET Release build directory.
+!/release/
+!/release/*.py
+!/release/*.json
+!/release/*.md
+!/release/examples/
+!/release/examples/*
+!/tests/release/
+!/tests/release/*.py

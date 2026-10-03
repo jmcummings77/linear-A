@@ -8,7 +8,9 @@ use case.
 
 [View live report](https://jmcummings77.github.io/linear-A/latest/) ·
 [Browse all reports](https://jmcummings77.github.io/linear-A/) ·
-[Shared API and implementation differences](ports/README.md)
+[Shared API and implementation differences](ports/README.md) ·
+[Release kits and installation](release/README.md) ·
+[Versioned API contract](docs/api/0.1.0/README.md)
 
 ## Choose an implementation
 

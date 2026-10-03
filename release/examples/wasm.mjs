@@ -1,0 +1,12 @@
+import { createMatrixAPI } from "linear-a-wasm";
+const { Matrix } = await createMatrixAPI();
+const a = new Matrix(2, 2, [4, 1, 2, 3]);
+const b = new Matrix(2, 1, [6, 8]);
+const x = a.solve(b);
+const reconstructed = a.multiply(x);
+try {
+  for (const [actual, expected] of [[x.toArray(), [1, 2]], [reconstructed.toArray(), b.toArray()]]) {
+    if (actual.some((v, i) => Math.abs(v - expected[i]) > 1e-12 || !Number.isFinite(v))) throw Error("incorrect solution");
+  }
+  console.log("solution: 1, 2");
+} finally { reconstructed.dispose(); x.dispose(); b.dispose(); a.dispose(); }
