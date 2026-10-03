@@ -11,3 +11,6 @@ Console.WriteLine("solution: 1, 2");
 
 var decomposition = a.Svd();
 if (decomposition.Values.Length != 2 || decomposition.Values[1] <= 0) throw new Exception("incorrect SVD");
+
+var inverse = a.Pseudoinverse(); var minimum = a.SolveMinimumNorm(b); var diagnostics = a.SpectralDiagnostics();
+if (Math.Abs(inverse[0,0]-.3)>1e-12 || Math.Abs(minimum[1,0]-2)>1e-12 || diagnostics.Rank!=2) throw new Exception("incorrect SVD inverse");

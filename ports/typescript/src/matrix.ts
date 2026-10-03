@@ -10,6 +10,20 @@ export function finite(value: number): number {
   return value;
 }
 
+export interface SpectralDiagnostics {
+  rank: number;
+  reciprocalCondition: number;
+  retainedReciprocalCondition: number;
+}
+function spectralRank(values: Float64Array, cutoff: number): number {
+  let rank=0;
+  while(rank<values.length && values[rank]>0 && (cutoff===0 || values[rank]/values[0]>cutoff)) rank++;
+  return rank;
+}
+function checkCutoff(cutoff: number): number {
+  if(!Number.isFinite(cutoff)||cutoff<0||cutoff>1) throw new RangeError("invalid relative cutoff");
+  return cutoff;
+}
 export type DeterminantAlgorithm = "auto" | "lu" | "cholesky";
 
 export interface GeneralEigenDecomposition {
@@ -423,6 +437,32 @@ export class Matrix {
   factorLU():Factorization { return new Factorization(this,"lu"); }
   factorCholesky():Factorization { return new Factorization(this,"cholesky"); }
   factorQR():Factorization { return new Factorization(this,"qr"); }
+  spectralDiagnostics(cutoff=Math.max(this.rows,this.cols)*Number.EPSILON): SpectralDiagnostics {
+    checkCutoff(cutoff);const {values:s}=this.svd(), rank=spectralRank(s,cutoff);
+    return {rank,reciprocalCondition:s.length&&s[0]?s[s.length-1]/s[0]:0,retainedReciprocalCondition:rank?s[rank-1]/s[0]:0};
+  }
+  pseudoinverse(cutoff=Math.max(this.rows,this.cols)*Number.EPSILON): Matrix { return this.applyInverse(undefined,cutoff); }
+  solveMinimumNorm(rhs: Matrix,cutoff=Math.max(this.rows,this.cols)*Number.EPSILON): Matrix {
+    if(!(rhs instanceof Matrix))throw new TypeError("right-hand side must be a Matrix");
+    return this.applyInverse(rhs,cutoff);
+  }
+  private applyInverse(rhs: Matrix|undefined,cutoff: number): Matrix {
+    checkCutoff(cutoff);
+    if(rhs && rhs.rows!==this.rows)throw new RangeError("incompatible right-hand side");
+    const r=this.svd(),m=this.rows,n=this.cols,rank=spectralRank(r.values,cutoff),cols=rhs?rhs.cols:m,out=new Matrix(n,cols);
+    for(let j=0;j<cols;j++) {
+      let scale=rhs?0:1;
+      if(rhs)for(let i=0;i<m;i++)scale=Math.max(scale,Math.abs(rhs.get(i,j)));
+      if(rhs && rank && scale)for(let i=0;i<m;i++)if(rhs.get(i,j)!==0 && rhs.get(i,j)/scale===0)throw new RangeError("right-hand side scaling discards an entry");
+      for(let p=0;p<rank;p++) {
+        let projection=rhs?0:r.u.get(j,p);
+        if(rhs && scale)for(let i=0;i<m;i++)projection+=r.u.get(i,p)*(rhs.get(i,j)/scale);
+        const coefficient=rhs?finite(quotientProduct(projection,r.values[p],scale)):0;
+        for(let i=0;i<n;i++)out.set(i,j,finite(out.get(i,j)+(rhs?r.vt.get(p,i)*coefficient:quotientProduct(projection,r.values[p],r.vt.get(p,i)))));
+      }
+    }
+    return out;
+  }
   svd(tolerance=1e-12,maxSweeps=100): SingularValueDecomposition { return decompose(this,tolerance,maxSweeps); }
   solve(rhs:Matrix):Matrix { return this.factorLU().solve(rhs); }
   leastSquares(rhs:Matrix):Matrix { return this.factorQR().solve(rhs); }

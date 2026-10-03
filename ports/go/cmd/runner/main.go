@@ -19,7 +19,7 @@ type operation string
 
 func parseOperation(value string) (operation, error) {
 	switch value {
-	case "svd", "svd_one_sweep", "add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "eigen_symmetric", "eigen_general", "triangular":
+	case "pseudoinverse", "spectral_diagnostics", "solve_minimum_norm", "svd", "svd_one_sweep", "add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "eigen_symmetric", "eigen_general", "triangular":
 		return operation(value), nil
 	default:
 		return "", fmt.Errorf("unknown operation: %s", value)
@@ -27,7 +27,7 @@ func parseOperation(value string) (operation, error) {
 }
 
 func (op operation) binary() bool {
-	return op == "add" || op == "subtract" || op == "multiply" || op == "cross" || op == "solve" || op == "solve_cholesky" || op == "least_squares"
+	return op == "add" || op == "subtract" || op == "multiply" || op == "cross" || op == "solve" || op == "solve_cholesky" || op == "least_squares" || op == "solve_minimum_norm"
 }
 
 type outcome struct {
@@ -53,6 +53,16 @@ func execute(op operation, a, b *matrix.Matrix, scalar float64) (outcome, error)
 		result.matrix = a.Transpose()
 	case "multiply":
 		result.matrix, err = a.Multiply(b)
+	case "pseudoinverse":
+		result.matrix, err = a.PseudoinverseWith(scalar)
+	case "solve_minimum_norm":
+		result.matrix, err = a.SolveMinimumNorm(b)
+	case "spectral_diagnostics":
+		var d *matrix.SpectralDiagnostics
+		d, err = a.SpectralDiagnosticsWith(scalar)
+		if err == nil {
+			result.matrix, err = matrix.New(1, 3, []float64{float64(d.Rank), d.ReciprocalCondition, d.RetainedReciprocalCondition})
+		}
 	case "svd", "svd_one_sweep":
 		sweeps := 100
 		if op == "svd_one_sweep" {
@@ -250,7 +260,7 @@ func check(args []string) error {
 	expected := 4
 	if op.binary() {
 		expected = 6
-	} else if op == "scale" || op == "rotation2d" || op == "rotation3d" {
+	} else if op == "scale" || op == "rotation2d" || op == "rotation3d" || op == "pseudoinverse" || op == "spectral_diagnostics" {
 		expected = 5
 	}
 	if len(args) != expected {
@@ -287,7 +297,7 @@ func check(args []string) error {
 		return errors.New("input count overflow")
 	}
 	scalar := 1.25
-	if op == "scale" || op == "rotation2d" || op == "rotation3d" {
+	if op == "scale" || op == "rotation2d" || op == "rotation3d" || op == "pseudoinverse" || op == "spectral_diagnostics" {
 		scalar, err = number(args[4])
 		if err != nil {
 			return err

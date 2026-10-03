@@ -19,6 +19,7 @@ from reference import OPERATIONS, fixtures as arithmetic_fixtures, assert_result
 from eigen_reference import eigen_fixtures, generated_eigen, eigen_spectrum, assert_eigen_result
 from general_eigen_reference import general_eigen_fixtures, generated_general_eigen, general_eigen_spectrum, assert_general_eigen_result
 from solve_reference import solve_fixtures
+from pseudoinverse_reference import pseudoinverse_fixtures, assert_inverse_result
 from svd_reference import svd_fixtures, assert_svd_result
 from vector_reference import vector_fixtures, vector_inputs, vector_expected
 from publication import PublicSanitizer
@@ -27,7 +28,7 @@ OPERATIONS = (*OPERATIONS, "eigen_symmetric", "eigen_general", "cross", "rotatio
 
 
 def fixtures():
-    return arithmetic_fixtures() + eigen_fixtures() + general_eigen_fixtures() + vector_fixtures() + solve_fixtures() + svd_fixtures()
+    return arithmetic_fixtures() + eigen_fixtures() + general_eigen_fixtures() + vector_fixtures() + solve_fixtures() + svd_fixtures() + pseudoinverse_fixtures()
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / ".build"
@@ -156,7 +157,7 @@ def verify(implementation, cases=None):
         if b is not None:
             arguments += [str(b["rows"]),str(b["cols"])]
             values += b["values"]
-        elif case["op"] in ("scale", "rotation2d", "rotation3d"): arguments.append(str(case["scalar"]))
+        elif case["op"] in ("scale", "rotation2d", "rotation3d", "pseudoinverse", "spectral_diagnostics"): arguments.append(str(case["scalar"]))
         outcome = {"name":case["name"],"passed":False}
         try:
             result = execute(implementation["runner"]+arguments,stdin=" ".join(format(x,".17g") for x in values),
@@ -167,7 +168,9 @@ def verify(implementation, cases=None):
                 if result.stdout.strip(): raise AssertionError("Invalid request produced output on stdout")
             else:
                 if result.returncode: raise AssertionError(result.stderr.strip()[-2000:])
-                if case["op"] == "svd":
+                if case["op"] in ("pseudoinverse", "solve_minimum_norm", "spectral_diagnostics"):
+                    assert_inverse_result(json.loads(result.stdout),case)
+                elif case["op"] == "svd":
                     assert_svd_result(json.loads(result.stdout), a, case.get("spectrum"))
                 elif case["op"] == "eigen_general":
                     assert_general_eigen_result(json.loads(result.stdout), a, case.get("expected_complex_eigenvalues"),

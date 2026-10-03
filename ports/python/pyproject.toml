@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "linear-a-python"
-version = "0.2.0"
+version = "0.3.0"
 description = "A small dependency-free float64 matrix library"
 requires-python = ">=3.9"
 

@@ -9,3 +9,6 @@ console.log("solution: 1, 2");
 
 const decomposition = a.svd();
 if (decomposition.values.length !== 2 || decomposition.values[1] <= 0) throw Error("incorrect SVD");
+
+const inverse=a.pseudoinverse(), minimum=a.solveMinimumNorm(b), diagnostics=a.spectralDiagnostics();
+if(Math.abs(inverse.get(0,0)-.3)>1e-12 || Math.abs(minimum.get(1,0)-2)>1e-12 || diagnostics.rank!==2) throw Error("incorrect SVD inverse");

@@ -65,3 +65,43 @@ function svd(a::Matrix64; tolerance=1e-12, max_sweeps=100)
     end
     (u=Matrix64(m,n,u),values=values,vt=Matrix64(n,n,vt))
 end
+
+function spectral_cutoff(a::Matrix64, cutoff)
+    value = cutoff === nothing ? max(a.rows,a.cols)*eps(Float64) : Float64(cutoff)
+    isfinite(value) && 0 <= value <= 1 || throw(ArgumentError("invalid relative cutoff"))
+    value
+end
+spectral_rank(s,cutoff) = count(x -> x>0 && (cutoff==0 || x/s[1]>cutoff), s)
+function spectral_diagnostics(a::Matrix64; relative_cutoff=nothing)
+    cutoff=spectral_cutoff(a,relative_cutoff);s=svd(a).values;rank=spectral_rank(s,cutoff)
+    (rank=rank,reciprocal_condition=isempty(s)||s[1]==0 ? 0.0 : s[end]/s[1],
+     retained_reciprocal_condition=rank==0 ? 0.0 : s[rank]/s[1])
+end
+function inverse_product(a,b,c)
+    fa,ea=frexp(a);fb,eb=frexp(b);fc,ec=frexp(c)
+    finite(ldexp((fa/fb)*fc,ea-eb+ec))
+end
+function apply_inverse(a::Matrix64,rhs,cutoff)
+    cutoff=spectral_cutoff(a,cutoff)
+    rhs === nothing || rhs.rows==a.rows || throw(DimensionMismatch("incompatible right-hand side"))
+    rhs === nothing || all(isfinite,rhs.data) || throw(ArgumentError("expected finite right-hand side"))
+    r=svd(a);rank=spectral_rank(r.values,cutoff);m,n=a.rows,a.cols
+    cols=rhs === nothing ? m : rhs.cols;out=Matrix64(n,cols)
+    for j in 1:cols
+        scaling=rhs === nothing ? 1.0 : maximum((abs(rhs[i,j]) for i in 1:m);init=0.0)
+        if rhs !== nothing && rank>0 && scaling!=0 && any(rhs[i,j]!=0 && rhs[i,j]/scaling==0 for i in 1:m)
+            error("right-hand side scaling discards an entry")
+        end
+        for p in 1:rank
+            projection=rhs === nothing ? r.u[j,p] : scaling==0 ? 0.0 : sum((r.u[i,p]*(rhs[i,j]/scaling) for i in 1:m);init=0.0)
+            coefficient=rhs === nothing ? 0.0 : inverse_product(projection,r.values[p],scaling)
+            for i in 1:n
+                term=rhs === nothing ? inverse_product(projection,r.values[p],r.vt[p,i]) : r.vt[p,i]*coefficient
+                out[i,j]=finite(out[i,j]+term)
+            end
+        end
+    end
+    out
+end
+pseudoinverse(a::Matrix64;relative_cutoff=nothing)=apply_inverse(a,nothing,relative_cutoff)
+solve_minimum_norm(a::Matrix64,b::Matrix64;relative_cutoff=nothing)=apply_inverse(a,b,relative_cutoff)

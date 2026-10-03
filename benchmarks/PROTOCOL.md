@@ -214,3 +214,10 @@ QR rank thresholds, scaling failures, and the computed condition diagnostic.
 matrix result envelope. `svd_one_sweep` uses a one-sweep limit to test explicit
 nonconvergence. See [the SVD contract](../ports/SVD.md). These operations are
 not added to the existing timed workloads or historical measurements.
+
+SVD inverse checks use `check pseudoinverse ROWS COLS CUTOFF` and
+`check spectral_diagnostics ROWS COLS CUTOFF`; the cutoff is explicit and in
+[0,1]. Diagnostics use a 1×3 matrix envelope `[rank, reciprocal_condition,
+retained_reciprocal_condition]`. `check solve_minimum_norm ROWS COLS BROWS BCOLS`
+uses the library's default cutoff and accepts any compatible rectangular shapes.
+These conformance operations are not part of saved timing suites.

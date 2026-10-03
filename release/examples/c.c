@@ -12,6 +12,10 @@ int main(void) {
     matrix u={0},s={0},vt={0};
     if (!failed) failed=m_svd(&a,1e-12,100,&u,&s,&vt);
     if (!failed) failed=s.rows!=2 || s.values[1]<=0;
+    matrix inverse={0},minimum={0};matrix_spectral_diagnostics diagnostics;
+    if(!failed)failed=m_pseudoinverse(&a,-1,&inverse)||m_solve_minimum_norm(&a,&b,-1,&minimum)||m_spectral_diagnostics(&a,-1,&diagnostics);
+    if(!failed)failed=fabs(inverse.values[0]-.3)>1e-12||fabs(minimum.values[1]-2)>1e-12||diagnostics.rank!=2;
+    m_free(&inverse);m_free(&minimum);
     m_free(&u);m_free(&s);m_free(&vt);
     m_free(&reconstructed);m_free(&x);m_free(&b);m_free(&a);
     if (!failed) puts("solution: 1, 2");

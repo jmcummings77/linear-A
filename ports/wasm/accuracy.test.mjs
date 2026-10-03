@@ -36,3 +36,25 @@ test('solver choices, singular perturbation, rounded-away delta, and input rejec
  assert.throws(()=>computeAccuracy(Matrix,{...stable,a:[1,1,2,2]}),/singular/i);
  assert.deepEqual(diagnostics([0,0,0,0],[0,0],[0,0]),{backward_error:0,residual_infinity:0});
 });
+test('SVD cutoff exchanges fit for a smaller, more stable solution',()=>{
+ const config={...stable,algorithm:'svd',a:[1,1,1,1.000001],b:[2,2.000101],cutoff:1e-12};
+ const full=computeAccuracy(Matrix,config),truncated=computeAccuracy(Matrix,{...config,cutoff:1e-5});
+ assert.equal(full.base.rank,2);assert.equal(truncated.base.rank,1);
+ assert.ok(full.base.solution_norm>truncated.base.solution_norm*50);
+ assert.ok(truncated.relative_solution_change<full.relative_solution_change);
+ assert.ok(truncated.base.residual_infinity>full.base.residual_infinity);
+ assert.equal(truncated.base.retained_reciprocal_condition,1);
+ assert.equal(truncated.base.condition_norm,'2-norm');
+ assert.deepEqual(computeAccuracy(Matrix,{...config,cutoff:1}).base.x,[0,0]);
+ for(const cutoff of [-1,NaN,Infinity,1.1])assert.throws(()=>computeAccuracy(Matrix,{...config,cutoff}));
+});
+test('SVD gives a minimum-norm answer for inconsistent singular equations',()=>{
+ const r=computeAccuracy(Matrix,{...stable,algorithm:'svd',a:[1,1,2,2],b:[1,3],cutoff:1e-12});
+ assert.equal(r.base.rank,1);
+ r.base.x.forEach(x=>assert.ok(Math.abs(x-.7)<1e-12));
+});
+test('all inverse fixtures also execute through the browser correctness gate',async()=>{
+ const fixtures=JSON.parse(execFileSync(process.env.PYTHON||'python3',['-c','import sys,json;sys.path.insert(0,"benchmarks");from pseudoinverse_reference import pseudoinverse_fixtures;print(json.dumps(pseudoinverse_fixtures()))'],{encoding:'utf8'}));
+ const checks=await runChecks(Matrix,fixtures);
+ assert.equal(checks.passed,fixtures.length,JSON.stringify(checks));
+});

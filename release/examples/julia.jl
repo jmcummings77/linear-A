@@ -7,3 +7,6 @@ println("solution: 1, 2")
 
 r=svd(a)
 @assert length(r.values)==2 && r.values[2]>0
+
+p=pseudoinverse(a); minimum=solve_minimum_norm(a,b); d=spectral_diagnostics(a)
+@assert abs(p[1,1]-.3)<1e-12 && abs(minimum[2,1]-2)<1e-12 && d.rank==2

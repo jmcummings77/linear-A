@@ -4,14 +4,14 @@
   if(!panel)return;
   const bundle=JSON.parse(get('live-data').textContent), canvas=get('accuracy-canvas'), ctx=canvas.getContext('2d');
   const controls=Array.from(panel.querySelectorAll('input,select')), fields=[];
-  const presets={stable:[4,1,1,3,6,7],sensitive:[1,1,1,1.000001,2,2.000001],singular:[1,1,2,2,2,4]};
+  const presets={stable:[4,1,1,3,6,7],sensitive:[1,1,1,1.000001,2,2.000001],singular:[1,1,2,2,2,4],noisy:[1,1,1,1.000001,2,2.000101]};
   let timer, worker, workerURL, watchdog, request=0, result=null;
   const status=(text)=>{get('accuracy-status').textContent=text;};
   const format=value=>value===null?'undefined (zero baseline)':!Number.isFinite(value)?'outside float64 range':value===0?'0':Math.abs(value)<.001||Math.abs(value)>1e4?value.toExponential(3):value.toPrecision(6);
   const vector=values=>`[${values.map(format).join(', ')}]`;
   function clearResult(){
     result=null;
-    for(const id of ['solution','change','condition','residual','backward'])get(`accuracy-${id}`).textContent='—';
+    for(const id of ['solution','change','condition','residual','backward','norm','rank','retained','spectrum'])get(`accuracy-${id}`).textContent='—';
     draw();
   }
   function stop(){worker?.terminate();worker=null;if(workerURL)URL.revokeObjectURL(workerURL);workerURL=null;clearTimeout(watchdog);panel.setAttribute('aria-busy','false');}
@@ -40,6 +40,13 @@
   }
   function show(data){
     result=data.result;const r=result,b=r.base,p=r.perturbed;
+    get('accuracy-condition-label').textContent=`Reciprocal condition · ${b.condition_norm||'infinity norm'}`;
+    get('accuracy-norm').textContent=`${format(b.solution_norm)}${p?' → '+format(p.solution_norm):''}`;
+    if(b.rank!==undefined) {
+      get('accuracy-rank').textContent=`${b.rank}${p?' → '+p.rank:''}`;
+      get('accuracy-retained').textContent=`${format(b.retained_reciprocal_condition)}${p?' → '+format(p.retained_reciprocal_condition):''}`;
+      get('accuracy-spectrum').textContent=`${vector(b.singular_values)}${p?' → '+vector(p.singular_values):''}`;
+    }
     get('accuracy-solution').textContent=p?`${vector(b.x)} → ${vector(p.x)}`:vector(b.x);
     get('accuracy-change').textContent=p?format(r.relative_solution_change):'perturbed solve rejected';
     get('accuracy-condition').textContent=`${format(b.reciprocal_condition)}${p?' → '+format(p.reciprocal_condition):''}`;
@@ -64,14 +71,21 @@
       }
       panel.setAttribute('aria-busy','true');status('Solving in WebAssembly…');
       clearTimeout(watchdog);watchdog=setTimeout(()=>{++request;stop();clearResult();status('Accuracy calculation timed out. Change an input to retry.');},20000);
-      worker.postMessage({type:'accuracy',id,bundle,config:{a:values.slice(0,4),b:values.slice(4),delta,target:Number(get('accuracy-target').value),algorithm:get('accuracy-algorithm').value}});
+      worker.postMessage({type:'accuracy',id,bundle,config:{a:values.slice(0,4),b:values.slice(4),delta,target:Number(get('accuracy-target').value),algorithm:get('accuracy-algorithm').value,cutoff:10**Number(get('accuracy-cutoff').value)}});
     }catch(error){stop();status(error.message);}
   }
-  function schedule(){++request;clearTimeout(timer);clearTimeout(watchdog);panel.setAttribute('aria-busy','false');clearResult();status('Inputs changed; waiting for editing to pause…');timer=setTimeout(compute,300);}
+  function cutoffControls(){
+    const enabled=get('accuracy-algorithm').value==='svd';
+    get('accuracy-cutoff-control').hidden=!enabled;
+    get('accuracy-cutoff').disabled=!enabled;
+    get('accuracy-cutoff-value').textContent=format(10**Number(get('accuracy-cutoff').value));
+    panel.querySelectorAll('.accuracy-spectral').forEach(node=>node.hidden=!enabled);
+  }
+  function schedule(){cutoffControls();++request;clearTimeout(timer);clearTimeout(watchdog);panel.setAttribute('aria-busy','false');clearResult();status('Inputs changed; waiting for editing to pause…');timer=setTimeout(compute,300);}
   for(let i=0;i<6;i++){
     const input=document.createElement('input');input.type='number';input.step='any';input.min='-1000000';input.max='1000000';input.setAttribute('aria-label',i<4?`A row ${Math.floor(i/2)+1} column ${i%2+1}`:`b row ${i-3}`);input.addEventListener('input',()=>{get('accuracy-preset').value='custom';schedule();});fields.push(input);get(i<4?'accuracy-a':'accuracy-b').append(input);
   }
-  function preset(){const values=presets[get('accuracy-preset').value];if(!values)return;fields.forEach((input,i)=>input.value=values[i]);schedule();}
+  function preset(){const values=presets[get('accuracy-preset').value];if(!values)return;fields.forEach((input,i)=>input.value=values[i]);if(get('accuracy-preset').value==='noisy')get('accuracy-algorithm').value='svd';schedule();}
   get('accuracy-preset').addEventListener('change',preset);
   controls.filter(input=>input.id!=='accuracy-preset').forEach(input=>input.addEventListener(input.tagName==='SELECT'?'change':'input',schedule));
   addEventListener('resize',draw);addEventListener('pagehide',()=>{clearTimeout(timer);stop();});

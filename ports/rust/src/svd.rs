@@ -172,3 +172,117 @@ impl Matrix {
         Ok(SingularValueDecomposition { u, values, vt })
     }
 }
+
+/// Rank and reciprocal 2-norm conditions before and after truncation.
+#[derive(Clone, Debug)]
+pub struct SpectralDiagnostics {
+    pub rank: usize,
+    pub reciprocal_condition: f64,
+    pub retained_reciprocal_condition: f64,
+}
+fn spectral_rank(s: &[f64], cutoff: f64) -> usize {
+    s.iter()
+        .take_while(|&&x| x > 0. && (cutoff == 0. || x / s[0] > cutoff))
+        .count()
+}
+fn check_cutoff(cutoff: f64) -> Result<(), MatrixError> {
+    if !cutoff.is_finite() || !(0. ..=1.).contains(&cutoff) {
+        Err(MatrixError::new("invalid relative cutoff"))
+    } else {
+        Ok(())
+    }
+}
+impl Matrix {
+    pub fn spectral_diagnostics(&self) -> Result<SpectralDiagnostics, MatrixError> {
+        self.spectral_diagnostics_with(self.rows.max(self.cols) as f64 * f64::EPSILON)
+    }
+    pub fn spectral_diagnostics_with(
+        &self,
+        cutoff: f64,
+    ) -> Result<SpectralDiagnostics, MatrixError> {
+        check_cutoff(cutoff)?;
+        let r = self.svd()?;
+        let s = &r.values;
+        let rank = spectral_rank(s, cutoff);
+        Ok(SpectralDiagnostics {
+            rank,
+            reciprocal_condition: if !s.is_empty() && s[0] > 0. {
+                s[s.len() - 1] / s[0]
+            } else {
+                0.
+            },
+            retained_reciprocal_condition: if rank > 0 { s[rank - 1] / s[0] } else { 0. },
+        })
+    }
+    pub fn pseudoinverse(&self) -> Result<Matrix, MatrixError> {
+        self.pseudoinverse_with(self.rows.max(self.cols) as f64 * f64::EPSILON)
+    }
+    pub fn pseudoinverse_with(&self, cutoff: f64) -> Result<Matrix, MatrixError> {
+        self.apply_inverse(None, cutoff)
+    }
+    pub fn solve_minimum_norm(&self, rhs: &Matrix) -> Result<Matrix, MatrixError> {
+        self.solve_minimum_norm_with(rhs, self.rows.max(self.cols) as f64 * f64::EPSILON)
+    }
+    pub fn solve_minimum_norm_with(
+        &self,
+        rhs: &Matrix,
+        cutoff: f64,
+    ) -> Result<Matrix, MatrixError> {
+        self.apply_inverse(Some(rhs), cutoff)
+    }
+    fn apply_inverse(&self, rhs: Option<&Matrix>, cutoff: f64) -> Result<Matrix, MatrixError> {
+        use crate::determinant::quotient_product;
+        check_cutoff(cutoff)?;
+        if rhs.map_or(false, |b| b.rows != self.rows) {
+            return Err(MatrixError::new("incompatible right-hand side"));
+        }
+        let r = self.svd()?;
+        let (m, n, k) = (self.rows, self.cols, r.values.len());
+        let rank = spectral_rank(&r.values, cutoff);
+        let cols = rhs.map_or(m, |b| b.cols);
+        let mut out = Matrix::zeros(n, cols)?;
+        for j in 0..cols {
+            let scale = rhs.map_or(1., |b| {
+                (0..m).fold(0_f64, |s, i| s.max(b.values[i * cols + j].abs()))
+            });
+            if rank > 0
+                && scale != 0.
+                && rhs.map_or(false, |b| {
+                    (0..m).any(|i| {
+                        b.values[i * cols + j] != 0. && b.values[i * cols + j] / scale == 0.
+                    })
+                })
+            {
+                return Err(MatrixError::new(
+                    "right-hand side scaling discards an entry",
+                ));
+            }
+            for p in 0..rank {
+                let projection =
+                    rhs.map_or(r.u.values.get(j * k + p).copied().unwrap_or(0.), |b| {
+                        if scale == 0. {
+                            0.
+                        } else {
+                            (0..m)
+                                .map(|i| r.u.values[i * k + p] * (b.values[i * cols + j] / scale))
+                                .sum()
+                        }
+                    });
+                let coefficient = if rhs.is_some() {
+                    crate::finite(quotient_product(projection, r.values[p], scale))?
+                } else {
+                    0.
+                };
+                for i in 0..n {
+                    let term = if rhs.is_some() {
+                        r.vt.values[p * n + i] * coefficient
+                    } else {
+                        quotient_product(projection, r.values[p], r.vt.values[p * n + i])
+                    };
+                    out.values[i * cols + j] = crate::finite(out.values[i * cols + j] + term)?;
+                }
+            }
+        }
+        Ok(out)
+    }
+}

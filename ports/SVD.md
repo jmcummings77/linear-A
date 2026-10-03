@@ -84,3 +84,74 @@ relatively. Seeded rectangular inputs exercise reconstruction without assuming
 particular vectors. Negative tests cover scaling loss, overflow and exhausted
 iterations. C ownership/error paths also run with address and undefined-behavior
 sanitizers. The image playground uses this same public WebAssembly SVD API.
+
+## Pseudoinverse, minimum-norm least squares, and spectral diagnostics
+
+Every port also supplies the following operations. They use the default SVD
+convergence settings above; the rank cutoff is a separate parameter.
+
+| Port | Pseudoinverse | Minimum-norm solve | Diagnostics |
+| --- | --- | --- | --- |
+| ARM64 / C | `m_pseudoinverse(a, cutoff, &out)` | `m_solve_minimum_norm(a, b, cutoff, &out)` | `m_spectral_diagnostics(a, cutoff, &d)` |
+| C++ | `a.pseudoinverse(cutoff)` | `a.solve_minimum_norm(b, cutoff)` | `a.spectral_diagnostics(cutoff)` |
+| C# / F# | `a.Pseudoinverse(relativeCutoff)` | `a.SolveMinimumNorm(b, relativeCutoff)` | `a.SpectralDiagnostics(relativeCutoff)` |
+| Go | `a.Pseudoinverse()` / `PseudoinverseWith(cutoff)` | `a.SolveMinimumNorm(b)` / `SolveMinimumNormWith(b, cutoff)` | `a.SpectralDiagnostics()` / `SpectralDiagnosticsWith(cutoff)` |
+| Julia | `pseudoinverse(a; relative_cutoff=...)` | `solve_minimum_norm(a,b; relative_cutoff=...)` | `spectral_diagnostics(a; relative_cutoff=...)` |
+| Python | `a.pseudoinverse(relative_cutoff)` | `a.solve_minimum_norm(b, relative_cutoff)` | `a.spectral_diagnostics(relative_cutoff)` |
+| Rust | `a.pseudoinverse()` / `pseudoinverse_with(cutoff)` | `a.solve_minimum_norm(&b)` / `solve_minimum_norm_with(&b, cutoff)` | `a.spectral_diagnostics()` / `spectral_diagnostics_with(cutoff)` |
+| TypeScript / WASM | `a.pseudoinverse(cutoff)` | `a.solveMinimumNorm(b, cutoff)` | `a.spectralDiagnostics(cutoff)` |
+
+The default relative cutoff is `max(m,n) * 2^-52`. C uses `-1` to request this
+default, and C++ accepts the same sentinel. Other ports use omitted/optional
+arguments or the methods without `With`. Explicit cutoffs must be finite and
+in [0,1]. A singular value is retained exactly when it is positive and
+`s / s_max > cutoff`. Equality is discarded; zero retains every computed
+positive value, and one retains none. This is a computed numerical rank, not an
+exact algebraic rank. Comparisons use ratios to avoid underflow in a product
+of the cutoff and a small largest value; zero cutoff tests positivity directly.
+
+The n×m pseudoinverse is `V diag(s⁺) Uᵀ`, where retained values are reciprocated
+and other entries of `s⁺` are zero. If a nonzero singular value is discarded,
+this is the Moore–Penrose inverse of the *truncated matrix* Aτ. In general it
+no longer satisfies `A A⁺ A = A` for the original matrix. Setting cutoff zero
+does not guarantee that rounding preserves an exact null space.
+
+For an m×q right-hand side B, the n×q solve returns the minimum Euclidean-norm
+least-squares solution for Aτ, column by column. This handles underdetermined,
+overdetermined and rank-deficient systems, including multiple right-hand sides.
+It applies the factors directly instead of materializing the pseudoinverse.
+Each RHS column is scaled before projection; scaling that would discard a
+nonzero entry is rejected when the retained rank is nonzero. Binary exponent arithmetic
+avoids an unnecessary overflow from forming `1/s` first. An unrepresentable
+coefficient, term, or partial sum still fails even if later cancellation would
+produce a finite answer. These algorithms do not use arbitrary precision.
+The original SVD's convergence and extreme-dynamic-range limits still apply.
+
+Diagnostics return three fields (using each language's naming convention):
+
+- `rank`: number of retained singular values.
+- `reciprocal_condition`: `s_min/s_max` of the complete economy spectrum,
+  independent of the cutoff. It is the reciprocal 2-norm condition for a
+  full-rank rectangular matrix, not the infinity-norm estimate from LU/QR.
+- `retained_reciprocal_condition`: smallest retained value divided by the
+  largest. This describes the retained subspace and can improve as rank falls.
+
+Both condition fields are zero for an empty or all-zero spectrum; the retained
+field is also zero if rank is zero. Ratios can underflow to zero. A zero original
+ratio corresponds to an infinite/unrepresentable condition number, not a
+well-conditioned system. A wide full-row-rank matrix can have a positive
+reciprocal condition despite having a null space. These computed diagnostics
+are not certified bounds.
+
+Zero and empty inputs produce zero inverse/solution matrices with the natural
+rectangular shapes. Inputs remain unchanged. C output matrices must be distinct
+and empty; failures leave them unchanged. C diagnostic outputs are written only
+on success. WASM inverse/solution matrices need `dispose()`; diagnostics are
+ordinary copied JavaScript numbers and do not need disposal.
+
+Shared analytic tests check the four Penrose identities for untruncated cases,
+known minimum-norm answers, residual orthogonality, multiple RHS columns,
+cutoff equality/adjacent floating-point boundaries, zeros, empty shapes and
+extreme scales. Truncated cases are checked against the inverse of Aτ. A tiny
+1×1 case verifies that direct solving succeeds when an explicit inverse cannot
+be represented. The live accuracy playground uses these public WASM APIs.

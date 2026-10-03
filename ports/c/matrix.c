@@ -727,3 +727,43 @@ matrix_status m_svd(const matrix *source,double tolerance,size_t max_sweeps,matr
     if(status==M_OK){*u=a;*values=s;*vt=b;}else{m_free(&a);m_free(&s);m_free(&b);}
     return status;
 }
+
+#include "pseudoinverse_core.h"
+static double inverse_cutoff(const matrix *a,double cutoff){
+    return cutoff==-1?(double)(a->rows>a->cols?a->rows:a->cols)*DBL_EPSILON:cutoff;
+}
+static matrix_status inverse_apply(const matrix *a,const matrix *rhs,double cutoff,matrix *out){
+    if(!a||!empty_output(out)||a==out||rhs==out)return M_ARGUMENT;
+    matrix_status status=validate(a);if(status!=M_OK)return status;
+    cutoff=inverse_cutoff(a,cutoff);
+    if(!isfinite(cutoff)||cutoff<0||cutoff>1)return M_ARGUMENT;
+    if(rhs){status=validate(rhs);if(status!=M_OK)return status;if(rhs->rows!=a->rows)return M_SHAPE;}
+    matrix u={0},s={0},vt={0},result={0};
+    status=m_svd(a,1e-12,100,&u,&s,&vt);
+    size_t cols=rhs?rhs->cols:a->rows;
+    if(status==M_OK)status=m_create(a->cols,cols,&result);
+    if(status==M_OK){
+        int code=la_apply_inverse(a->rows,a->cols,s.rows,u.values,s.values,vt.values,cutoff,rhs?rhs->values:NULL,cols,rhs!=NULL,result.values);
+        if(code)status=code==1?M_ARGUMENT:M_SOLVER_RANGE;
+    }
+    m_free(&u);m_free(&s);m_free(&vt);
+    if(status==M_OK)*out=result;else m_free(&result);
+    return status;
+}
+matrix_status m_pseudoinverse(const matrix *a,double cutoff,matrix *out){return inverse_apply(a,NULL,cutoff,out);}
+matrix_status m_solve_minimum_norm(const matrix *a,const matrix *b,double cutoff,matrix *out){
+    if(!b)return M_ARGUMENT;
+    return inverse_apply(a,b,cutoff,out);
+}
+matrix_status m_spectral_diagnostics(const matrix *a,double cutoff,matrix_spectral_diagnostics *out){
+    if(!a||!out)return M_ARGUMENT;
+    cutoff=inverse_cutoff(a,cutoff);
+    if(!isfinite(cutoff)||cutoff<0||cutoff>1)return M_ARGUMENT;
+    matrix u={0},s={0},vt={0};matrix_status status=m_svd(a,1e-12,100,&u,&s,&vt);
+    if(status==M_OK){
+        size_t rank=la_spectral_rank(s.rows,s.values,cutoff);
+        matrix_spectral_diagnostics result={rank,s.rows&&s.values[0]?s.values[s.rows-1]/s.values[0]:0,rank?s.values[rank-1]/s.values[0]:0};
+        *out=result;
+    }
+    m_free(&u);m_free(&s);m_free(&vt);return status;
+}

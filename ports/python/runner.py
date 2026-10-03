@@ -7,7 +7,7 @@ from matrix import Matrix, SymmetricEigenDecomposition, GeneralEigenDecompositio
 
 
 DETERMINANTS = {"determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"}
-OPERATIONS = {"svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
+OPERATIONS = {"pseudoinverse", "spectral_diagnostics", "solve_minimum_norm", "svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
               "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d"} | DETERMINANTS
 
 
@@ -25,6 +25,9 @@ def operation(name, a, b=None, scalar=1.25):
         return a.subtract(b)
     if name == "multiply":
         return a.multiply(b)
+    if name == "pseudoinverse": return a.pseudoinverse(scalar)
+    if name == "solve_minimum_norm": return a.solve_minimum_norm(b)
+    if name == "spectral_diagnostics": return Matrix(1,3,a.spectral_diagnostics(scalar))
     if name in ("svd", "svd_one_sweep"):
         r=a.svd(max_sweeps=100 if name=="svd" else 1)
         return Matrix(a.rows+1+a.cols,min(a.rows,a.cols),r.u.values+r.values+r.vt.transpose().values)
@@ -82,8 +85,8 @@ def check(args):
     if len(args) < 3 or args[0] not in OPERATIONS:
         raise ValueError("usage: check OP ROWS COLS [BROWS BCOLS | SCALAR]")
     name, rows, cols = args[0], integer(args[1]), integer(args[2])
-    binary = name in {"add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares"}
-    scalar_operation = name in {"scale", "rotation2d", "rotation3d"}
+    binary = name in {"add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares", "solve_minimum_norm"}
+    scalar_operation = name in {"scale", "rotation2d", "rotation3d", "pseudoinverse", "spectral_diagnostics"}
     expected_args = 5 if binary else 4 if scalar_operation else 3
     if len(args) != expected_args:
         raise ValueError("incorrect number of operation arguments")

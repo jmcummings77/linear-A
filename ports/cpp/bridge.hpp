@@ -129,6 +129,10 @@ inline matrix_status m_solve(const matrix *a, const matrix *b, matrix *out) {
 inline matrix_status m_least_squares(const matrix *a, const matrix *b, matrix *out) {
     return guarded([&] { *out = matrix(a->owned.least_squares(b->owned)); });
 }
+using matrix_spectral_diagnostics = linear_a::Matrix::SpectralDiagnostics;
+inline matrix_status m_pseudoinverse(const matrix *a,double cutoff,matrix *out){return guarded([&]{*out=matrix(a->owned.pseudoinverse(cutoff));});}
+inline matrix_status m_solve_minimum_norm(const matrix *a,const matrix *b,double cutoff,matrix *out){return guarded([&]{*out=matrix(a->owned.solve_minimum_norm(b->owned,cutoff));});}
+inline matrix_status m_spectral_diagnostics(const matrix *a,double cutoff,matrix_spectral_diagnostics *out){return guarded([&]{*out=a->owned.spectral_diagnostics(cutoff);});}
 inline matrix_status m_svd(const matrix *a,double tolerance,std::size_t sweeps,matrix *u,matrix *s,matrix *vt) {
     return guarded([&] { auto r=a->owned.svd(tolerance,sweeps); *u=matrix(std::move(r.u)); *vt=matrix(std::move(r.vt)); auto k=r.values.size(); *s=matrix(linear_a::Matrix(k,1,std::move(r.values))); });
 }

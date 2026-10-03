@@ -181,3 +181,119 @@ func (a *Matrix) SVDWith(tolerance float64, maxSweeps int) (*SingularValueDecomp
 	}
 	return &SingularValueDecomposition{um, values, vm}, nil
 }
+
+// SpectralDiagnostics describes the original and retained singular spectra.
+type SpectralDiagnostics struct {
+	Rank                        int
+	ReciprocalCondition         float64
+	RetainedReciprocalCondition float64
+}
+
+func spectralRank(s []float64, cutoff float64) int {
+	rank := 0
+	for rank < len(s) && s[rank] > 0 && (cutoff == 0 || s[rank]/s[0] > cutoff) {
+		rank++
+	}
+	return rank
+}
+func (a *Matrix) defaultCutoff() float64 { return float64(max(a.rows, a.cols)) * 2.220446049250313e-16 }
+func (a *Matrix) SpectralDiagnostics() (*SpectralDiagnostics, error) {
+	return a.SpectralDiagnosticsWith(a.defaultCutoff())
+}
+func (a *Matrix) SpectralDiagnosticsWith(cutoff float64) (*SpectralDiagnostics, error) {
+	if !isFinite(cutoff) || cutoff < 0 || cutoff > 1 {
+		return nil, errors.New("invalid relative cutoff")
+	}
+	r, err := a.SVD()
+	if err != nil {
+		return nil, err
+	}
+	rank := spectralRank(r.Values, cutoff)
+	d := &SpectralDiagnostics{Rank: rank}
+	if len(r.Values) > 0 && r.Values[0] > 0 {
+		d.ReciprocalCondition = r.Values[len(r.Values)-1] / r.Values[0]
+	}
+	if rank > 0 {
+		d.RetainedReciprocalCondition = r.Values[rank-1] / r.Values[0]
+	}
+	return d, nil
+}
+func (a *Matrix) Pseudoinverse() (*Matrix, error) { return a.PseudoinverseWith(a.defaultCutoff()) }
+func (a *Matrix) PseudoinverseWith(cutoff float64) (*Matrix, error) {
+	return a.applyInverse(nil, cutoff)
+}
+func (a *Matrix) SolveMinimumNorm(rhs *Matrix) (*Matrix, error) {
+	return a.SolveMinimumNormWith(rhs, a.defaultCutoff())
+}
+func (a *Matrix) SolveMinimumNormWith(rhs *Matrix, cutoff float64) (*Matrix, error) {
+	if rhs == nil {
+		return nil, errors.New("missing right-hand side")
+	}
+	return a.applyInverse(rhs, cutoff)
+}
+func (a *Matrix) applyInverse(rhs *Matrix, cutoff float64) (*Matrix, error) {
+	if !isFinite(cutoff) || cutoff < 0 || cutoff > 1 {
+		return nil, errors.New("invalid relative cutoff")
+	}
+	if rhs != nil && rhs.rows != a.rows {
+		return nil, errors.New("incompatible right-hand side")
+	}
+	r, err := a.SVD()
+	if err != nil {
+		return nil, err
+	}
+	m, n, k := a.rows, a.cols, len(r.Values)
+	rank := spectralRank(r.Values, cutoff)
+	cols := m
+	if rhs != nil {
+		cols = rhs.cols
+	}
+	out, err := Zeros(n, cols)
+	if err != nil {
+		return nil, err
+	}
+	for j := 0; j < cols; j++ {
+		scale := 1.
+		if rhs != nil {
+			scale = 0
+			for i := 0; i < m; i++ {
+				scale = math.Max(scale, math.Abs(rhs.values[i*cols+j]))
+			}
+		}
+		if rhs != nil && rank > 0 && scale != 0 {
+			for i := 0; i < m; i++ {
+				if rhs.values[i*cols+j] != 0 && rhs.values[i*cols+j]/scale == 0 {
+					return nil, errors.New("right-hand side scaling discards an entry")
+				}
+			}
+		}
+		for p := 0; p < rank; p++ {
+			projection := 0.
+			if rhs == nil {
+				projection = r.U.values[j*k+p]
+			} else if scale != 0 {
+				for i := 0; i < m; i++ {
+					projection += r.U.values[i*k+p] * (rhs.values[i*cols+j] / scale)
+				}
+			}
+			coefficient := 0.
+			if rhs != nil {
+				coefficient = quotientProduct(projection, r.Values[p], scale)
+				if !isFinite(coefficient) {
+					return nil, errors.New("SVD solve outside float64 range")
+				}
+			}
+			for i := 0; i < n; i++ {
+				term := r.Vt.values[p*n+i] * coefficient
+				if rhs == nil {
+					term = quotientProduct(projection, r.Values[p], r.Vt.values[p*n+i])
+				}
+				out.values[i*cols+j] += term
+				if !isFinite(out.values[i*cols+j]) {
+					return nil, errors.New("SVD inverse outside float64 range")
+				}
+			}
+		}
+	}
+	return out, nil
+}

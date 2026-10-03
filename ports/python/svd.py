@@ -84,3 +84,53 @@ def decompose(source, tolerance=1e-12, max_sweeps=100):
                     break
             else: raise ArithmeticError('cannot complete SVD null basis')
     return SingularValueDecomposition(Matrix(m,n,u),values,Matrix(n,n,vt))
+
+
+class SpectralDiagnostics(NamedTuple):
+    rank: int
+    reciprocal_condition: float
+    retained_reciprocal_condition: float
+
+
+def cutoff(source, relative_cutoff):
+    value = max(source.rows, source.cols) * 2.220446049250313e-16 if relative_cutoff is None else relative_cutoff
+    if not math.isfinite(value) or not 0 <= value <= 1:
+        raise ValueError('relative cutoff must be finite and in [0, 1]')
+    return value
+
+
+def retained(values, relative_cutoff):
+    return sum(s > 0 and (relative_cutoff == 0 or s / values[0] > relative_cutoff) for s in values)
+
+
+def spectral_diagnostics(source, relative_cutoff=None):
+    rtol = cutoff(source, relative_cutoff)
+    s = source.svd().values
+    rank = retained(s, rtol)
+    return SpectralDiagnostics(rank, s[-1]/s[0] if s and s[0] else 0,
+                               s[rank-1]/s[0] if rank else 0)
+
+
+def apply_inverse(source, rhs=None, relative_cutoff=None):
+    from matrix import Matrix, _quotient_product
+    rtol = cutoff(source, relative_cutoff)
+    if rhs is not None and rhs.rows != source.rows:
+        raise ValueError('right-hand side must have the same row count')
+    r = source.svd()
+    rank = retained(r.values, rtol)
+    m, n = source.rows, source.cols
+    cols = m if rhs is None else rhs.cols
+    out = [0.0] * (n * cols)
+    for j in range(cols):
+        scale = max((abs(rhs[i,j]) for i in range(m)), default=0) if rhs is not None else 1.0
+        if rhs is not None and rank and scale and any(rhs[i,j] and not rhs[i,j]/scale for i in range(m)):
+            raise ArithmeticError('right-hand side scaling would discard a nonzero entry')
+        for p in range(rank):
+            projection = sum(r.u[i,p] * (rhs[i,j]/scale) for i in range(m)) if rhs is not None and scale else 0.0
+            if rhs is None: projection = r.u[j,p]
+            coefficient = _quotient_product(projection, r.values[p], scale) if rhs is not None else None
+            for i in range(n):
+                term = r.vt[p,i]*coefficient if rhs is not None else _quotient_product(projection, r.values[p], r.vt[p,i])
+                out[i*cols+j] += term
+                if not math.isfinite(out[i*cols+j]): raise ArithmeticError('SVD inverse result outside float64 range')
+    return Matrix(n, cols, out)

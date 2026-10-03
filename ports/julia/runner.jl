@@ -1,7 +1,7 @@
 include(joinpath(@__DIR__, "src", "LinearAMatrices.jl"))
 using .LinearAMatrices
 
-const OPERATIONS = Set(["svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "eigen_symmetric", "eigen_general", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "triangular"])
+const OPERATIONS = Set(["pseudoinverse", "spectral_diagnostics", "solve_minimum_norm", "svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "eigen_symmetric", "eigen_general", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "triangular"])
 
 function integer(text, minimum=0, maximum=typemax(Int))
     value = parse(Int, text)
@@ -13,6 +13,12 @@ function operation(name, a, b=nothing, scalar=1.25)
     name == "add" && return a + b
     name == "subtract" && return a - b
     name == "multiply" && return a * b
+    name == "pseudoinverse" && return pseudoinverse(a;relative_cutoff=scalar)
+    name == "solve_minimum_norm" && return solve_minimum_norm(a,b)
+    if name == "spectral_diagnostics"
+        d=spectral_diagnostics(a;relative_cutoff=scalar)
+        return Matrix64(1,3,[d.rank,d.reciprocal_condition,d.retained_reciprocal_condition])
+    end
     if name in ("svd","svd_one_sweep")
         r=svd(a;max_sweeps=name=="svd" ? 100 : 1)
         return Matrix64(a.rows+1+a.cols,min(a.rows,a.cols),vcat(rowmajor(r.u),r.values,rowmajor(transpose(r.vt))))
@@ -42,8 +48,8 @@ end
 function check(args)
     (length(args) >= 3 && args[1] in OPERATIONS) || throw(ArgumentError("usage: check OP ROWS COLS [BROWS BCOLS | SCALAR]"))
     name, rows, cols = args[1], integer(args[2]), integer(args[3])
-    binary = name in ("add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares")
-    has_scalar = name in ("scale", "rotation2d", "rotation3d")
+    binary = name in ("add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares", "solve_minimum_norm")
+    has_scalar = name in ("scale", "rotation2d", "rotation3d", "pseudoinverse", "spectral_diagnostics")
     length(args) == (binary ? 5 : has_scalar ? 4 : 3) || throw(ArgumentError("incorrect number of operation arguments"))
     brows, bcols = binary ? (integer(args[4]), integer(args[5])) : (0, 0)
     scalar = has_scalar ? finite(parse(Float64, args[4])) : 1.25

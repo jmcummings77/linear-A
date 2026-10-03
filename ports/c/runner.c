@@ -43,7 +43,7 @@ static uint64_t now_ns(void) {
 #endif
 }
 static bool binary(const char *op) {
-    return !strcmp(op, "add") || !strcmp(op, "subtract") || !strcmp(op, "multiply") || !strcmp(op, "cross") || !strcmp(op,"solve") || !strcmp(op,"solve_cholesky") || !strcmp(op,"least_squares");
+    return !strcmp(op, "add") || !strcmp(op, "subtract") || !strcmp(op, "multiply") || !strcmp(op, "cross") || !strcmp(op,"solve") || !strcmp(op,"solve_cholesky") || !strcmp(op,"least_squares") || !strcmp(op,"solve_minimum_norm");
 }
 static bool rotation_operation(const char *op) { return !strcmp(op, "rotation2d") || !strcmp(op, "rotation3d"); }
 static bool determinant_operation(const char *op) {
@@ -61,6 +61,14 @@ static void execute(const char *op, const matrix *a, const matrix *b, double sca
     if (!strcmp(op, "add")) require(m_add(a, b, result));
     else if (!strcmp(op, "subtract")) require(m_subtract(a, b, result));
     else if (!strcmp(op, "multiply")) require(m_multiply(a, b, result));
+    else if (!strcmp(op,"pseudoinverse")) require(m_pseudoinverse(a,scalar,result));
+    else if (!strcmp(op,"solve_minimum_norm")) require(m_solve_minimum_norm(a,b,-1,result));
+    else if (!strcmp(op,"spectral_diagnostics")) {
+        matrix_spectral_diagnostics d;require(m_spectral_diagnostics(a,scalar,&d));
+        double values[3]={(double)d.rank,d.reciprocal_condition,d.retained_reciprocal_condition};
+        require(m_create(1,3,result));
+        for(size_t i=0;i<3;i++)result->values[i]=values[i];
+    }
     else if (!strcmp(op,"svd") || !strcmp(op,"svd_one_sweep")) {
         matrix u={0},s={0},vt={0};
         require(m_svd(a,1e-12,!strcmp(op,"svd")?100:1,&u,&s,&vt));
@@ -101,12 +109,12 @@ static void print_matrix(const matrix *value) {
 static int check(int argc, char **argv) {
     if (argc < 5) fail("usage: runner check OP ROWS COLS [BROWS BCOLS | SCALAR]");
     const char *op = argv[2];
-    int expected = binary(op) ? 7 : (!strcmp(op, "scale") || rotation_operation(op)) ? 6 : 5;
+    int expected = binary(op) ? 7 : (!strcmp(op, "scale") || rotation_operation(op) || !strcmp(op,"pseudoinverse") || !strcmp(op,"spectral_diagnostics")) ? 6 : 5;
     if (argc != expected) fail("incorrect argument count for operation");
     matrix a = {0}, b = {0}, result = {0};
     require(m_create(integer(argv[3]), integer(argv[4]), &a));
     if (binary(op)) require(m_create(integer(argv[5]), integer(argv[6]), &b));
-    double scalar = (!strcmp(op, "scale") || rotation_operation(op)) ? number(argv[5]) : 0.0;
+    double scalar = (!strcmp(op, "scale") || rotation_operation(op) || !strcmp(op,"pseudoinverse") || !strcmp(op,"spectral_diagnostics")) ? number(argv[5]) : 0.0;
     read_values(&a); read_values(&b);
     int trailing;
     do { trailing = getchar(); } while (trailing != EOF && isspace((unsigned char)trailing));

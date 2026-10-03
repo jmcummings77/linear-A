@@ -11,5 +11,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let decomposition = a.svd()?;
     assert_eq!(decomposition.values.len(), 2);
     assert!(decomposition.values[1] > 0.);
+    let inverse=a.pseudoinverse()?;let minimum=a.solve_minimum_norm(&b)?;
+    assert!((inverse.get(0,0)?-0.3).abs()<1e-12 && (minimum.get(1,0)?-2.).abs()<1e-12);
+    assert_eq!(a.spectral_diagnostics()?.rank,2);
     println!("solution: 1, 2"); Ok(())
 }

@@ -186,14 +186,14 @@ def _check_output(output, iterations, checksum):
         raise ValueError("profiling checksum differs from the independent reference")
 
 
-def _calibrate(implementation, seed):
+def _calibrate(implementation, seed, operation="multiply", size=SIZE):
     from run import measure
     from reference import benchmark_checksum
-    expected = benchmark_checksum("multiply", SIZE, seed)
-    trial = measure(implementation, "multiply", SIZE, 1, seed, expected, timeout=90)
+    expected = benchmark_checksum(operation, size, seed)
+    trial = measure(implementation, operation, size, 1, seed, expected, timeout=90)
     count = max(1, min(1000, math.ceil(50_000_000 / trial["ns_per_op"])))
-    trial = measure(implementation, "multiply", SIZE, count, seed, expected, timeout=90)
-    iterations = max(1, min(5_000_000, math.ceil(TARGET_NS / trial["ns_per_op"])))
+    trial = measure(implementation, operation, size, count, seed, expected, timeout=90)
+    iterations = max(1, min(500_000_000, math.ceil(TARGET_NS / trial["ns_per_op"])))
     return iterations, expected
 
 
@@ -240,7 +240,7 @@ def _sanitize_native_file(raw):
     raw.write_text(text, encoding="utf-8")
 
 
-def collect_profiles(implementations, output_dir, seed):
+def collect_profiles(implementations, output_dir, seed, operation="multiply", size=SIZE):
     from publication import PublicSanitizer
     sanitizer = PublicSanitizer()
     output_dir = Path(output_dir).resolve()
@@ -261,8 +261,8 @@ def collect_profiles(implementations, output_dir, seed):
                 raise ValueError("raw profile files must not be links")
             if name not in ("python", "typescript", "wasm", "go", "julia") and platform.system() != "Darwin":
                 raise FileNotFoundError("No native stack profiler is configured on this platform; benchmark timings remain available.")
-            iterations, expected = _calibrate(implementation, seed)
-            arguments = ["bench", "multiply", str(SIZE), str(iterations), str(seed)]
+            iterations, expected = _calibrate(implementation, seed, operation, size)
+            arguments = ["bench", operation, str(size), str(iterations), str(seed)]
             runner, env = implementation["runner"], implementation["env"].copy()
             if name == "python":
                 if len(runner) != 2:
@@ -306,7 +306,7 @@ def collect_profiles(implementations, output_dir, seed):
                 wrapper = ROOT / "ports/julia/profile.jl"
                 if not wrapper.is_file():
                     raise FileNotFoundError("Julia Profile wrapper is unavailable.")
-                completed = _command(runner[:-1] + [str(wrapper), "multiply", str(SIZE), str(iterations), str(seed), str(raw)], env, timeout=90)
+                completed = _command(runner[:-1] + [str(wrapper), operation, str(size), str(iterations), str(seed), str(raw)], env, timeout=90)
                 # Julia wrapper profiles the same workload after its own JIT warmup.
                 data = sanitize_julia(json.loads(raw.read_text()), sanitizer)
                 raw.write_text(json.dumps(data, allow_nan=False), encoding="utf-8")
@@ -322,7 +322,7 @@ def collect_profiles(implementations, output_dir, seed):
             if not stacks or len(stacks) != len(weights) or any(isinstance(weight, bool) or not isinstance(weight, (int, float)) or not math.isfinite(weight) or weight <= 0 for weight in weights):
                 raise ValueError("profiler produced no usable stack samples")
             profile.update(status="available", stacks=stacks, weights=weights, raw_file=str(raw.relative_to(output_dir)),
-                           workload={"operation": "multiply", "size": SIZE, "iterations": iterations, "seed": seed})
+                           workload={"operation": operation, "size": size, "iterations": iterations, "seed": seed})
         except FileNotFoundError as error:
             profile.update(status="unavailable", note=str(error))
         except Exception as error:

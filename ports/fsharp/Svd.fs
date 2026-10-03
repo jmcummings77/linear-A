@@ -5,6 +5,8 @@ open System
 /// Economy A = U diag(Values) Vt. All returned arrays and matrices are owned.
 type SingularValueDecomposition = { U: Matrix; Values: double[]; Vt: Matrix }
 
+type SpectralDiagnostics = { Rank: int; ReciprocalCondition: double; RetainedReciprocalCondition: double }
+
 [<AutoOpen>]
 module MatrixSvd =
     let rec private decompose (source: Matrix) tolerance maxSweeps =
@@ -88,7 +90,60 @@ module MatrixSvd =
                     if not found then raise (ArithmeticException("Cannot complete SVD null basis."))
             { U=u; Values=values; Vt=vt }
 
+
+    let private cutoff (a: Matrix) value =
+        let x = defaultArg value (float (max a.Rows a.Cols)*2.220446049250313e-16)
+        if not (Double.IsFinite x) || x<0.0 || x>1.0 then invalidArg "relativeCutoff" "Invalid relative cutoff."
+        x
+    let private rank (s: double[]) cutoff =
+        s |> Array.takeWhile (fun x -> x>0.0 && (cutoff=0.0 || x/s[0]>cutoff)) |> Array.length
+    let private inverseProduct a b c =
+        if a=0.0 || c=0.0 then 0.0
+        else
+            let ae,be,ce = Math.ILogB(a),Math.ILogB(b),Math.ILogB(c)
+            let x = Math.ScaleB(Math.ScaleB(a,-ae)/Math.ScaleB(b,-be)*Math.ScaleB(c,-ce),ae-be+ce)
+            if not (Double.IsFinite x) then raise (ArithmeticException("SVD inverse outside float64 range."))
+            x
+    let private applyInverse (a: Matrix) (rhs: Matrix option) relativeCutoff =
+        let cutoff = cutoff a relativeCutoff
+        if rhs |> Option.exists (fun b -> b.Rows<>a.Rows) then invalidArg "rhs" "Incompatible right-hand side."
+        if rhs |> Option.exists (fun b -> b.ToArray() |> Array.exists (Double.IsFinite >> not)) then invalidArg "rhs" "Expected finite right-hand side."
+        let r = decompose a 1e-12 100
+        let rank = rank r.Values cutoff
+        let m,n = a.Rows,a.Cols
+        let cols = rhs |> Option.map (fun b -> b.Cols) |> Option.defaultValue m
+        let output = Matrix(n,cols)
+        for j in 0..cols-1 do
+            let scaling =
+                match rhs with
+                | None -> 1.0
+                | Some b -> [0..m-1] |> List.fold (fun s i -> max s (abs b[i,j])) 0.0
+            if rank>0 && scaling<>0.0 && (rhs |> Option.exists (fun b -> [0..m-1] |> List.exists (fun i -> b[i,j]<>0.0 && b[i,j]/scaling=0.0))) then
+                raise (ArithmeticException("Right-hand side scaling discards an entry."))
+            for p in 0..rank-1 do
+                let projection =
+                    match rhs with
+                    | None -> r.U[j,p]
+                    | Some b when scaling<>0.0 -> [0..m-1] |> List.sumBy (fun i -> r.U[i,p]*(b[i,j]/scaling))
+                    | _ -> 0.0
+                let coefficient = if rhs.IsSome then inverseProduct projection r.Values[p] scaling else 0.0
+                for i in 0..n-1 do
+                    let term = if rhs.IsSome then r.Vt[p,i]*coefficient else inverseProduct projection r.Values[p] r.Vt[p,i]
+                    let value = output[i,j]+term
+                    if not (Double.IsFinite value) then raise (ArithmeticException("SVD inverse outside float64 range."))
+                    output[i,j] <- value
+        output
+
     type Matrix with
         /// One-sided Jacobi SVD; see ports/SVD.md for range and convergence rules.
         member this.Svd(?tolerance: double, ?maxSweeps: int) =
             decompose this (defaultArg tolerance 1e-12) (defaultArg maxSweeps 100)
+
+        member this.Pseudoinverse(?relativeCutoff: double) = applyInverse this None relativeCutoff
+        member this.SolveMinimumNorm(rhs: Matrix, ?relativeCutoff: double) = applyInverse this (Some rhs) relativeCutoff
+        member this.SpectralDiagnostics(?relativeCutoff: double) =
+            let cutoff = cutoff this relativeCutoff
+            let s = (this.Svd()).Values
+            let rank = rank s cutoff
+            { Rank=rank; ReciprocalCondition=(if s.Length>0 && s[0]>0.0 then s[s.Length-1]/s[0] else 0.0);
+              RetainedReciprocalCondition=(if rank>0 then s[rank-1]/s[0] else 0.0) }

@@ -1,0 +1,133 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1692 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1692 start  (in dyld) + 6992  [0x18068be00]
+        1692 main  (in runner) + 1652  [0x104872d1c]  runner.c:241
+          791 one_iteration  (in runner) + 156  [0x10487422c]  runner.c:181
+          + 425 execute  (in runner) + 1688  [0x104874044]  runner.c:90
+          + ! 269 m_cross  (in runner) + 432  [0x10486b894]  matrix.c:569
+          + ! : 228 m_create  (in runner) + 112  [0x104868594]  matrix.c:67
+          + ! : | 119 _xzm_xzone_malloc_tiny  (in libsystem_malloc.dylib) + 268,312,...  [0x18086bfe0,0x18086c00c,...]
+          + ! : | 47 _malloc_zone_calloc  (in libsystem_malloc.dylib) + 12,84,...  [0x180876274,0x1808762bc,...]
+          + ! : | 46 _xzm_malloc_zone_malloc_type_calloc_entry  (in libsystem_malloc.dylib) + 160,236,...  [0x1808750b8,0x180875104,...]
+          + ! : | 13 _xzm_xzone_malloc  (in libsystem_malloc.dylib) + 24,336,...  [0x1808668d8,0x180866a10,...]
+          + ! : | 3 DYLD-STUB$$calloc  (in runner) + 4  [0x104874908]
+          + ! : 19 m_create  (in runner) + 20,4  [0x104868538,0x104868528]  matrix.c:64
+          + ! : 8 m_create  (in runner) + 52,36  [0x104868558,0x104868548]  matrix.c:65
+          + ! : 7 m_create  (in runner) + 148  [0x1048685b8]  matrix.c:0
+          + ! : 7 m_cross  (in runner) + 432  [0x10486b894]  matrix.c:569
+          + ! :   7 m_create  (in runner) + 92  [0x104868580]  matrix.c:0
+          + ! 47 m_cross  (in runner) + 544  [0x10486b904]  matrix.c:579
+          + ! : 46 finish  (in runner) + 92,60,...  [0x104868f80,0x104868f60,...]  matrix.c:120
+          + ! : 1 finish  (in runner) + 0  [0x104868f24]  matrix.c:119
+          + ! 29 m_cross  (in runner) + 272,252,...  [0x10486b7f4,0x10486b7e0,...]  matrix.c:565
+          + ! 27 m_cross  (in runner) + 216,188,...  [0x10486b7bc,0x10486b7a0,...]  matrix.c:563
+          + ! 13 m_cross  (in runner) + 60,120,...  [0x10486b720,0x10486b75c,...]  matrix.c:562
+          + ! 10 finish  (in runner) + 132  [0x104868fa8]  matrix.c:124
+          + ! 8 m_cross  (in runner) + 296,360  [0x10486b80c,0x10486b84c]  matrix.c:567
+          + ! 7 m_cross  (in runner) + 528  [0x10486b8f4]  matrix.c:577
+          + ! 5 m_cross  (in runner) + 412  [0x10486b880]  matrix.c:568
+          + ! 4 m_cross  (in runner) + 12  [0x10486b6f0]  matrix.c:561
+          + ! 3 m_cross  (in runner) + 432  [0x10486b894]  matrix.c:569
+          + ! 3 m_cross  (in runner) + 480,488  [0x10486b8c4,0x10486b8cc]  matrix.c:576
+          + 74 execute  (in runner) + 304  [0x104873adc]  runner.c:90
+          + ! 55 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0  [0x180a5473c,0x180a54730]
+          + ! 11 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + ! 8 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + 32 execute  (in runner) + 264,268,...  [0x104873ab4,0x104873ab8,...]  runner.c:84
+          + 23 execute  (in runner) + 244  [0x104873aa0]  runner.c:83
+          + ! 10 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + ! 8 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          + ! 5 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + 22 execute  (in runner) + 264  [0x104873ab4]  runner.c:84
+          + ! 11 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + ! 9 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + ! 2 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          + 21 require  (in runner) + 0,4  [0x104873998,0x10487399c]  runner.c:20
+          + 20 execute  (in runner) + 204  [0x104873a78]  runner.c:72
+          + ! 10 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0  [0x180a5473c,0x180a54730]
+          + ! 8 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + ! 2 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + 17 execute  (in runner) + 224  [0x104873a8c]  runner.c:82
+          + ! 8 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          + ! 5 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + ! 4 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + 17 execute  (in runner) + 244,228  [0x104873aa0,0x104873a90]  runner.c:83
+          + 17 execute  (in runner) + 284  [0x104873ac8]  runner.c:84
+          + ! 6 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + ! 6 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + ! 5 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          + 16 execute  (in runner) + 184,188,...  [0x104873a64,0x104873a68,...]  runner.c:72
+          + 15 execute  (in runner) + 184  [0x104873a64]  runner.c:72
+          + ! 10 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          + ! 3 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + ! 2 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + 14 execute  (in runner) + 148,164  [0x104873a40,0x104873a50]  runner.c:66
+          + 14 execute  (in runner) + 304,300  [0x104873adc,0x104873ad8]  runner.c:90
+          + 11 execute  (in runner) + 224,220  [0x104873a8c,0x104873a88]  runner.c:82
+          + 10 execute  (in runner) + 84  [0x104873a00]  runner.c:62
+          + ! 10 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 8  [0x180a54738]
+          + 9 execute  (in runner) + 16  [0x1048739bc]  runner.c:60
+          + 9 execute  (in runner) + 124  [0x104873a28]  runner.c:64
+          + ! 9 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 0  [0x180a5790c]
+          + 7 execute  (in runner) + 64  [0x1048739ec]  runner.c:61
+          + ! 7 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          + 7 execute  (in runner) + 144  [0x104873a3c]  runner.c:65
+          + ! 7 DYLD-STUB$$strcmp  (in runner) + 0  [0x1048749dc]
+          + 6 m_cross  (in runner) + 552  [0x10486b90c]  matrix.c:580
+          + 3 execute  (in runner) + 104  [0x104873a14]  runner.c:63
+          + ! 3 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + 2 execute  (in runner) + 164  [0x104873a50]  runner.c:66
+          +   2 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          612 one_iteration  (in runner) + 624  [0x104874400]  runner.c:186
+          + 592 m_free  (in runner) + 32  [0x1048685f4]  matrix.c:74
+          + ! 415 _xzm_free  (in libsystem_malloc.dylib) + 1048  [0x180867484]
+          + ! : 409 mach_absolute_time  (in libsystem_kernel.dylib) + 108,112,...  [0x180a0610c,0x180a06110,...]
+          + ! : 6 DYLD-STUB$$mach_absolute_time  (in libsystem_malloc.dylib) + 8  [0x18087eb14]
+          + ! 97 _xzm_free  (in libsystem_malloc.dylib) + 336,40,...  [0x1808671bc,0x180867094,...]
+          + ! 44 _free  (in libsystem_malloc.dylib) + 36,64,...  [0x180876c70,0x180876c8c,...]
+          + ! 28 _xzm_free  (in libsystem_malloc.dylib) + 352  [0x1808671cc]
+          + ! : 22 _platform_memset  (in libsystem_platform.dylib) + 180,208  [0x180a53144,0x180a53160]
+          + ! : 6 DYLD-STUB$$_platform_bzero  (in libsystem_malloc.dylib) + 8  [0x18087e7f4]
+          + ! 8 DYLD-STUB$$free  (in runner) + 8  [0x104874948]
+          + 13 _xzm_free  (in libsystem_malloc.dylib) + 1548  [0x180867678]
+          + 7 m_free  (in runner) + 16  [0x1048685e4]  matrix.c:74
+          208 one_iteration  (in runner) + 164  [0x104874234]  runner.c:182
+          + 71 scalar_result  (in runner) + 112,32,...  [0x10487415c,0x10487410c,...]  runner.c:54
+          + 28 scalar_result  (in runner) + 28  [0x104874108]  runner.c:54
+          + ! 16 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0,...  [0x180a5473c,0x180a54730,...]
+          + ! 6 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + ! 6 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + 25 scalar_result  (in runner) + 128  [0x10487416c]  runner.c:54
+          + ! 12 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + ! 8 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 8  [0x180a57914]
+          + ! 5 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          + 24 scalar_result  (in runner) + 48  [0x10487411c]  runner.c:54
+          + ! 14 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0,...  [0x180a5473c,0x180a54730,...]
+          + ! 6 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + ! 4 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + 21 scalar_result  (in runner) + 88  [0x104874144]  runner.c:54
+          + ! 9 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + ! 6 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + ! 6 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0  [0x180a5473c,0x180a54730]
+          + 20 scalar_result  (in runner) + 68  [0x104874130]  runner.c:54
+          + ! 10 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,28,...  [0x180a5473c,0x180a5474c,...]
+          + ! 5 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          + ! 5 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          + 19 scalar_result  (in runner) + 108  [0x104874158]  runner.c:54
+          +   8 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          +   7 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+          +   4 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0  [0x180a5473c,0x180a54730]
+          17 one_iteration  (in runner) + 80  [0x1048741e0]  runner.c:172
+          + 17 DYLD-STUB$$strcmp  (in runner) + 0  [0x1048749dc]
+          16 one_iteration  (in runner) + 100,84  [0x1048741f4,0x1048741e4]  runner.c:181
+          12 one_iteration  (in runner) + 120  [0x104874208]  runner.c:181
+          + 12 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+          8 one_iteration  (in runner) + 60  [0x1048741cc]  runner.c:163
+          + 8 DYLD-STUB$$strcmp  (in runner) + 4  [0x1048749e0]
+          8 one_iteration  (in runner) + 612  [0x1048743f4]  runner.c:184
+          8 scalar_result  (in runner) + 140  [0x104874178]  runner.c:54
+          5 one_iteration  (in runner) + 628  [0x104874404]  runner.c:187
+          4 one_iteration  (in runner) + 4  [0x104874194]  runner.c:155
+          3 one_iteration  (in runner) + 164  [0x104874234]  runner.c:182

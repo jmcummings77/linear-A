@@ -21,7 +21,8 @@ export function computeAccuracy(Matrix, config) {
   const delta=config.delta, target=config.target;
   if (!Number.isFinite(delta) || Math.abs(delta)>1 || !Number.isInteger(target) || target<0 || target>5)
     throw new RangeError('Choose a valid coefficient and perturbation in [−1, 1]');
-  if (!['lu','cholesky','qr'].includes(config.algorithm)) throw new RangeError('Unknown solver');
+  if (!['lu','cholesky','qr','svd'].includes(config.algorithm)) throw new RangeError('Unknown solver');
+  if(config.algorithm==='svd' && (!Number.isFinite(config.cutoff)||config.cutoff<0||config.cutoff>1)) throw new RangeError('Relative cutoff must be in [0, 1]');
   const perturbedA=a.slice(), perturbedB=b.slice(), selected=target<4?perturbedA:perturbedB, index=target<4?target:target-4;
   const before=selected[index]; selected[index]+=delta;
   const actualDelta=selected[index]-before;
@@ -29,10 +30,19 @@ export function computeAccuracy(Matrix, config) {
     let input, right, factor, output;
     try {
       input=new Matrix(2,2,values); right=new Matrix(2,1,rhs);
+      if(config.algorithm==='svd') {
+        output=input.solveMinimumNorm(right,config.cutoff);
+        const d=input.spectralDiagnostics(config.cutoff), r=input.svd();
+        let singular_values;
+        try {singular_values=Array.from(r.values);} finally {r.u.dispose();r.vt.dispose();}
+        const x=Array.from(output.toArray());
+        return {x,rank:d.rank,reciprocal_condition:d.reciprocalCondition,retained_reciprocal_condition:d.retainedReciprocalCondition,
+          singular_values,condition_norm:'2-norm',solution_norm:Math.hypot(...x),...diagnostics(values,rhs,x)};
+      }
       factor=config.algorithm==='lu'?input.factorLU():config.algorithm==='cholesky'?input.factorCholesky():input.factorQR();
       output=factor.solve(right);
       const x=Array.from(output.toArray());
-      return {x, reciprocal_condition:factor.reciprocalCondition(), ...diagnostics(values,rhs,x)};
+      return {x, condition_norm:'infinity norm', solution_norm:Math.hypot(...x), reciprocal_condition:factor.reciprocalCondition(), ...diagnostics(values,rhs,x)};
     } finally { output?.dispose(); factor?.dispose(); right?.dispose(); input?.dispose(); }
   }
   const base=solve(a,b);

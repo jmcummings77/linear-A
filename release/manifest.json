@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "capabilities": [
     "arithmetic",
     "determinants",
@@ -7,7 +7,8 @@
     "geometry",
     "linear-solves",
     "least-squares",
-    "svd"
+    "svd",
+    "svd-inverse"
   ],
   "ports": {
     "assembly": {
@@ -24,7 +25,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "c": {
@@ -40,7 +42,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "cpp": {
@@ -57,7 +60,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "csharp": {
@@ -73,7 +77,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "fsharp": {
@@ -89,7 +94,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "go": {
@@ -105,7 +111,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "julia": {
@@ -121,7 +128,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "python": {
@@ -137,7 +145,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "rust": {
@@ -153,7 +162,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "typescript": {
@@ -169,7 +179,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     },
     "wasm": {
@@ -186,7 +197,8 @@
         "geometry",
         "linear-solves",
         "least-squares",
-        "svd"
+        "svd",
+        "svd-inverse"
       ]
     }
   }

@@ -5,7 +5,7 @@ construction, identity matrices, dimensions, indexed access, independent copying
 row/column extraction, addition, subtraction, scaling, transpose, multiplication,
 trace, determinant, symmetric and general real eigendecomposition, 3D vector
 cross products, rotation factories, linear-system solves, reusable factors,
-QR least squares, economy SVD, and triangular classification. Each has its
+QR least squares, economy SVD, pseudoinverses, minimum-norm least squares, and triangular classification. Each has its
 own public API, tests, and runner for the [shared protocol](../benchmarks/PROTOCOL.md).
 
 The comparison contract uses IEEE 754 double precision. Language-specific APIs
@@ -214,6 +214,7 @@ implementation.
 
 ## Singular value decomposition
 
-All eleven ports provide an economy SVD for finite rectangular real matrices.
+All eleven ports provide an economy SVD for finite rectangular real matrices,
+plus pseudoinverses, minimum-norm solving and cutoff-based spectral diagnostics.
 See [SVD APIs and numerical limits](SVD.md) for shapes, ownership, convergence,
 and shared-kernel boundaries. The image playground uses the WebAssembly API.

@@ -261,7 +261,7 @@ class PublicSanitizer:
         for item in data.get("profiles", []):
             if not isinstance(item, dict):
                 continue
-            cleaned = self._leaves(item, ("implementation", "status", "chronological", "note", "error", "raw_file"))
+            cleaned = self._leaves(item, ("implementation", "status", "chronological", "note", "error", "raw_file", "created_at", "revision", "dirty", "source_sha256", "toolchain"))
             if isinstance(item.get("workload"), dict):
                 cleaned["workload"] = self._leaves(item["workload"], ("operation", "size", "iterations", "seed"))
             if isinstance(item.get("stacks"), list):

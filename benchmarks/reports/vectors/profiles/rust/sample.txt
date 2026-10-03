@@ -1,0 +1,56 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1669 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1669 start  (in dyld) + 6992  [0x18068be00]
+        1669 main  (in linear-a-rust) + 52  [0x100c0fa7c]
+          1669 std::rt::lang_start_internal::h91996717d3eb1d2a  (in linear-a-rust) + 648  [0x100c34ce8]
+            1669 std::rt::lang_start::_$u7b$$u7b$closure$u7d$$u7d$::h1cc2620cb2b9b9b2  (in linear-a-rust) + 16  [0x100c0fb40]
+              1669 std::sys_common::backtrace::__rust_begin_short_backtrace::hdf418c36328121cd  (in linear-a-rust) + 12  [0x100c0fb28]  backtrace.rs:134
+                1069 linear_a_rust::main::h6cce96d1b0463129  (in linear-a-rust) + 3872  [0x100c0f4ec]  main.rs:466
+                + 758 linear_a_rust::execute::hdeded00c3c7480aa  (in linear-a-rust) + 372  [0x100c0d8e4]  main.rs:214
+                + ! 614 linear_a::geometry::_$LT$impl$u20$linear_a..Matrix$GT$::cross::he6c21a39227856f5  (in linear-a-rust) + 164  [0x100c13d18]
+                + ! : 520 linear_a::allocate::h8706482f40034c72  (in linear-a-rust) + 88  [0x100c1625c]
+                + ! : | 482 alloc::raw_vec::finish_grow::h79238336cb621162  (in linear-a-rust) + 92  [0x100c1f9cc]
+                + ! : | + 217 _xzm_xzone_malloc_tiny  (in libsystem_malloc.dylib) + 420,268,...  [0x18086c078,0x18086bfe0,...]
+                + ! : | + 115 _malloc_zone_malloc  (in libsystem_malloc.dylib) + 100,12,...  [0x18087609c,0x180876044,...]
+                + ! : | + 67 <deduplicated_symbol>  (in libsystem_malloc.dylib) + 112,164,...  [0x180866144,0x180866178,...]
+                + ! : | + 59 _xzm_xzone_malloc  (in libsystem_malloc.dylib) + 8,180,...  [0x1808668c8,0x180866974,...]
+                + ! : | + 14 DYLD-STUB$$malloc  (in linear-a-rust) + 4  [0x100c58ba8]
+                + ! : | + 10 __rdl_alloc  (in linear-a-rust) + 12  [0x100c3ac68]
+                + ! : | 38 alloc::raw_vec::finish_grow::h79238336cb621162  (in linear-a-rust) + 8,32,...  [0x100c1f978,0x100c1f990,...]
+                + ! : 47 linear_a::allocate::h8706482f40034c72  (in linear-a-rust) + 36,88,...  [0x100c16228,0x100c1625c,...]
+                + ! : 46 linear_a::allocate::h8706482f40034c72  (in linear-a-rust) + 188  [0x100c162c0]
+                + ! : | 29 _platform_memset  (in libsystem_platform.dylib) + 180,208,...  [0x180a53144,0x180a53160,...]
+                + ! : | 12 DYLD-STUB$$bzero  (in linear-a-rust) + 4  [0x100c58ad0]
+                + ! : | 5 __bzero  (in libsystem_platform.dylib) + 0  [0x180a53030]
+                + ! : 1 alloc::raw_vec::finish_grow::h79238336cb621162  (in linear-a-rust) + 128  [0x100c1f9f0]
+                + ! 119 linear_a::geometry::_$LT$impl$u20$linear_a..Matrix$GT$::cross::he6c21a39227856f5  (in linear-a-rust) + 308,40,...  [0x100c13da8,0x100c13c9c,...]
+                + ! 25 linear_a::allocate::h8706482f40034c72  (in linear-a-rust) + 240,236,...  [0x100c162f4,0x100c162f0,...]
+                + 126 linear_a_rust::main::h6cce96d1b0463129  (in linear-a-rust) + 3940,3928,...  [0x100c0f530,0x100c0f524,...]  main.rs:466
+                + 105 linear_a_rust::execute::hdeded00c3c7480aa  (in linear-a-rust) + 2172,72,...  [0x100c0dfec,0x100c0d7b8,...]  main.rs:172
+                + 27 linear_a::geometry::_$LT$impl$u20$linear_a..Matrix$GT$::cross::he6c21a39227856f5  (in linear-a-rust) + 208,196  [0x100c13d44,0x100c13d38]
+                + 23 linear_a_rust::execute::hdeded00c3c7480aa  (in linear-a-rust) + 2228  [0x100c0e024]  main.rs:237
+                + 18 linear_a_rust::execute::hdeded00c3c7480aa  (in linear-a-rust) + 2100  [0x100c0dfa4]  main.rs:0
+                + 12 linear_a_rust::execute::hdeded00c3c7480aa  (in linear-a-rust) + 352,356  [0x100c0d8d0,0x100c0d8d4]  main.rs:214
+                459 linear_a_rust::main::h6cce96d1b0463129  (in linear-a-rust) + 3984  [0x100c0f55c]  main.rs:466
+                + 224 _xzm_free  (in libsystem_malloc.dylib) + 996,564,...  [0x180867450,0x1808672a0,...]
+                + 83 _free  (in libsystem_malloc.dylib) + 12,36,...  [0x180876c58,0x180876c70,...]
+                + 61 _xzm_free  (in libsystem_malloc.dylib) + 352  [0x1808671cc]
+                + ! 49 _platform_memset  (in libsystem_platform.dylib) + 180,208  [0x180a53144,0x180a53160]
+                + ! 12 DYLD-STUB$$_platform_bzero  (in libsystem_malloc.dylib) + 8  [0x18087e7f4]
+                + 39 DYLD-STUB$$free  (in linear-a-rust) + 4,0  [0x100c58b60,0x100c58b5c]
+                + 20 core::ptr::drop_in_place$LT$linear_a_rust..Outcome$GT$::h700ee8901c08f287  (in linear-a-rust) + 132  [0x100c0c834]  mod.rs:0
+                + 16 linear_a_rust::main::h6cce96d1b0463129  (in linear-a-rust) + 3852,3992  [0x100c0f4d8,0x100c0f564]  main.rs:466
+                + 13 core::ptr::drop_in_place$LT$linear_a_rust..Outcome$GT$::h700ee8901c08f287  (in linear-a-rust) + 16  [0x100c0c7c0]  mod.rs:490
+                + 2 __rdl_dealloc  (in linear-a-rust) + 0  [0x100c3acc8]
+                + 1 free  (in libsystem_malloc.dylib) + 0  [0x18083d6b8]
+                64 linear_a_rust::main::h6cce96d1b0463129  (in linear-a-rust) + 3956  [0x100c0f540]  main.rs:466
+                + 23 linear_a_rust::Outcome::checksum::h020aca388c871455  (in linear-a-rust) + 44  [0x100c0d090]  main.rs:97
+                + 17 linear_a_rust::main::h6cce96d1b0463129  (in linear-a-rust) + 3956  [0x100c0f540]  main.rs:466
+                + 13 linear_a_rust::Outcome::checksum::h020aca388c871455  (in linear-a-rust) + 64  [0x100c0d0a4]  main.rs:99
+                + ! 13 linear_a::Matrix::values::h3144147dddedcaf6  (in linear-a-rust) + 0  [0x100c16770]
+                + 11 linear_a_rust::Outcome::checksum::h020aca388c871455  (in linear-a-rust) + 108  [0x100c0d0d0]  main.rs:139
+                43 linear_a_rust::execute::hdeded00c3c7480aa  (in linear-a-rust) + 2256,2244  [0x100c0e040,0x100c0e034]  main.rs:237
+                25 _xzm_free  (in libsystem_malloc.dylib) + 1560  [0x180867684]
+                9 linear_a_rust::Outcome::checksum::h020aca388c871455  (in linear-a-rust) + 1116  [0x100c0d4c0]  main.rs:143

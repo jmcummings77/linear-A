@@ -219,3 +219,17 @@ int wm_svd(const matrix *source,double tolerance,size_t max_sweeps,matrix *u,mat
     last_status=m_svd(source,tolerance,max_sweeps,u,values,vt);
     return (int)last_status;
 }
+
+matrix *wm_pseudoinverse(const matrix *source,double cutoff){
+    matrix *out=allocate_handle();return out?complete(out,m_pseudoinverse(source,cutoff,out)):NULL;
+}
+matrix *wm_solve_minimum_norm(const matrix *source,const matrix *rhs,double cutoff){
+    matrix *out=allocate_handle();return out?complete(out,m_solve_minimum_norm(source,rhs,cutoff,out)):NULL;
+}
+matrix *wm_spectral_diagnostics(const matrix *source,double cutoff){
+    matrix_spectral_diagnostics d;
+    last_status=m_spectral_diagnostics(source,cutoff,&d);if(last_status!=M_OK)return NULL;
+    matrix *out=allocate_handle();if(!out)return NULL;
+    double values[3]={(double)d.rank,d.reciprocal_condition,d.retained_reciprocal_condition};
+    return complete(out,m_from_array(1,3,values,out));
+}

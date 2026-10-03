@@ -83,8 +83,8 @@ impl Product {
     }
 }
 
-fn quotient_product(numerator: f64, pivot: f64, value: f64) -> f64 {
-    if value == 0.0 {
+pub(crate) fn quotient_product(numerator: f64, pivot: f64, value: f64) -> f64 {
+    if value == 0.0 || numerator == 0.0 {
         return 0.0;
     }
     let (a, ae) = parts(numerator);

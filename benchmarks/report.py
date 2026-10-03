@@ -10,6 +10,7 @@ from reference import fixtures as arithmetic_fixtures
 from eigen_reference import eigen_fixtures
 from general_eigen_reference import general_eigen_fixtures
 from solve_reference import solve_fixtures
+from pseudoinverse_reference import pseudoinverse_fixtures
 from vector_reference import vector_fixtures
 from publication import PublicSanitizer
 from wasm_publication import sanitize_live_sources
@@ -77,7 +78,7 @@ def live_bundle(data, wasm_directory=None, include_live=True, sanitizer=None, tr
             digest.update(json.dumps(extra["geometry_source"], sort_keys=True).encode("utf-8"))
         except (OSError, UnicodeError, ValueError, TypeError, AttributeError):
             pass
-    cases = json.loads(json.dumps(arithmetic_fixtures() + eigen_fixtures() + general_eigen_fixtures() + vector_fixtures() + solve_fixtures(), default=float, allow_nan=False))
+    cases = json.loads(json.dumps(arithmetic_fixtures() + eigen_fixtures() + general_eigen_fixtures() + vector_fixtures() + solve_fixtures() + pseudoinverse_fixtures(), default=float, allow_nan=False))
     digest.update(b"fixtures\0")
     digest.update(json.dumps(cases, sort_keys=True, allow_nan=False).encode("utf-8"))
     return {"available": True, **sources, **extra, "wasm_base64": base64.b64encode(binary).decode("ascii"),

@@ -160,6 +160,24 @@ export async function createMatrixAPI({
       finally { values?.dispose(); }
     }
 
+    /** Truncated SVD inverse; dispose the returned matrix. */
+    pseudoinverse(cutoff=Math.max(this.rows,this.cols)*Number.EPSILON) {
+      this.#checkCutoff(cutoff);
+      return Matrix.#fromHandle(runtime._wm_pseudoinverse(this.#alive(),cutoff));
+    }
+    solveMinimumNorm(rhs,cutoff=Math.max(this.rows,this.cols)*Number.EPSILON) {
+      this.#checkCutoff(cutoff);
+      return Matrix.#fromHandle(runtime._wm_solve_minimum_norm(this.#alive(),this.#other(rhs),cutoff));
+    }
+    #checkCutoff(cutoff) {
+      if(typeof cutoff!=="number" || !Number.isFinite(cutoff)||cutoff<0||cutoff>1)throw new RangeError("invalid relative cutoff");
+    }
+    spectralDiagnostics(cutoff=Math.max(this.rows,this.cols)*Number.EPSILON) {
+      this.#checkCutoff(cutoff);
+      const result=Matrix.#fromHandle(runtime._wm_spectral_diagnostics(this.#alive(),cutoff));
+      try {const [rank,reciprocalCondition,retainedReciprocalCondition]=result.toArray();return {rank,reciprocalCondition,retainedReciprocalCondition};}
+      finally {result.dispose();}
+    }
     factorLU() { return new Factorization(runtime._wm_factorize(this.#alive(),1),ownedFactor); }
     factorCholesky() { return new Factorization(runtime._wm_factorize(this.#alive(),2),ownedFactor); }
     factorQR() { return new Factorization(runtime._wm_factorize(this.#alive(),3),ownedFactor); }

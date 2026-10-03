@@ -147,6 +147,9 @@ internal static class Program
             "add" => () => new(a + b!),
             "subtract" => () => new(a - b!),
             "multiply" => () => new(a * b!),
+            "pseudoinverse" => () => new(a.Pseudoinverse(scalar)),
+            "solve_minimum_norm" => () => new(a.SolveMinimumNorm(b!)),
+            "spectral_diagnostics" => () => {var d=a.SpectralDiagnostics(scalar);return new(new Matrix<double>(new double[,]{{d.Rank,d.ReciprocalCondition,d.RetainedReciprocalCondition}}));},
             "svd" or "svd_one_sweep" => () =>
             {
                 var r = a.Svd(maxSweeps: op == "svd" ? 100 : 1);
@@ -183,8 +186,8 @@ internal static class Program
             {
                 var rows = Number(args[2]);
                 var cols = Number(args[3]);
-                var binary = op is "add" or "subtract" or "multiply" or "cross" or "solve" or "solve_cholesky" or "least_squares";
-                var hasScalar = op is "scale" or "rotation2d" or "rotation3d";
+                var binary = op is "add" or "subtract" or "multiply" or "cross" or "solve" or "solve_cholesky" or "least_squares" or "solve_minimum_norm";
+                var hasScalar = op is "scale" or "rotation2d" or "rotation3d" or "pseudoinverse" or "spectral_diagnostics";
                 if (args.Length != (binary ? 6 : hasScalar ? 5 : 4)) throw new ArgumentException("Wrong argument count.");
                 var br = binary ? Number(args[4]) : 0;
                 var bc = binary ? Number(args[5]) : 0;

@@ -510,3 +510,21 @@ independently recomputed residuals. Its perturbation experiments and shared
 solver correctness checks do not alter saved benchmark measurements. Solver
 operations are check-only additions to the harness; no solver timings have been
 added to the historical reports.
+
+### Add profiles to a saved report
+
+A saved report can have timing measurements without stack profiles. To add
+profiles without rerunning or replacing those measurements:
+
+```sh
+python3 benchmarks/profile_report.py benchmarks/reports/vectors/results.json --operation cross --size 3
+```
+
+The workload must exist in the saved report. The command builds and checks the
+current implementations, calibrates separate profiling runs, and replaces only
+the `profiles` section and its raw files. Each profile records its own timestamp,
+Git revision, dirty state, source digest and toolchain, independently of the
+original timing run. `--no-build` reuses current local binaries. Sampling and
+calibration are not appended to the comparative timing table. Native sampling
+requires macOS; unavailable profilers are reported explicitly. HTML, profile
+metadata and raw samples pass through the public-export sanitizers.

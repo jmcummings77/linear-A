@@ -7,6 +7,9 @@ namespace linear_A;
 /// <summary>Economy factors A = U diag(Values) Vt with descending nonnegative values.</summary>
 public sealed record SingularValueDecomposition(Matrix<double> U, double[] Values, Matrix<double> Vt);
 
+/// <summary>Numerical rank and reciprocal 2-norm conditions.</summary>
+public sealed record SpectralDiagnostics(int Rank, double ReciprocalCondition, double RetainedReciprocalCondition);
+
 /// <summary>One-sided Jacobi SVD for finite real matrices; see ports/SVD.md.</summary>
 public static class MatrixSvd
 {
@@ -119,5 +122,75 @@ public static class MatrixSvd
         }
         return new(u, values, vt);
     }
+    private static double Cutoff(Matrix<double> source, double? cutoff)
+    {
+        var value = cutoff ?? Math.Max(source.RowCount, source.ColumnCount) * 2.220446049250313e-16;
+        if (!double.IsFinite(value) || value < 0 || value > 1) throw new ArgumentOutOfRangeException(nameof(cutoff));
+        return value;
+    }
+    private static int Rank(double[] values, double cutoff)
+    {
+        var rank = 0;
+        while (rank < values.Length && values[rank] > 0 && (cutoff == 0 || values[rank] / values[0] > cutoff)) rank++;
+        return rank;
+    }
+    /// <summary>Numerical rank and reciprocal 2-norm conditions of original and retained spectra.</summary>
+    public static SpectralDiagnostics SpectralDiagnostics(this Matrix<double> source, double? relativeCutoff = null)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        var cutoff = Cutoff(source, relativeCutoff); var s = source.Svd().Values; var rank = Rank(s, cutoff);
+        return new(rank, s.Length > 0 && s[0] > 0 ? s[^1] / s[0] : 0, rank > 0 ? s[rank - 1] / s[0] : 0);
+    }
+    /// <summary>Truncated SVD pseudoinverse; see ports/SVD.md for the strict relative cutoff.</summary>
+    public static Matrix<double> Pseudoinverse(this Matrix<double> source, double? relativeCutoff = null) => ApplyInverse(source, null, relativeCutoff);
+    /// <summary>Minimum-norm least-squares solution, including wide and rank-deficient inputs.</summary>
+    public static Matrix<double> SolveMinimumNorm(this Matrix<double> source, Matrix<double> rhs, double? relativeCutoff = null)
+    {
+        ArgumentNullException.ThrowIfNull(rhs);
+        return ApplyInverse(source, rhs, relativeCutoff);
+    }
+    private static double InverseProduct(double a, double b, double c)
+    {
+        if (a == 0 || c == 0) return 0;
+        var ae = Math.ILogB(a); var be = Math.ILogB(b); var ce = Math.ILogB(c);
+        var value = Math.ScaleB(Math.ScaleB(a, -ae) / Math.ScaleB(b, -be) * Math.ScaleB(c, -ce), ae - be + ce);
+        if (!double.IsFinite(value)) throw new ArithmeticException("SVD inverse outside float64 range.");
+        return value;
+    }
+    private static Matrix<double> ApplyInverse(Matrix<double> source, Matrix<double>? rhs, double? relativeCutoff)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        var cutoff = Cutoff(source, relativeCutoff);
+        if (rhs is not null && rhs.RowCount != source.RowCount) throw new ArgumentException("Incompatible right-hand side.", nameof(rhs));
+        if (rhs is not null)
+            for (var i = 0; i < rhs.RowCount; i++)
+                for (var j = 0; j < rhs.ColumnCount; j++)
+                    if (!double.IsFinite(rhs[i, j])) throw new ArgumentException("Expected finite right-hand side.", nameof(rhs));
+        var r = source.Svd(); var rank = Rank(r.Values, cutoff); var m = source.RowCount; var n = source.ColumnCount;
+        var cols = rhs?.ColumnCount ?? m; var result = new Matrix<double>(n, cols);
+        for (var j = 0; j < cols; j++)
+        {
+            var scale = rhs is null ? 1.0 : 0.0;
+            if (rhs is not null) for (var i = 0; i < m; i++) scale = Math.Max(scale, Math.Abs(rhs[i, j]));
+            if (rhs is not null && rank > 0 && scale != 0)
+                for (var i = 0; i < m; i++)
+                    if (rhs[i, j] != 0 && rhs[i, j] / scale == 0) throw new ArithmeticException("Right-hand side scaling discards an entry.");
+            for (var p = 0; p < rank; p++)
+            {
+                var projection = rhs is null ? r.U[j, p] : 0;
+                if (rhs is not null && scale != 0) for (var i = 0; i < m; i++) projection += r.U[i, p] * (rhs[i, j] / scale);
+                var coefficient = rhs is null ? 0 : InverseProduct(projection, r.Values[p], scale);
+                for (var i = 0; i < n; i++)
+                {
+                    var term = rhs is null ? InverseProduct(projection, r.Values[p], r.Vt[p, i]) : r.Vt[p, i] * coefficient;
+                    var value = result[i, j] + term;
+                    if (!double.IsFinite(value)) throw new ArithmeticException("SVD inverse outside float64 range.");
+                    result[i, j] = value;
+                }
+            }
+        }
+        return result;
+    }
+
 }
 #endif

@@ -5,6 +5,7 @@
 #include <memory>
 #include "../c/solve_core.h"
 #include "../c/svd_core.h"
+#include "../c/pseudoinverse_core.h"
 #include "../c/general_eigen.h"
 #include <cmath>
 #include <cstddef>
@@ -321,6 +322,10 @@ public:
     Factorization factor_lu() const;
     Factorization factor_cholesky() const;
     Factorization factor_qr() const;
+    struct SpectralDiagnostics { std::size_t rank; double reciprocal_condition, retained_reciprocal_condition; };
+    Matrix pseudoinverse(double cutoff=-1) const;
+    Matrix solve_minimum_norm(const Matrix& rhs,double cutoff=-1) const;
+    SpectralDiagnostics spectral_diagnostics(double cutoff=-1) const;
     struct Svd;
     Svd svd(double tolerance=1e-12, std::size_t max_sweeps=100) const;
     Matrix solve(const Matrix& rhs) const;
@@ -491,6 +496,27 @@ inline Matrix::Svd Matrix::svd(double tolerance,std::size_t max_sweeps) const {
     if(status==3)throw std::overflow_error("SVD outside float64 range");
     if(status==4)throw EigenConvergenceError();
     return result;
+}
+inline double inverse_cutoff(std::size_t m,std::size_t n,double cutoff) {
+    if(cutoff==-1)cutoff=static_cast<double>(std::max(m,n))*std::numeric_limits<double>::epsilon();
+    if(!std::isfinite(cutoff)||cutoff<0||cutoff>1)throw std::invalid_argument("invalid relative cutoff");
+    return cutoff;
+}
+inline Matrix Matrix::pseudoinverse(double cutoff) const {
+    cutoff=inverse_cutoff(rows_,cols_,cutoff);auto r=svd();Matrix out(cols_,rows_);
+    if(la_apply_inverse(rows_,cols_,r.values.size(),r.u.data(),r.values.data(),r.vt.data(),cutoff,nullptr,rows_,0,out.data()))throw std::overflow_error("SVD inverse outside float64 range");
+    return out;
+}
+inline Matrix Matrix::solve_minimum_norm(const Matrix& rhs,double cutoff) const {
+    rhs.validate();
+    if(rhs.rows_!=rows_)throw std::invalid_argument("incompatible right-hand side");
+    cutoff=inverse_cutoff(rows_,cols_,cutoff);auto r=svd();Matrix out(cols_,rhs.cols_);
+    if(la_apply_inverse(rows_,cols_,r.values.size(),r.u.data(),r.values.data(),r.vt.data(),cutoff,rhs.values_.data(),rhs.cols_,1,out.data()))throw std::overflow_error("SVD solve outside float64 range");
+    return out;
+}
+inline Matrix::SpectralDiagnostics Matrix::spectral_diagnostics(double cutoff) const {
+    cutoff=inverse_cutoff(rows_,cols_,cutoff);auto r=svd();auto k=r.values.size();auto rank=la_spectral_rank(k,r.values.data(),cutoff);
+    return {rank,k&&r.values[0]?r.values[k-1]/r.values[0]:0,rank?r.values[rank-1]/r.values[0]:0};
 }
 }
 #endif

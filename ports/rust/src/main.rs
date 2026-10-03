@@ -15,6 +15,9 @@ enum Operation {
     Scale,
     Transpose,
     Multiply,
+    Pseudoinverse,
+    MinimumNorm,
+    SpectralDiagnostics,
     Svd,
     SvdOneSweep,
     Solve,
@@ -42,6 +45,9 @@ impl Operation {
             "scale" => Ok(Self::Scale),
             "transpose" => Ok(Self::Transpose),
             "multiply" => Ok(Self::Multiply),
+            "pseudoinverse" => Ok(Self::Pseudoinverse),
+            "solve_minimum_norm" => Ok(Self::MinimumNorm),
+            "spectral_diagnostics" => Ok(Self::SpectralDiagnostics),
             "svd" => Ok(Self::Svd),
             "svd_one_sweep" => Ok(Self::SvdOneSweep),
             "solve" => Ok(Self::Solve),
@@ -73,6 +79,7 @@ impl Operation {
                 | Self::Solve
                 | Self::SolveCholesky
                 | Self::LeastSquares
+                | Self::MinimumNorm
         )
     }
 }
@@ -168,6 +175,20 @@ fn execute(
         Operation::Scale => Outcome::Matrix(a.scale(scalar)?),
         Operation::Transpose => Outcome::Matrix(a.transpose()?),
         Operation::Multiply => Outcome::Matrix(a.multiply(second()?)?),
+        Operation::Pseudoinverse => Outcome::Matrix(a.pseudoinverse_with(scalar)?),
+        Operation::MinimumNorm => Outcome::Matrix(a.solve_minimum_norm(second()?)?),
+        Operation::SpectralDiagnostics => {
+            let d = a.spectral_diagnostics_with(scalar)?;
+            Outcome::Matrix(Matrix::new(
+                1,
+                3,
+                &[
+                    d.rank as f64,
+                    d.reciprocal_condition,
+                    d.retained_reciprocal_condition,
+                ],
+            )?)
+        }
         Operation::Svd | Operation::SvdOneSweep => {
             let r = a.svd_with(
                 1e-12,
@@ -249,7 +270,11 @@ fn check(args: &[String]) -> RunnerResult<()> {
         6
     } else if matches!(
         operation,
-        Operation::Scale | Operation::Rotation2D | Operation::Rotation3D
+        Operation::Scale
+            | Operation::Rotation2D
+            | Operation::Rotation3D
+            | Operation::Pseudoinverse
+            | Operation::SpectralDiagnostics
     ) {
         5
     } else {
@@ -274,7 +299,11 @@ fn check(args: &[String]) -> RunnerResult<()> {
         .ok_or("input count overflow")?;
     let scalar = if matches!(
         operation,
-        Operation::Scale | Operation::Rotation2D | Operation::Rotation3D
+        Operation::Scale
+            | Operation::Rotation2D
+            | Operation::Rotation3D
+            | Operation::Pseudoinverse
+            | Operation::SpectralDiagnostics
     ) {
         number(&args[4])?
     } else {

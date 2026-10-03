@@ -104,4 +104,12 @@ matrix_status m_eigen_general_with_options(const matrix *source, size_t max_iter
 matrix_status m_svd(const matrix *source, double tolerance, size_t max_sweeps,
                     matrix *u, matrix *values, matrix *vt);
 
+/* Truncated SVD inverse and minimum-norm least squares. Cutoff in [0,1],
+ * strict s/s_max > cutoff; -1 selects max(rows,cols)*DBL_EPSILON.
+ * Empty distinct outputs, unchanged on failure. See ports/SVD.md. */
+typedef struct { size_t rank; double reciprocal_condition, retained_reciprocal_condition; } matrix_spectral_diagnostics;
+matrix_status m_pseudoinverse(const matrix *source,double cutoff,matrix *out);
+matrix_status m_solve_minimum_norm(const matrix *source,const matrix *rhs,double cutoff,matrix *out);
+matrix_status m_spectral_diagnostics(const matrix *source,double cutoff,matrix_spectral_diagnostics *out);
+
 #endif

@@ -15,8 +15,8 @@ function harness(available=true){
   getContext(){return new Proxy({}, {get:()=>()=>{},set:()=>true});}
  }
  const nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,new Element(id));return nodes.get(id);};
- for(const [id,tag,value] of [['preset','SELECT','stable'],['algorithm','SELECT','lu'],['target','SELECT','5'],['delta','INPUT','0.0000001']])Object.assign(get('accuracy-'+id),{tagName:tag,value});
- get('accuracy-panel').querySelectorAll=()=>['preset','algorithm','target','delta'].map(id=>get('accuracy-'+id));
+ for(const [id,tag,value] of [['preset','SELECT','stable'],['algorithm','SELECT','lu'],['target','SELECT','5'],['delta','INPUT','0.0000001'],['cutoff','INPUT','-12']])Object.assign(get('accuracy-'+id),{tagName:tag,value});
+ get('accuracy-panel').querySelectorAll=selector=>selector==='.accuracy-spectral'?[]:['preset','algorithm','target','delta','cutoff'].map(id=>get('accuracy-'+id));
  get('live-data').textContent=JSON.stringify({available,accuracy_worker_source:'export {};'});
  const timers=new Map(),workers=[],revoked=[];let clock=0,next=0;
  class Worker {constructor(){this.sent=[];workers.push(this);}postMessage(message){this.sent.push(message);}terminate(){this.terminated=true;}}
@@ -44,4 +44,14 @@ test('invalid edits clear old output and missing WASM never starts a worker',()=
 test('timeout terminates worker, clears results, and editing can retry',()=>{
  const h=harness();h.advance(300);h.advance(20000);assert.equal(h.workers[0].terminated,true);assert.match(h.get('accuracy-status').textContent,/timed out/);
  h.get('accuracy-delta').dispatch('input');h.advance(300);assert.equal(h.workers.length,2);
+});
+test('SVD controls show the cutoff, debounce edits, and restore LU visibility',()=>{
+ const h=harness();h.get('accuracy-algorithm').value='svd';h.get('accuracy-algorithm').dispatch('change');
+ assert.equal(h.get('accuracy-cutoff-control').hidden,false);
+ h.get('accuracy-cutoff').value='-5';h.get('accuracy-cutoff').dispatch('input');
+ h.advance(299);assert.equal(h.workers.length,0);h.advance(1);
+ assert.equal(h.workers[0].sent[0].config.cutoff,1e-5);
+ h.get('accuracy-algorithm').value='lu';h.get('accuracy-algorithm').dispatch('change');
+ assert.equal(h.get('accuracy-cutoff-control').hidden,true);
+ assert.equal(h.get('accuracy-cutoff').disabled,true);
 });

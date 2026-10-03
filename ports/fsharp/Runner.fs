@@ -49,6 +49,11 @@ let operation op (a: Matrix) (b: Matrix) scalar =
     | "add" -> MatrixResult(a.Add(b))
     | "subtract" -> MatrixResult(a.Subtract(b))
     | "multiply" -> MatrixResult(a.Multiply(b))
+    | "pseudoinverse" -> MatrixResult(a.Pseudoinverse(scalar))
+    | "solve_minimum_norm" -> MatrixResult(a.SolveMinimumNorm(b))
+    | "spectral_diagnostics" ->
+        let d = a.SpectralDiagnostics(scalar)
+        MatrixResult(Matrix.FromArray(1,3,[|float d.Rank;d.ReciprocalCondition;d.RetainedReciprocalCondition|]))
     | "svd" | "svd_one_sweep" ->
         let r = a.Svd(maxSweeps=(if op="svd" then 100 else 1))
         MatrixResult(Matrix.FromArray(a.Rows+1+a.Cols,min a.Rows a.Cols,Array.concat [r.U.ToArray();r.Values;r.Vt.Transpose().ToArray()]))
@@ -109,8 +114,8 @@ let main args =
         match args[0] with
         | "check" ->
             let rows, cols = number false args[2], number false args[3]
-            let binary = op = "add" || op = "subtract" || op = "multiply" || op = "cross" || op = "solve" || op = "solve_cholesky" || op = "least_squares"
-            let hasScalar = op = "scale" || op = "rotation2d" || op = "rotation3d"
+            let binary = op = "add" || op = "subtract" || op = "multiply" || op = "cross" || op = "solve" || op = "solve_cholesky" || op = "least_squares" || op = "solve_minimum_norm"
+            let hasScalar = op = "scale" || op = "rotation2d" || op = "rotation3d" || op = "pseudoinverse" || op = "spectral_diagnostics"
             if args.Length <> (if binary then 6 elif hasScalar then 5 else 4) then
                 invalidArg "args" "Wrong argument count."
             let br, bc = if binary then number false args[4], number false args[5] else 0, 0

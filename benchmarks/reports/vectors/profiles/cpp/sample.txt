@@ -1,0 +1,162 @@
+Analysis of sampling runner every 1 millisecond
+
+Call graph:
+    1690 Thread_1 DispatchQueue_1: com.apple.main-thread (serial)
+      1690 start  (in dyld) + 6992  [0x18068be00]
+        1671 main  (in runner) + 2952  [0x1040c9110]  runner.c:241
+        + 989 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 168  [0x1040d7618]  runner.c:181
+        + ! 460 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 2400  [0x1040caa8c]  runner.c:90
+        + ! : 423 guarded<m_cross(matrix const*, matrix const*, matrix*)::'lambda'()>(m_cross(matrix const*, matrix const*, matrix*)::'lambda'())  (in runner) + 40  [0x1040d4f1c]  bridge.hpp:38
+        + ! : | 266 linear_a::Matrix::cross(linear_a::Matrix const&) const  (in runner) + 252  [0x1040d5184]  matrix.hpp:260
+        + ! : | + 246 operator new(unsigned long)  (in libc++abi.dylib) + 52  [0x180a007e8]
+        + ! : | + ! 125 _xzm_xzone_malloc_tiny  (in libsystem_malloc.dylib) + 12,420,...  [0x18086bee0,0x18086c078,...]
+        + ! : | + ! 48 <deduplicated_symbol>  (in libsystem_malloc.dylib) + 112,212,...  [0x180866144,0x1808661a8,...]
+        + ! : | + ! 35 malloc_type_malloc  (in libsystem_malloc.dylib) + 44,84,...  [0x18085a010,0x18085a038,...]
+        + ! : | + ! 25 _xzm_xzone_malloc  (in libsystem_malloc.dylib) + 24,184,...  [0x1808668d8,0x180866978,...]
+        + ! : | + ! 13 DYLD-STUB$$malloc_type_malloc  (in libc++abi.dylib) + 8  [0x180a00c18]
+        + ! : | + 10 DYLD-STUB$$operator new(unsigned long)  (in runner) + 4  [0x1040d7e24]
+        + ! : | + 10 operator new(unsigned long)  (in libc++abi.dylib) + 48,36,...  [0x180a007e4,0x180a007d8,...]
+        + ! : | 62 linear_a::Matrix::cross(linear_a::Matrix const&) const  (in runner) + 328  [0x1040d51d0]  matrix.hpp:260
+        + ! : | + 38 linear_a::Matrix::Matrix(unsigned long, unsigned long, std::vector<double>)  (in runner) + 116,128,...  [0x1040cea60,0x1040cea6c,...]  matrix.hpp:183
+        + ! : | + 19 linear_a::Matrix::Matrix(unsigned long, unsigned long, std::vector<double>)  (in runner) + 60,84,...  [0x1040cea28,0x1040cea40,...]  matrix.hpp:182
+        + ! : | + 5 linear_a::Matrix::Matrix(unsigned long, unsigned long, std::vector<double>)  (in runner) + 40  [0x1040cea14]  matrix.hpp:181
+        + ! : | 38 linear_a::Matrix::cross(linear_a::Matrix const&) const  (in runner) + 100,56,...  [0x1040d50ec,0x1040d50c0,...]  matrix.hpp:255
+        + ! : | 21 linear_a::Matrix::cross(linear_a::Matrix const&) const  (in runner) + 124,144  [0x1040d5104,0x1040d5118]  matrix.hpp:256
+        + ! : | 13 linear_a::Matrix::cross(linear_a::Matrix const&) const  (in runner) + 304,328  [0x1040d51b8,0x1040d51d0]  matrix.hpp:260
+        + ! : | 10 linear_a::Matrix::cross(linear_a::Matrix const&) const  (in runner) + 16,8  [0x1040d5098,0x1040d5090]  matrix.hpp:254
+        + ! : | 5 linear_a::Matrix::Matrix(unsigned long, unsigned long, std::vector<double>)  (in runner) + 144  [0x1040cea7c]  matrix.hpp:184
+        + ! : | 5 operator new(unsigned long)  (in libc++abi.dylib) + 76  [0x180a00800]
+        + ! : | 3 linear_a::Matrix::cross(linear_a::Matrix const&) const  (in runner) + 204  [0x1040d5154]  matrix.hpp:257
+        + ! : 30 guarded<m_cross(matrix const*, matrix const*, matrix*)::'lambda'()>(m_cross(matrix const*, matrix const*, matrix*)::'lambda'())  (in runner) + 72,68,...  [0x1040d4f3c,0x1040d4f38,...]  bridge.hpp:38
+        + ! : 7 linear_a::Matrix::cross(linear_a::Matrix const&) const  (in runner) + 364  [0x1040d51f4]  matrix.hpp:261
+        + ! 63 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 312  [0x1040ca264]  runner.c:90
+        + ! : 54 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0,...  [0x180a5473c,0x180a54730,...]
+        + ! : 7 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 2 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! 29 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 92  [0x1040ca188]  runner.c:62
+        + ! : 14 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 9 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4,0  [0x180a57910,0x180a5790c]
+        + ! : 6 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 0,12  [0x180a54730,0x180a5473c]
+        + ! 27 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 212  [0x1040ca200]  runner.c:72
+        + ! : 12 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 9 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+        + ! : 6 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! 26 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 152  [0x1040ca1c4]  runner.c:65
+        + ! : 12 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! : 8 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,20  [0x180a5473c,0x180a54744]
+        + ! : 6 DYLD-STUB$$strcmp  (in runner) + 4,0  [0x1040d7f80,0x1040d7f7c]
+        + ! 26 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 172  [0x1040ca1d8]  runner.c:66
+        + ! : 10 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 10 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,28  [0x180a5473c,0x180a5474c]
+        + ! : 6 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! 26 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 232  [0x1040ca214]  runner.c:82
+        + ! : 11 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 11 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,20  [0x180a5473c,0x180a54744]
+        + ! : 4 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4,8  [0x180a57910,0x180a57914]
+        + ! 24 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 72  [0x1040ca174]  runner.c:61
+        + ! : 9 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 8 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! : 7 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 0,12,...  [0x180a54730,0x180a5473c,...]
+        + ! 23 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 192  [0x1040ca1ec]  runner.c:72
+        + ! : 10 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! : 9 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 4 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,20  [0x180a5473c,0x180a54744]
+        + ! 23 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 192,176,...  [0x1040ca1ec,0x1040ca1dc,...]  runner.c:72
+        + ! 23 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 272  [0x1040ca23c]  runner.c:84
+        + ! : 10 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,20  [0x180a5473c,0x180a54744]
+        + ! : 7 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 6 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! 22 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 128,132,...  [0x1040ca1ac,0x1040ca1b0,...]  runner.c:64
+        + ! 21 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 252  [0x1040ca228]  runner.c:83
+        + ! : 7 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! : 7 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 7 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+        + ! 21 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 292  [0x1040ca250]  runner.c:84
+        + ! : 8 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4,8  [0x180a57910,0x180a57914]
+        + ! : 8 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 5 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0  [0x180a5473c,0x180a54730]
+        + ! 21 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 256,272,...  [0x1040ca22c,0x1040ca23c,...]  runner.c:84
+        + ! 20 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 92,76  [0x1040ca188,0x1040ca178]  runner.c:62
+        + ! 17 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 296,312,...  [0x1040ca254,0x1040ca264,...]  runner.c:90
+        + ! 16 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 112  [0x1040ca19c]  runner.c:63
+        + ! : 10 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! : 3 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 3 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,20  [0x180a5473c,0x180a54744]
+        + ! 16 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 132  [0x1040ca1b0]  runner.c:64
+        + ! : 8 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! : 4 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 4 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12  [0x180a5473c]
+        + ! 16 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 252,236,...  [0x1040ca228,0x1040ca218,...]  runner.c:83
+        + ! 13 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 136,152,...  [0x1040ca1b4,0x1040ca1c4,...]  runner.c:65
+        + ! 11 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 232,216  [0x1040ca214,0x1040ca204]  runner.c:82
+        + ! 10 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 96,112  [0x1040ca18c,0x1040ca19c]  runner.c:63
+        + ! 8 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 28,24,...  [0x1040ca148,0x1040ca144,...]  runner.c:60
+        + ! 8 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 72  [0x1040ca174]  runner.c:61
+        + ! 8 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 156,172,...  [0x1040ca1c8,0x1040ca1d8,...]  runner.c:66
+        + ! 8 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 2404  [0x1040caa90]  runner.c:90
+        + ! : 8 require(matrix_status)  (in runner) + 4,0  [0x1040ca048,0x1040ca044]  runner.c:20
+        + ! 3 guarded<m_cross(matrix const*, matrix const*, matrix*)::'lambda'()>(m_cross(matrix const*, matrix const*, matrix*)::'lambda'())  (in runner) + 140  [0x1040d4f80]  bridge.hpp:47
+        + 236 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 176  [0x1040d7620]  runner.c:182
+        + ! 88 scalar_result(char const*)  (in runner) + 28,108,...  [0x1040cb27c,0x1040cb2cc,...]  runner.c:54
+        + ! 40 scalar_result(char const*)  (in runner) + 48  [0x1040cb290]  runner.c:54
+        + ! : 20 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,28,...  [0x180a5473c,0x180a5474c,...]
+        + ! : 13 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4,0  [0x180a57910,0x180a5790c]
+        + ! : 7 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! 29 scalar_result(char const*)  (in runner) + 28  [0x1040cb27c]  runner.c:54
+        + ! : 13 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 10 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0,...  [0x180a5473c,0x180a54730,...]
+        + ! : 6 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4,8  [0x180a57910,0x180a57914]
+        + ! 24 scalar_result(char const*)  (in runner) + 68  [0x1040cb2a4]  runner.c:54
+        + ! : 10 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 7 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4,0  [0x180a57910,0x180a5790c]
+        + ! : 7 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0,...  [0x180a5473c,0x180a54730,...]
+        + ! 20 scalar_result(char const*)  (in runner) + 108  [0x1040cb2cc]  runner.c:54
+        + ! : 10 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4,8  [0x180a57910,0x180a57914]
+        + ! : 6 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 4 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,28  [0x180a5473c,0x180a5474c]
+        + ! 19 scalar_result(char const*)  (in runner) + 128  [0x1040cb2e0]  runner.c:54
+        + ! : 9 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! : 5 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! : 5 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,20  [0x180a5473c,0x180a54744]
+        + ! 16 scalar_result(char const*)  (in runner) + 88  [0x1040cb2b8]  runner.c:54
+        + !   9 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0,...  [0x180a5473c,0x180a54730,...]
+        + !   5 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + !   2 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + 215 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 1060  [0x1040d7994]  runner.c:186
+        + ! 120 _xzm_free  (in libsystem_malloc.dylib) + 996,128,...  [0x180867450,0x1808670ec,...]
+        + ! 41 _free  (in libsystem_malloc.dylib) + 12,36,...  [0x180876c58,0x180876c70,...]
+        + ! 34 _xzm_free  (in libsystem_malloc.dylib) + 352  [0x1808671cc]
+        + ! : 29 _platform_memset  (in libsystem_platform.dylib) + 180,208  [0x180a53144,0x180a53160]
+        + ! : 5 DYLD-STUB$$_platform_bzero  (in libsystem_malloc.dylib) + 8  [0x18087e7f4]
+        + ! 11 DYLD-STUB$$free  (in libc++abi.dylib) + 8  [0x180a00bd8]
+        + ! 9 DYLD-STUB$$operator delete(void*)  (in runner) + 4  [0x1040d7e18]
+        + 33 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 92  [0x1040d75cc]  runner.c:172
+        + ! 19 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 28,12  [0x180a5474c,0x180a5473c]
+        + ! 8 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! 6 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + 29 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 72  [0x1040d75b8]  runner.c:163
+        + ! 13 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 28,16,...  [0x180a5474c,0x180a54740,...]
+        + ! 11 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! 5 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + 27 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 132  [0x1040d75f4]  runner.c:181
+        + ! 11 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + ! 9 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 28,12,...  [0x180a5474c,0x180a5473c,...]
+        + ! 7 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + 22 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 112  [0x1040d75e0]  runner.c:181
+        + ! 10 _platform_strcmp$VARIANT$Base  (in libsystem_platform.dylib) + 12,0,...  [0x180a5473c,0x180a54730,...]
+        + ! 7 DYLD-STUB$$_platform_strcmp  (in libsystem_platform.dylib) + 4  [0x180a57910]
+        + ! 5 DYLD-STUB$$strcmp  (in runner) + 4  [0x1040d7f80]
+        + 19 _xzm_free  (in libsystem_malloc.dylib) + 1560  [0x180867684]
+        + 19 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 96,112,...  [0x1040d75d0,0x1040d75e0,...]  runner.c:181
+        + 15 execute(char const*, matrix const*, matrix const*, double, matrix*, double*)  (in runner) + 2204  [0x1040ca9c8]  runner.c:103
+        + 14 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 1084  [0x1040d79ac]  runner.c:187
+        + 13 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 56  [0x1040d75a8]  runner.c:162
+        + 8 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 44  [0x1040d759c]  runner.c:161
+        + 8 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 176,168  [0x1040d7620,0x1040d7618]  runner.c:182
+        + 8 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 1044,1052  [0x1040d7984,0x1040d798c]  runner.c:186
+        + 7 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 76,84  [0x1040d75bc,0x1040d75c4]  runner.c:172
+        + 5 scalar_result(char const*)  (in runner) + 140  [0x1040cb2ec]  runner.c:54
+        + 3 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 72  [0x1040d75b8]  runner.c:163
+        + 1 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 1028  [0x1040d7974]  runner.c:184
+        10 main  (in runner) + 2952  [0x1040c9110]  runner.c:241
+        9 one_iteration(char const*, matrix const*, matrix const*)  (in runner) + 1140  [0x1040d79e4]  runner.c:189

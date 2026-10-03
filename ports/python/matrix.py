@@ -423,6 +423,20 @@ class Matrix:
         from solve import Factorization
         return Factorization(self, "qr")
 
+    def pseudoinverse(self, relative_cutoff=None):
+        from svd import apply_inverse
+        return apply_inverse(self, relative_cutoff=relative_cutoff)
+
+    def solve_minimum_norm(self, rhs, relative_cutoff=None):
+        if not isinstance(rhs, Matrix):
+            raise TypeError("right-hand side must be a Matrix")
+        from svd import apply_inverse
+        return apply_inverse(self, rhs, relative_cutoff)
+
+    def spectral_diagnostics(self, relative_cutoff=None):
+        from svd import spectral_diagnostics
+        return spectral_diagnostics(self, relative_cutoff)
+
     def svd(self, tolerance=1e-12, max_sweeps=100):
         from svd import decompose
         return decompose(self, tolerance, max_sweeps)
