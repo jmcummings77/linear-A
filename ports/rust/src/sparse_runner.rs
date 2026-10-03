@@ -1,4 +1,4 @@
-use linear_a::{CGOptions, CSRMatrix, GMRESOptions, Matrix};
+use linear_a::{CGOptions, CSRMatrix, GMRESOptions, Matrix, ILU0};
 use std::io::{self, Read};
 use std::time::Instant;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -22,7 +22,11 @@ pub fn run(args: &[String]) -> Result<()> {
     let limit: usize = args[8].parse()?;
     let jacobi: usize = args[9].parse()?;
     let capture: usize = args[10].parse()?;
-    if !["spmv", "dense", "cg", "gmres"].contains(&op) || jacobi > 1 || capture > 1 {
+    if !["spmv", "dense", "cg", "gmres", "ilu_setup", "ilu_apply"].contains(&op)
+        || jacobi > 3
+        || (op != "gmres" && jacobi > 1)
+        || capture > 1
+    {
         return Err("invalid sparse options".into());
     }
     let mut raw = String::new();
@@ -59,6 +63,11 @@ pub fn run(args: &[String]) -> Result<()> {
         .map(|s| s.parse())
         .collect::<std::result::Result<Vec<f64>, _>>()?;
     let a = CSRMatrix::new(rows, cols, &rp, &ci, &v)?;
+    let factor = if op == "ilu_apply" || (op == "gmres" && jacobi == 2) {
+        Some(ILU0::new(&a)?)
+    } else {
+        None
+    };
     let dense = if op == "dense" {
         let mut data = vec![0.; rows.checked_mul(cols).ok_or("size overflow")?];
         for i in 0..rows {
@@ -71,6 +80,13 @@ pub fn run(args: &[String]) -> Result<()> {
         None
     };
     let compute = || -> Result<Vec<f64>> {
+        if op == "ilu_setup" {
+            let f = ILU0::new(&a)?;
+            return Ok(vec![f.size() as f64, f.nnz() as f64]);
+        }
+        if op == "ilu_apply" {
+            return Ok(factor.as_ref().unwrap().apply(&b)?);
+        }
         if op == "spmv" {
             return Ok(a.matvec(&b)?);
         }
@@ -78,17 +94,24 @@ pub fn run(args: &[String]) -> Result<()> {
             return Ok(d.multiply(right)?.values().to_vec());
         }
         if op == "gmres" {
-            let r = a.gmres(
-                &b,
-                GMRESOptions {
-                    restart: args[11].parse()?,
-                    relative_tolerance: rtol,
-                    absolute_tolerance: atol,
-                    max_iterations: limit,
-                    jacobi: jacobi != 0,
-                    capture: capture != 0,
-                },
-            )?;
+            let current = if jacobi == 3 {
+                Some(ILU0::new(&a)?)
+            } else {
+                None
+            };
+            let options = GMRESOptions {
+                restart: args[11].parse()?,
+                relative_tolerance: rtol,
+                absolute_tolerance: atol,
+                max_iterations: limit,
+                jacobi: jacobi == 1,
+                capture: capture != 0,
+            };
+            let r = if let Some(p) = current.as_ref().or(factor.as_ref()) {
+                a.gmres_preconditioned(&b, options, p)?
+            } else {
+                a.gmres(&b, options)?
+            };
             if iterations > 0 {
                 if !r.converged {
                     return Err("benchmark GMRES did not converge".into());

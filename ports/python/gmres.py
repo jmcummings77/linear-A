@@ -14,10 +14,12 @@ class GMRESResult(NamedTuple):
     restarts: list
 
 
-def gmres(a, b, restart=30, rtol=1e-10, atol=0.0, max_iterations=1000, jacobi=False, capture=False):
+def gmres(a, b, restart=30, rtol=1e-10, atol=0.0, max_iterations=1000, jacobi=False, capture=False, preconditioner=None):
     b=list(b);n=a.rows
     if a.cols!=n or len(b)!=n or any(not math.isfinite(x) for x in b):raise ValueError('GMRES requires square matrix and finite matching vector')
     if type(restart) is not int or not 1<=restart<=1024 or type(max_iterations) is not int or not 0<=max_iterations<=100000 or not math.isfinite(rtol) or not 0<=rtol<1 or not math.isfinite(atol) or atol<0 or type(jacobi) is not bool or type(capture) is not bool:raise ValueError('invalid GMRES options')
+    if preconditioner is not None and (jacobi or preconditioner.size!=n):raise ValueError('incompatible preconditioner')
+    apply=lambda v:preconditioner.apply(v) if preconditioner is not None else [v[i]/diagonal[i] for i in range(n)]
     diagonal=[1.0]*n
     if jacobi:
         for i in range(n):
@@ -40,7 +42,7 @@ def gmres(a, b, restart=30, rtol=1e-10, atol=0.0, max_iterations=1000, jacobi=Fa
         base=x.copy();beta=norm(r);basis=[[v/beta for v in r]]
         h=[[0.0]*m for _ in range(m+1)];cs=[0.0]*m;sn=[0.0]*m;g=[beta]+[0.0]*m
         for j in range(min(m,max_iterations-(len(history)-1))):
-            try:w=a.matvec([basis[j][i]/diagonal[i] for i in range(n)])
+            try:w=a.matvec(apply(basis[j]))
             except (ValueError,ArithmeticError):return result('nonfinite')
             original=norm(w)
             # A second MGS pass limits loss of orthogonality on difficult systems.
@@ -64,7 +66,9 @@ def gmres(a, b, restart=30, rtol=1e-10, atol=0.0, max_iterations=1000, jacobi=Fa
             for k in range(j,-1,-1):
                 if h[k][k]==0:return result('breakdown')
                 y[k]=(y[k]-sum(h[k][q]*y[q] for q in range(k+1,j+1)))/h[k][k]
-            candidate=[base[i]+sum(basis[k][i]*y[k] for k in range(j+1))/diagonal[i] for i in range(n)]
+            try:correction=apply([sum(basis[k][i]*y[k] for k in range(j+1)) for i in range(n)])
+            except (ValueError,ArithmeticError):return result('nonfinite')
+            candidate=[base[i]+correction[i] for i in range(n)]
             if not finite(y) or not finite(candidate) or not math.isfinite(g[j+1]):return result('nonfinite')
             try:ax=a.matvec(candidate)
             except (ValueError,ArithmeticError):return result('nonfinite')

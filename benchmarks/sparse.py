@@ -19,6 +19,7 @@ from report import json_for_html
 from report_design import apply_report_design
 from sparse_reference import fixtures as csr_fixtures, protocol, check_result as check_csr, diffusion, multiply
 from gmres_reference import fixtures as gmres_fixtures, check_result as check_gmres
+from ilu_reference import fixtures as ilu_fixtures
 from wasm_publication import sanitize_live_sources
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,7 +27,7 @@ HERE = Path(__file__).resolve().parent
 
 
 def fixtures():
-    return csr_fixtures()+gmres_fixtures()
+    return csr_fixtures()+gmres_fixtures()+ilu_fixtures()
 
 def check_result(actual,case):
     return check_gmres(actual,case) if case["op"]=="gmres" else check_csr(actual,case)
@@ -121,13 +122,15 @@ def render(data, destination, *, live_override=None):
         for key, value in sorted(sources.items()): digest.update((key + value).encode())
         cases = fixtures()
         digest.update(json.dumps(cases, sort_keys=True, allow_nan=False).encode())
-        live = dict(available=True, **sources, fixtures=cases, wasm_base64=base64.b64encode(binary).decode(), sha256=digest.hexdigest())
+        live = dict(available=True, capabilities=["gmres","ilu0","rhs_cache"], **sources, fixtures=cases, wasm_base64=base64.b64encode(binary).decode(), sha256=digest.hexdigest())
     template = (HERE / 'sparse-report.html').read_text()
     # One pass: embedded source/data cannot introduce replacement markers.
     import re
     replacements = {'DATA': json_for_html(data), 'LIVE': json_for_html(live), 'SCRIPT': (HERE / 'sparse-report.mjs').read_text()}
     if data.get('suite') == 'gmres-transport-v1':
         template = template.replace('<title>Sparse solvers · linear-A</title>', '<title>Restarted GMRES · linear-A</title>').replace('Saved benchmark / Sparse systems', 'Saved benchmark / restarted GMRES').replace('<h1>Sparse systems</h1>', '<h1>Restarted GMRES</h1>').replace('Fewer entries. Less work. Compare sparse matrix operations across languages, then explore how an iterative solver reaches equilibrium.', 'Compare restart lengths, runtime and workspace across eleven implementations. Explore how GMRES solves a nonsymmetric flow and diffusion system.')
+    if data.get('suite') == 'ilu-reuse-v1':
+        template=template.replace('<title>Sparse solvers · linear-A</title>','<title>ILU(0) and solver reuse · linear-A</title>').replace('Saved benchmark / Sparse systems','Saved benchmark / ILU(0)').replace('<h1>Sparse systems</h1>','<h1>Prepare once. Solve again.</h1>').replace('Fewer entries. Less work. Compare sparse matrix operations across languages, then explore how an iterative solver reaches equilibrium.','Compare ILU(0) setup, repeated GMRES solves and one-shot costs across eleven ports. Explore when stronger preconditioning pays off.')
     html = re.sub(r'@@(DATA|LIVE|SCRIPT)@@', lambda m: replacements[m[1]], template)
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)

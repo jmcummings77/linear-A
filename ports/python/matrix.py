@@ -463,3 +463,4 @@ class Matrix:
 
 from sparse import CSRMatrix, CGResult
 from gmres import GMRESResult
+from ilu import ILU0

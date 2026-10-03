@@ -128,4 +128,9 @@ void m_cg_free(matrix_cg_result *result);
 typedef la_gmres_result matrix_gmres_result;
 matrix_status m_csr_gmres(const sparse_matrix *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,bool jacobi,bool capture,matrix_gmres_result *out);
 void m_gmres_free(matrix_gmres_result *r);
+typedef la_ilu0 matrix_ilu0;
+matrix_status m_ilu0_create(const sparse_matrix *a,matrix_ilu0 *out);
+void m_ilu0_free(matrix_ilu0 *f);
+matrix_status m_ilu0_apply(const matrix_ilu0 *f,const matrix *b,matrix *out);
+matrix_status m_csr_gmres_preconditioned(const sparse_matrix *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_ilu0 *preconditioner,matrix_gmres_result *out);
 #endif

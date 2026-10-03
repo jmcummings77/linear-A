@@ -101,6 +101,6 @@ class CSRMatrix:
             beta=next_rho/rho;p=[z[i]+beta*p[i] for i in range(n)];rho=next_rho
         return result('iteration_limit')
 
-    def gmres(self,b,restart=30,rtol=1e-10,atol=0.0,max_iterations=1000,jacobi=False,capture=False):
+    def gmres(self,b,restart=30,rtol=1e-10,atol=0.0,max_iterations=1000,jacobi=False,capture=False,preconditioner=None):
         from gmres import gmres
-        return gmres(self,b,restart,rtol,atol,max_iterations,jacobi,capture)
+        return gmres(self,b,restart,rtol,atol,max_iterations,jacobi,capture,preconditioner)

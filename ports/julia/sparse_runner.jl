@@ -1,19 +1,22 @@
 function sparse_run(args)
     length(args)==(length(args)>0 && args[1]=="gmres" ? 11 : 10) || throw(ArgumentError("invalid sparse protocol"))
     op=args[1];rows,cols,nnz,iterations=parse.(Int,args[2:5]);rtol,atol=parse.(Float64,args[6:7]);limit,jacobi,capture=parse.(Int,args[8:10])
-    op in ("spmv","dense","cg","gmres") && min(rows,cols,nnz,iterations)>=0 && jacobi in (0,1) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
+    op in ("spmv","dense","cg","gmres","ilu_setup","ilu_apply") && min(rows,cols,nnz,iterations)>=0 && jacobi in (op=="gmres" ? (0,1,2,3) : (0,1)) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
     tokens=split(read(stdin,String));count=op in ("cg","gmres") ? rows : cols
     length(tokens)==rows+1+2*nnz+count || throw(ArgumentError("incorrect sparse input count"))
     rp=parse.(Int,tokens[1:rows+1]);ci=parse.(Int,tokens[rows+2:rows+1+nnz]);v=parse.(Float64,tokens[rows+2+nnz:rows+1+2*nnz]);b=parse.(Float64,tokens[rows+2+2*nnz:end])
     a=CSRMatrix(rows,cols,rp,ci,v);dense=nothing;right=nothing
+    factor=op=="ilu_apply" || (op=="gmres" && jacobi==2) ? ILU0(a) : nothing
     if op=="dense"
         dense=Matrix64(rows,cols);right=Matrix64(cols,1,b)
         for i in 1:rows,p in rp[i]+1:rp[i+1];dense[i,ci[p]+1]=v[p];end
     end
     function compute()
+        if op=="ilu_setup";f=ILU0(a);return Float64[f.factors.rows,length(f.factors.values)];end
+        op=="ilu_apply" && return ilu_apply(factor,b)
         op=="spmv" && return matvec(a,b)
         op=="dense" && return rowmajor(dense*right)
-        r=op=="gmres" ? gmres(a,b;restart=parse(Int,args[11]),rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi!=0,capture=capture!=0) : conjugate_gradient(a,b;rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi!=0,capture=capture!=0)
+        r=op=="gmres" ? gmres(a,b;restart=parse(Int,args[11]),rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi==1,capture=capture!=0,preconditioner=jacobi==3 ? ILU0(a) : factor) : conjugate_gradient(a,b;rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi!=0,capture=capture!=0)
         if iterations>0
             r.converged || error("benchmark CG did not converge: "*r.reason)
             return r.x

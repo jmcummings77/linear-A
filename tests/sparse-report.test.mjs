@@ -3,15 +3,15 @@ import test from 'node:test';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../benchmarks/sparse-report.mjs',import.meta.url),'utf8');
-function setup(recorded={implementations:[],results:[],machine:{},methodology:{}}){
+function setup(recorded={implementations:[],results:[],machine:{},methodology:{}},live={available:true,worker_source:'worker',capabilities:['gmres','ilu0','rhs_cache']}){
  const elements=new Map(),timers=new Map(),workers=[],animation=[],events={},drawing=[];let tid=0;
  const context=new Proxy({},{get:(o,k)=>o[k]??((...args)=>drawing.push([k,...args]))});
  const element=()=>({value:'',checked:false,disabled:false,textContent:'',children:[],style:{},setAttribute(name,value){this[name]=value;},append(...a){this.children.push(...a);},replaceChildren(){this.children=[];},getBoundingClientRect:()=>({width:500,height:340}),getContext:()=>context});
  const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
- get('data').textContent=JSON.stringify(recorded);get('live').textContent=JSON.stringify({available:true,worker_source:'worker'});
+ get('data').textContent=JSON.stringify(recorded);get('live').textContent=JSON.stringify(live);
  get('operation').value='csr_spmv';get('timing-scale').value='linear';
  get('solver').value='gmres';get('restart').value='20';get('diffusivity').value='.2';get('speed').value='4';get('angle').value='30';
- get('grid').value='16';get('contrast').value='2';get('limit').value='400';get('jacobi').checked=true;
+ get('grid').value='16';get('contrast').value='2';get('limit').value='400';get('preconditioner').value='jacobi';get('hot').value='100';get('rhs-count').value='8';
  class Worker{constructor(){workers.push(this);this.sent=[];}postMessage(m){this.sent.push(m);}terminate(){this.terminated=true;}}
  const sandbox={document:{getElementById:get,createElement:element,createTextNode:t=>t,documentElement:{dataset:{}},querySelector:()=>element()},window:{addEventListener:(k,f)=>events[k]=f},Worker,Blob:class{},URL:{createObjectURL:()=> 'blob:test',revokeObjectURL(){}},devicePixelRatio:1,getComputedStyle:()=>({getPropertyValue:()=> '#000'}),ResizeObserver:class{observe(){}},matchMedia:()=>({matches:false}),localStorage:{getItem(){},setItem(){}},requestAnimationFrame:f=>animation.push(f),setTimeout:(f,delay)=>{timers.set(++tid,{f,delay});return tid;},clearTimeout:id=>timers.delete(id)};
  vm.runInNewContext(source,sandbox);
@@ -50,12 +50,12 @@ const recorded={
 test('saved timing controls preserve values and expose failed rows while changing chart scale',()=>{
  const original=JSON.stringify(recorded),t=setup(recorded);
  const rows=()=>t.get('timing-rows').children.map(row=>row.children.map(cell=>cell.textContent));
- assert.deepEqual(rows()[0],['C#','8 × 8 / 64','2 ms','1 µs','—','—']);
+ assert.deepEqual(rows()[0],['C#','8 × 8 / 64','2 ms','1 µs','—','—','—']);
  assert.equal(rows()[3][2],'failed');
  assert.ok(t.drawing.some(([op,text])=>op==='fillText'&&text==='80'));
  t.drawing.length=0;t.get('timing-scale').value='log';t.get('timing-scale').onchange();
  assert.match(t.get('timing-note').textContent,/Logarithmic/);
- assert.deepEqual(rows()[0],['C#','8 × 8 / 64','2 ms','1 µs','—','—']);
+ assert.deepEqual(rows()[0],['C#','8 × 8 / 64','2 ms','1 µs','—','—','—']);
  assert.ok(t.drawing.some(([op,text])=>op==='fillText'&&text==='100'));
  assert.equal(JSON.stringify(recorded),original);
 });
@@ -93,4 +93,24 @@ test('GMRES timing rows include accepted work and logical workspace',()=>{
  const data=structuredClone(recorded);data.results=data.results.slice(0,1);Object.assign(data.results[0],{solver_iterations:12,logical_workspace_bytes:4096});
  const t=setup(data),cells=t.get('timing-rows').children[0].children;
  assert.equal(cells[4].textContent,12);assert.equal(cells[5].textContent,'4 KiB');
+});
+
+test('ILU selection and RHS changes debounce; CG removes incompatible ILU',()=>{
+ const t=setup();t.get('preconditioner').value='ilu0';t.get('preconditioner').onchange();t.get('hot').value='50';t.get('hot').oninput();t.ready();
+ let config=t.workers[0].sent.at(-1).config;assert.equal(config.ilu,true);assert.equal(config.jacobi,false);assert.equal(config.hot,50);
+ t.get('solver').value='cg';t.get('solver').onchange();assert.equal(t.get('preconditioner').value,'jacobi');assert.equal(t.get('ilu-option').disabled,true);
+});
+test('reuse cost model includes setup once and exposes the crossover estimate',()=>{
+ const data=structuredClone(recorded);data.suite='ilu-reuse-v1';data.implementations=data.implementations.slice(0,1);
+ data.results=Object.entries({ilu_setup:100000,gmres_ilu_reused:10000,gmres_ilu_total:110000,gmres_none:100000,gmres_jacobi:30000}).map(([operation,median_ns])=>({...recorded.results[0],operation,median_ns}));
+ const t=setup(data);assert.equal(t.get('reuse-section').hidden,false);assert.match(t.get('reuse-note').textContent,/after 6 RHS/);
+ t.get('rhs-count').value='16';t.get('rhs-count').oninput();assert.match(t.get('reuse-note').textContent,/setup \+ 16/);
+ assert.ok(t.drawing.some(([op,text])=>op==='fillText'&&text==='260 µs'));
+});
+
+test('preserved legacy live bundles do not advertise unsupported solver controls',()=>{
+ const t=setup(undefined,{available:true,worker_source:'old worker',fixtures:[{op:'cg'}]});
+ assert.equal(t.get('solver').value,'cg');assert.equal(t.get('solver').disabled,true);
+ assert.equal(t.get('ilu-option').disabled,true);assert.equal(t.get('hot').disabled,true);assert.equal(t.get('capability-note').hidden,false);
+ t.ready();assert.equal(t.workers[0].sent.at(-1).config.speed,0);
 });

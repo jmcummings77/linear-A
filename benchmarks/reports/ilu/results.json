@@ -1,0 +1,6491 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-03T11:53:18.948580+00:00",
+  "revision": "82c3e09033299cee92d055f99608dec58d25fb13",
+  "dirty": true,
+  "source_sha256": "d0742acfb86185fc7bc1b70fe95a1023ff47426310d4cba49cfec06a225f0686",
+  "suite": "ilu-reuse-v1",
+  "seed": 2026,
+  "total_seconds": 371.842803209,
+  "machine": {
+    "os": "Darwin",
+    "release": "25.5.0",
+    "architecture": "arm64",
+    "logical_cpus": 8
+  },
+  "methodology": {
+    "numeric_type": "IEEE 754 binary64",
+    "matrix_layout": "Canonical CSR, 1\u2013100 horizontal conductivity, diffusivity 0.2, speed 4, angle 30 degrees clockwise from right; zero Dirichlet boundaries. Known x=ones defines b=A*x.",
+    "timing": "In-process monotonic clock; excludes parsing, compilation, process startup and CSR construction. ILU setup includes factor construction, a two-value shape checksum, and explicit destruction where applicable; managed collection follows runtime policy. ILU apply includes triangular solves, validation, result allocation and checksum; factor setup is outside timing. Reused GMRES also excludes factor setup. One-shot total includes factor setup and the solve. No-preconditioner and Jacobi runs include all their solver preparation.",
+    "warmup": "Three excluded warmup calls in each process, including Julia checksum-loop compilation. Separate calibration targets 20 ms, capped at 10,000 repetitions.",
+    "sampling": "Three samples by default; serial seeded randomized port order, median and MAD. Timed repetitions use the same RHS, with no captured frames. Reuse across different RHS is tested separately.",
+    "profiles": "No profiles collected for this suite.",
+    "limitations": "GMRES restart 20, rtol 1e-10, atol 0, limit 3000; true residual recomputed every accepted update. ILU(0) has no fill, pivoting, permutation, shifts or fallback. It can break down on nonsingular matrices. Factor memory is a logical model with float64 values and 64-bit indices: 16*nnz+16*n+8 bytes; excludes objects, allocator overhead and transient copies. Solver workspace uses the GMRES logical model; no RSS measurements. Setup and solve samples are independent, so their medians need not sum to the measured one-shot median. Amortized charts are estimates from separate measurements, not measured multi-RHS timings. Small systems and JIT/GC effects limit generalization."
+  },
+  "implementations": [
+    {
+      "id": "csharp",
+      "name": "C#",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Matrix<double>; type-aware determinant with pivoting and scaling; rectangular array storage",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "benchmarks/dotnet/Runner.csproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/csharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "fsharp",
+      "name": "F#",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "F# float64 matrix; managed flat storage; partial-pivot determinant",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "ports/fsharp/Runner.fsproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/fsharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "rust",
+      "name": "Rust",
+      "status": "passed",
+      "toolchain": "rustc 1.69.0 (84c898d65 2023-04-16)",
+      "detail": "Rust f64 matrix; contiguous storage; optimized release build",
+      "build_commands": [
+        [
+          "cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--manifest-path",
+          "ports/rust/Cargo.toml",
+          "--target-dir",
+          ".build/rust"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "go",
+      "name": "Go",
+      "status": "passed",
+      "toolchain": "go version go1.24.1 darwin/arm64",
+      "detail": "Go float64 matrix; contiguous storage; default optimizing compiler",
+      "build_commands": [
+        [
+          "go",
+          "build",
+          "-o",
+          ".build/go/runner",
+          "./cmd/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "status": "passed",
+      "toolchain": "v25.9.0; TypeScript 7.0.2",
+      "detail": "TypeScript compiled to JavaScript; Float64Array; Node.js JIT",
+      "build_commands": [
+        [
+          "npm",
+          "ci",
+          "--ignore-scripts"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "status": "passed",
+      "toolchain": "Python 3.9.6",
+      "detail": "Python float matrix; interpreted loops; no NumPy",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "cpp",
+      "name": "C++",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "C++ double matrix; optimized native build; no fast-math; shared C general eigen, SVD and factorization kernels",
+      "build_commands": [
+        [
+          "clang++",
+          "-std=c++17",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/cpp/runner.cpp",
+          "-lm",
+          "-o",
+          ".build/cpp/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "name": "C",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "C double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "-lm",
+          "-o",
+          ".build/c/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "assembly",
+      "name": "ARM64 Assembly",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "ARM64 arithmetic kernels with C allocation, validation, pivot control, shared real eigensolvers, SVD and system solvers",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "-DMATRIX_USE_ASM",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "ports/assembly/kernels.S",
+          "-lm",
+          "-o",
+          ".build/assembly/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "julia",
+      "name": "Julia",
+      "status": "passed",
+      "toolchain": "julia version 1.13.1",
+      "detail": "Julia Float64 matrix; handwritten loops; JIT; no BLAS calls",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "wasm",
+      "name": "WebAssembly",
+      "status": "passed",
+      "toolchain": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.10 (d6c521a7f05449857c76bd99e396895583cf2083); Node.js v25.9.0",
+      "detail": "C double matrix compiled with Emscripten; Node.js WebAssembly runtime; JS/WASM dispatch, allocation, checksum reads, and disposal included",
+      "build_commands": [
+        [
+          "python3",
+          "ports/wasm/build.py",
+          "--emcc",
+          "emcc",
+          "--output",
+          ".build/wasm"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "ILU0 dropped fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 second RHS",
+          "passed": true
+        },
+        {
+          "name": "ILU0 setup shape",
+          "passed": true
+        },
+        {
+          "name": "ILU0 explicit zero retains fill",
+          "passed": true
+        },
+        {
+          "name": "ILU0 dense exact solve",
+          "passed": true
+        },
+        {
+          "name": "ILU0 negative pivots",
+          "passed": true
+        },
+        {
+          "name": "ILU0 empty",
+          "passed": true
+        },
+        {
+          "name": "ILU0 missing diagonal",
+          "passed": true
+        },
+        {
+          "name": "ILU0 stored zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 cancellation pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 nonsingular zero pivot",
+          "passed": true
+        },
+        {
+          "name": "ILU0 rectangular",
+          "passed": true
+        },
+        {
+          "name": "ILU0 factor overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 apply overflow",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 2",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES exact mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 0 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES transport 3 mode 3",
+          "passed": true
+        },
+        {
+          "name": "ILU0 GMRES nonfinite preconditioner solve",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "implementation": "julia",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4445,
+      "median_ns": 7234.092688413948,
+      "min_ns": 7022.319010123734,
+      "max_ns": 7795.134983127109,
+      "mad_ns": 211.77367829021387,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 32155542,
+          "iterations": 4445,
+          "checksum": 1564640.0,
+          "ns_per_op": 7234.092688413948
+        },
+        {
+          "elapsed_ns": 31214208,
+          "iterations": 4445,
+          "checksum": 1564640.0,
+          "ns_per_op": 7022.319010123734
+        },
+        {
+          "elapsed_ns": 34649375,
+          "iterations": 4445,
+          "checksum": 1564640.0,
+          "ns_per_op": 7795.134983127109
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 187,
+      "median_ns": 107587.3422459893,
+      "min_ns": 106210.11764705883,
+      "max_ns": 109817.064171123,
+      "mad_ns": 1377.2245989304793,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 20118833,
+          "iterations": 187,
+          "checksum": 65824.0,
+          "ns_per_op": 107587.3422459893
+        },
+        {
+          "elapsed_ns": 20535791,
+          "iterations": 187,
+          "checksum": 65824.0,
+          "ns_per_op": 109817.064171123
+        },
+        {
+          "elapsed_ns": 19861292,
+          "iterations": 187,
+          "checksum": 65824.0,
+          "ns_per_op": 106210.11764705883
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1826.0083,
+      "min_ns": 1803.4541,
+      "max_ns": 1831.0667,
+      "mad_ns": 5.05840000000012,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 18310667,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1831.0667
+        },
+        {
+          "elapsed_ns": 18034541,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1803.4541
+        },
+        {
+          "elapsed_ns": 18260083,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1826.0083
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 395,
+      "median_ns": 10156.32911392405,
+      "min_ns": 10035.020253164557,
+      "max_ns": 11324.050632911392,
+      "mad_ns": 121.30886075949275,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 4473000,
+          "iterations": 395,
+          "checksum": 139040,
+          "ns_per_op": 11324.050632911392
+        },
+        {
+          "elapsed_ns": 3963833,
+          "iterations": 395,
+          "checksum": 139040,
+          "ns_per_op": 10035.020253164557
+        },
+        {
+          "elapsed_ns": 4011750,
+          "iterations": 395,
+          "checksum": 139040,
+          "ns_per_op": 10156.32911392405
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1429,
+      "median_ns": 3034.027291812456,
+      "min_ns": 3027.3498950314906,
+      "max_ns": 3185.328201539538,
+      "mad_ns": 6.67739678096541,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 4551834,
+          "iterations": 1429,
+          "checksum": 503008,
+          "ns_per_op": 3185.328201539538
+        },
+        {
+          "elapsed_ns": 4326083,
+          "iterations": 1429,
+          "checksum": 503008,
+          "ns_per_op": 3027.3498950314906
+        },
+        {
+          "elapsed_ns": 4335625,
+          "iterations": 1429,
+          "checksum": 503008,
+          "ns_per_op": 3034.027291812456
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1688.5667,
+      "min_ns": 1672.85,
+      "max_ns": 1695.6958,
+      "mad_ns": 7.12909999999988,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 16885667,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1688.5667
+        },
+        {
+          "elapsed_ns": 16956958,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1695.6958
+        },
+        {
+          "elapsed_ns": 16728500,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1672.85
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1861,
+      "median_ns": 3061.257388500806,
+      "min_ns": 2906.65878559914,
+      "max_ns": 3099.498119290704,
+      "mad_ns": 38.24073078989795,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 5697000,
+          "iterations": 1861,
+          "checksum": 655072,
+          "ns_per_op": 3061.257388500806
+        },
+        {
+          "elapsed_ns": 5768166,
+          "iterations": 1861,
+          "checksum": 655072,
+          "ns_per_op": 3099.498119290704
+        },
+        {
+          "elapsed_ns": 5409292,
+          "iterations": 1861,
+          "checksum": 655072,
+          "ns_per_op": 2906.65878559914
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1453.4458,
+      "min_ns": 1431.8667,
+      "max_ns": 1466.7,
+      "mad_ns": 13.254200000000083,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 14534458,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1453.4458
+        },
+        {
+          "elapsed_ns": 14667000,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1466.7
+        },
+        {
+          "elapsed_ns": 14318667,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1431.8667
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2000,
+      "median_ns": 10692.3,
+      "min_ns": 10552.15,
+      "max_ns": 10828.4,
+      "mad_ns": 136.10000000000036,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 21384600,
+          "iterations": 2000,
+          "checksum": 704000,
+          "ns_per_op": 10692.3
+        },
+        {
+          "elapsed_ns": 21656800,
+          "iterations": 2000,
+          "checksum": 704000,
+          "ns_per_op": 10828.4
+        },
+        {
+          "elapsed_ns": 21104300,
+          "iterations": 2000,
+          "checksum": 704000,
+          "ns_per_op": 10552.15
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2084,
+      "median_ns": 10190.642994241842,
+      "min_ns": 10092.178502879078,
+      "max_ns": 10546.30518234165,
+      "mad_ns": 98.46449136276351,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 21237300,
+          "iterations": 2084,
+          "checksum": 733568,
+          "ns_per_op": 10190.642994241842
+        },
+        {
+          "elapsed_ns": 21032100,
+          "iterations": 2084,
+          "checksum": 733568,
+          "ns_per_op": 10092.178502879078
+        },
+        {
+          "elapsed_ns": 21978500,
+          "iterations": 2084,
+          "checksum": 733568,
+          "ns_per_op": 10546.30518234165
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "ilu_setup",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1697.8166,
+      "min_ns": 1683.7667,
+      "max_ns": 1736.875,
+      "mad_ns": 14.049900000000207,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 17368750,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1736.875
+        },
+        {
+          "elapsed_ns": 16837667,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1683.7667
+        },
+        {
+          "elapsed_ns": 16978166,
+          "iterations": 10000,
+          "checksum": 3520000,
+          "ns_per_op": 1697.8166
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4348,
+      "median_ns": 4523.85004599816,
+      "min_ns": 4499.011039558418,
+      "max_ns": 4656.163753449862,
+      "mad_ns": 24.839006439741752,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 19669700,
+          "iterations": 4348,
+          "checksum": 142467.5557509822,
+          "ns_per_op": 4523.85004599816
+        },
+        {
+          "elapsed_ns": 19561700,
+          "iterations": 4348,
+          "checksum": 142467.5557509822,
+          "ns_per_op": 4499.011039558418
+        },
+        {
+          "elapsed_ns": 20245000,
+          "iterations": 4348,
+          "checksum": 142467.5557509822,
+          "ns_per_op": 4656.163753449862
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 3449,
+      "median_ns": 5508.698173383589,
+      "min_ns": 5503.0733545955345,
+      "max_ns": 5553.899681066976,
+      "mad_ns": 5.624818788054654,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 18999500,
+          "iterations": 3449,
+          "checksum": 113010.717521897,
+          "ns_per_op": 5508.698173383589
+        },
+        {
+          "elapsed_ns": 18980100,
+          "iterations": 3449,
+          "checksum": 113010.717521897,
+          "ns_per_op": 5503.0733545955345
+        },
+        {
+          "elapsed_ns": 19155400,
+          "iterations": 3449,
+          "checksum": 113010.717521897,
+          "ns_per_op": 5553.899681066976
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1349,
+      "median_ns": 4552.168272794663,
+      "min_ns": 4496.447739065975,
+      "max_ns": 4779.435137138621,
+      "mad_ns": 55.72053372868777,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 6140875,
+          "iterations": 1349,
+          "checksum": 44201.64045722231,
+          "ns_per_op": 4552.168272794663
+        },
+        {
+          "elapsed_ns": 6065708,
+          "iterations": 1349,
+          "checksum": 44201.64045722231,
+          "ns_per_op": 4496.447739065975
+        },
+        {
+          "elapsed_ns": 6447458,
+          "iterations": 1349,
+          "checksum": 44201.64045722231,
+          "ns_per_op": 4779.435137138621
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1222.45,
+      "min_ns": 1186.7875,
+      "max_ns": 1229.6833,
+      "mad_ns": 7.233299999999872,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 12296833,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1229.6833
+        },
+        {
+          "elapsed_ns": 11867875,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1186.7875
+        },
+        {
+          "elapsed_ns": 12224500,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1222.45
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1670.7458,
+      "min_ns": 1667.35,
+      "max_ns": 1701.6166,
+      "mad_ns": 3.3958000000000084,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 16673500,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1667.35
+        },
+        {
+          "elapsed_ns": 16707458,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1670.7458
+        },
+        {
+          "elapsed_ns": 17016166,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1701.6166
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1007,
+      "median_ns": 7314.796425024826,
+      "min_ns": 6791.335650446872,
+      "max_ns": 7328.492552135054,
+      "mad_ns": 13.69612711022819,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 7366000,
+          "iterations": 1007,
+          "checksum": 32995.5907638496,
+          "ns_per_op": 7314.796425024826
+        },
+        {
+          "elapsed_ns": 6838875,
+          "iterations": 1007,
+          "checksum": 32995.5907638496,
+          "ns_per_op": 6791.335650446872
+        },
+        {
+          "elapsed_ns": 7379792,
+          "iterations": 1007,
+          "checksum": 32995.5907638496,
+          "ns_per_op": 7328.492552135054
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 397,
+      "median_ns": 46779.70277078086,
+      "min_ns": 46551.00755667506,
+      "max_ns": 49605.1637279597,
+      "mad_ns": 228.6952141057991,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 18571542,
+          "iterations": 397,
+          "checksum": 13008.192187930566,
+          "ns_per_op": 46779.70277078086
+        },
+        {
+          "elapsed_ns": 18480750,
+          "iterations": 397,
+          "checksum": 13008.192187930566,
+          "ns_per_op": 46551.00755667506
+        },
+        {
+          "elapsed_ns": 19693250,
+          "iterations": 397,
+          "checksum": 13008.192187930566,
+          "ns_per_op": 49605.1637279597
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1320.3958,
+      "min_ns": 1319.7625,
+      "max_ns": 1368.0959,
+      "mad_ns": 0.6332999999999629,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 13203958,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1320.3958
+        },
+        {
+          "elapsed_ns": 13197625,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1319.7625
+        },
+        {
+          "elapsed_ns": 13680959,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1368.0959
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1693.625,
+      "min_ns": 1661.025,
+      "max_ns": 1707.6125,
+      "mad_ns": 13.987499999999955,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 16936250,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1693.625
+        },
+        {
+          "elapsed_ns": 16610250,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1661.025
+        },
+        {
+          "elapsed_ns": 17076125,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1707.6125
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 643,
+      "median_ns": 5416.538102643857,
+      "min_ns": 5298.147744945568,
+      "max_ns": 5650.01399688958,
+      "mad_ns": 118.39035769828934,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 3406709,
+          "iterations": 643,
+          "checksum": 21068.6840726446,
+          "ns_per_op": 5298.147744945568
+        },
+        {
+          "elapsed_ns": 3482834,
+          "iterations": 643,
+          "checksum": 21068.6840726446,
+          "ns_per_op": 5416.538102643857
+        },
+        {
+          "elapsed_ns": 3632959,
+          "iterations": 643,
+          "checksum": 21068.6840726446,
+          "ns_per_op": 5650.01399688958
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "ilu_apply",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10000,
+      "median_ns": 1300.5709,
+      "min_ns": 1298.9375,
+      "max_ns": 1319.8917,
+      "mad_ns": 1.6333999999999378,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 512,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 13005709,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1300.5709
+        },
+        {
+          "elapsed_ns": 12989375,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1298.9375
+        },
+        {
+          "elapsed_ns": 13198917,
+          "iterations": 10000,
+          "checksum": 327662.2717358413,
+          "ns_per_op": 1319.8917
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 24,
+      "median_ns": 832845.4583333334,
+      "min_ns": 830986.125,
+      "max_ns": 908619.7916666666,
+      "mad_ns": 1859.3333333333721,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 19988291,
+          "iterations": 24,
+          "checksum": 1535.9999981887718,
+          "ns_per_op": 832845.4583333334
+        },
+        {
+          "elapsed_ns": 21806875,
+          "iterations": 24,
+          "checksum": 1535.9999981887718,
+          "ns_per_op": 908619.7916666666
+        },
+        {
+          "elapsed_ns": 19943667,
+          "iterations": 24,
+          "checksum": 1535.9999981887718,
+          "ns_per_op": 830986.125
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 62880291.0,
+      "min_ns": 62572834.0,
+      "max_ns": 62952500.0,
+      "mad_ns": 72209.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 62572834,
+          "iterations": 1,
+          "checksum": 63.9999999245862,
+          "ns_per_op": 62572834.0
+        },
+        {
+          "elapsed_ns": 62952500,
+          "iterations": 1,
+          "checksum": 63.9999999245862,
+          "ns_per_op": 62952500.0
+        },
+        {
+          "elapsed_ns": 62880291,
+          "iterations": 1,
+          "checksum": 63.9999999245862,
+          "ns_per_op": 62880291.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 11,
+      "median_ns": 1388473.4545454546,
+      "min_ns": 1369507.5454545454,
+      "max_ns": 1402306.8181818181,
+      "mad_ns": 13833.36363636353,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 15425375,
+          "iterations": 11,
+          "checksum": 703.999999170519,
+          "ns_per_op": 1402306.8181818181
+        },
+        {
+          "elapsed_ns": 15273208,
+          "iterations": 11,
+          "checksum": 703.999999170519,
+          "ns_per_op": 1388473.4545454546
+        },
+        {
+          "elapsed_ns": 15064583,
+          "iterations": 11,
+          "checksum": 703.999999170519,
+          "ns_per_op": 1369507.5454545454
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 16,
+      "median_ns": 1204065.0625,
+      "min_ns": 1201356.75,
+      "max_ns": 1337234.375,
+      "mad_ns": 2708.3125,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 19265041,
+          "iterations": 16,
+          "checksum": 1023.999998792518,
+          "ns_per_op": 1204065.0625
+        },
+        {
+          "elapsed_ns": 21395750,
+          "iterations": 16,
+          "checksum": 1023.999998792518,
+          "ns_per_op": 1337234.375
+        },
+        {
+          "elapsed_ns": 19221708,
+          "iterations": 16,
+          "checksum": 1023.999998792518,
+          "ns_per_op": 1201356.75
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 14,
+      "median_ns": 1365663.7142857143,
+      "min_ns": 1364842.2857142857,
+      "max_ns": 1414446.4285714286,
+      "mad_ns": 821.428571428638,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 19802250,
+          "iterations": 14,
+          "checksum": 895.999998944539,
+          "ns_per_op": 1414446.4285714286
+        },
+        {
+          "elapsed_ns": 19107792,
+          "iterations": 14,
+          "checksum": 895.999998944539,
+          "ns_per_op": 1364842.2857142857
+        },
+        {
+          "elapsed_ns": 19119292,
+          "iterations": 14,
+          "checksum": 895.999998944539,
+          "ns_per_op": 1365663.7142857143
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 5132333.333333333,
+      "min_ns": 5017166.666666667,
+      "max_ns": 5259866.666666667,
+      "mad_ns": 115166.66666666605,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 15779600,
+          "iterations": 3,
+          "checksum": 191.99999977369777,
+          "ns_per_op": 5259866.666666667
+        },
+        {
+          "elapsed_ns": 15051500,
+          "iterations": 3,
+          "checksum": 191.99999977369777,
+          "ns_per_op": 5017166.666666667
+        },
+        {
+          "elapsed_ns": 15397000,
+          "iterations": 3,
+          "checksum": 191.99999977369777,
+          "ns_per_op": 5132333.333333333
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 9743750.0,
+      "min_ns": 8993104.0,
+      "max_ns": 9864125.0,
+      "mad_ns": 120375.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 19487500,
+          "iterations": 2,
+          "checksum": 127.99999984917235,
+          "ns_per_op": 9743750.0
+        },
+        {
+          "elapsed_ns": 17986208,
+          "iterations": 2,
+          "checksum": 127.99999984917235,
+          "ns_per_op": 8993104.0
+        },
+        {
+          "elapsed_ns": 19728250,
+          "iterations": 2,
+          "checksum": 127.99999984917235,
+          "ns_per_op": 9864125.0
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 13,
+      "median_ns": 1628942.3076923077,
+      "min_ns": 1606275.6153846155,
+      "max_ns": 1638971.1538461538,
+      "mad_ns": 10028.84615384601,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20881583,
+          "iterations": 13,
+          "checksum": 831.999999019633,
+          "ns_per_op": 1606275.6153846155
+        },
+        {
+          "elapsed_ns": 21176250,
+          "iterations": 13,
+          "checksum": 831.999999019633,
+          "ns_per_op": 1628942.3076923077
+        },
+        {
+          "elapsed_ns": 21306625,
+          "iterations": 13,
+          "checksum": 831.999999019633,
+          "ns_per_op": 1638971.1538461538
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 26,
+      "median_ns": 793642.6153846154,
+      "min_ns": 789892.6153846154,
+      "max_ns": 794846.1538461539,
+      "mad_ns": 1203.5384615384974,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20634708,
+          "iterations": 26,
+          "checksum": 1663.9999980378352,
+          "ns_per_op": 793642.6153846154
+        },
+        {
+          "elapsed_ns": 20666000,
+          "iterations": 26,
+          "checksum": 1663.9999980378352,
+          "ns_per_op": 794846.1538461539
+        },
+        {
+          "elapsed_ns": 20537208,
+          "iterations": 26,
+          "checksum": 1663.9999980378352,
+          "ns_per_op": 789892.6153846154
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 25,
+      "median_ns": 834070.0,
+      "min_ns": 828255.0,
+      "max_ns": 842511.64,
+      "mad_ns": 5815.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21062791,
+          "iterations": 25,
+          "checksum": 1599.9999981133035,
+          "ns_per_op": 842511.64
+        },
+        {
+          "elapsed_ns": 20706375,
+          "iterations": 25,
+          "checksum": 1599.9999981133035,
+          "ns_per_op": 828255.0
+        },
+        {
+          "elapsed_ns": 20851750,
+          "iterations": 25,
+          "checksum": 1599.9999981133035,
+          "ns_per_op": 834070.0
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_none",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 5312725.0,
+      "min_ns": 5294150.0,
+      "max_ns": 5363125.0,
+      "mad_ns": 18575.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 171,
+      "restart": 20,
+      "restart_count": 8,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21452500,
+          "iterations": 4,
+          "checksum": 255.9999996982637,
+          "ns_per_op": 5363125.0
+        },
+        {
+          "elapsed_ns": 21176600,
+          "iterations": 4,
+          "checksum": 255.9999996982637,
+          "ns_per_op": 5294150.0
+        },
+        {
+          "elapsed_ns": 21250900,
+          "iterations": 4,
+          "checksum": 255.9999996982637,
+          "ns_per_op": 5312725.0
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 25,
+      "median_ns": 736488.0,
+      "min_ns": 735664.0,
+      "max_ns": 746976.0,
+      "mad_ns": 824.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 18412200,
+          "iterations": 25,
+          "checksum": 1599.9999987823633,
+          "ns_per_op": 736488.0
+        },
+        {
+          "elapsed_ns": 18391600,
+          "iterations": 25,
+          "checksum": 1599.9999987823633,
+          "ns_per_op": 735664.0
+        },
+        {
+          "elapsed_ns": 18674400,
+          "iterations": 25,
+          "checksum": 1599.9999987823633,
+          "ns_per_op": 746976.0
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 100,
+      "median_ns": 205343.33,
+      "min_ns": 202211.67,
+      "max_ns": 211754.58,
+      "mad_ns": 3131.6599999999744,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21175458,
+          "iterations": 100,
+          "checksum": 6399.999995129406,
+          "ns_per_op": 211754.58
+        },
+        {
+          "elapsed_ns": 20534333,
+          "iterations": 100,
+          "checksum": 6399.999995129406,
+          "ns_per_op": 205343.33
+        },
+        {
+          "elapsed_ns": 20221167,
+          "iterations": 100,
+          "checksum": 6399.999995129406,
+          "ns_per_op": 202211.67
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 9,
+      "median_ns": 2239574.0,
+      "min_ns": 2185597.222222222,
+      "max_ns": 2773074.0,
+      "mad_ns": 53976.777777777985,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 24957666,
+          "iterations": 9,
+          "checksum": 575.9999995616495,
+          "ns_per_op": 2773074.0
+        },
+        {
+          "elapsed_ns": 20156166,
+          "iterations": 9,
+          "checksum": 575.9999995616495,
+          "ns_per_op": 2239574.0
+        },
+        {
+          "elapsed_ns": 19670375,
+          "iterations": 9,
+          "checksum": 575.9999995616495,
+          "ns_per_op": 2185597.222222222
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 69,
+      "median_ns": 294258.4492753623,
+      "min_ns": 292382.84057971014,
+      "max_ns": 304340.5797101449,
+      "mad_ns": 1875.6086956521613,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20999500,
+          "iterations": 69,
+          "checksum": 4415.999996639297,
+          "ns_per_op": 304340.5797101449
+        },
+        {
+          "elapsed_ns": 20174416,
+          "iterations": 69,
+          "checksum": 4415.999996639297,
+          "ns_per_op": 292382.84057971014
+        },
+        {
+          "elapsed_ns": 20303833,
+          "iterations": 69,
+          "checksum": 4415.999996639297,
+          "ns_per_op": 294258.4492753623
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 104,
+      "median_ns": 193739.57692307694,
+      "min_ns": 193439.50961538462,
+      "max_ns": 205967.54807692306,
+      "mad_ns": 300.06730769231217,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21420625,
+          "iterations": 104,
+          "checksum": 6655.999994934581,
+          "ns_per_op": 205967.54807692306
+        },
+        {
+          "elapsed_ns": 20117709,
+          "iterations": 104,
+          "checksum": 6655.999994934581,
+          "ns_per_op": 193439.50961538462
+        },
+        {
+          "elapsed_ns": 20148916,
+          "iterations": 104,
+          "checksum": 6655.999994934581,
+          "ns_per_op": 193739.57692307694
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 15,
+      "median_ns": 1344800.0,
+      "min_ns": 1329800.0,
+      "max_ns": 1374453.3333333333,
+      "mad_ns": 15000.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20616800,
+          "iterations": 15,
+          "checksum": 959.9999992694179,
+          "ns_per_op": 1374453.3333333333
+        },
+        {
+          "elapsed_ns": 19947000,
+          "iterations": 15,
+          "checksum": 959.9999992694179,
+          "ns_per_op": 1329800.0
+        },
+        {
+          "elapsed_ns": 20172000,
+          "iterations": 15,
+          "checksum": 959.9999992694179,
+          "ns_per_op": 1344800.0
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 15470667.0,
+      "min_ns": 15259354.5,
+      "max_ns": 16015687.5,
+      "mad_ns": 211312.5,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 30518709,
+          "iterations": 2,
+          "checksum": 127.99999990258893,
+          "ns_per_op": 15259354.5
+        },
+        {
+          "elapsed_ns": 30941334,
+          "iterations": 2,
+          "checksum": 127.99999990258893,
+          "ns_per_op": 15470667.0
+        },
+        {
+          "elapsed_ns": 32031375,
+          "iterations": 2,
+          "checksum": 127.99999990258893,
+          "ns_per_op": 16015687.5
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 61,
+      "median_ns": 336940.5737704918,
+      "min_ns": 336504.7704918033,
+      "max_ns": 344786.88524590165,
+      "mad_ns": 435.803278688516,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21032000,
+          "iterations": 61,
+          "checksum": 3903.9999970289437,
+          "ns_per_op": 344786.88524590165
+        },
+        {
+          "elapsed_ns": 20553375,
+          "iterations": 61,
+          "checksum": 3903.9999970289437,
+          "ns_per_op": 336940.5737704918
+        },
+        {
+          "elapsed_ns": 20526791,
+          "iterations": 61,
+          "checksum": 3903.9999970289437,
+          "ns_per_op": 336504.7704918033
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 100,
+      "median_ns": 204058.75,
+      "min_ns": 201850.42,
+      "max_ns": 214607.91,
+      "mad_ns": 2208.329999999987,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21460791,
+          "iterations": 100,
+          "checksum": 6399.999995129406,
+          "ns_per_op": 214607.91
+        },
+        {
+          "elapsed_ns": 20185042,
+          "iterations": 100,
+          "checksum": 6399.999995129406,
+          "ns_per_op": 201850.42
+        },
+        {
+          "elapsed_ns": 20405875,
+          "iterations": 100,
+          "checksum": 6399.999995129406,
+          "ns_per_op": 204058.75
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 46,
+      "median_ns": 391280.8043478261,
+      "min_ns": 385906.6956521739,
+      "max_ns": 410178.4347826087,
+      "mad_ns": 5374.1086956522195,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 18868208,
+          "iterations": 46,
+          "checksum": 2943.999997759535,
+          "ns_per_op": 410178.4347826087
+        },
+        {
+          "elapsed_ns": 17998917,
+          "iterations": 46,
+          "checksum": 2943.999997759535,
+          "ns_per_op": 391280.8043478261
+        },
+        {
+          "elapsed_ns": 17751708,
+          "iterations": 46,
+          "checksum": 2943.999997759535,
+          "ns_per_op": 385906.6956521739
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 39,
+      "median_ns": 381021.358974359,
+      "min_ns": 374547.0,
+      "max_ns": 391842.9487179487,
+      "mad_ns": 6474.358974358998,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 41,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 15281875,
+          "iterations": 39,
+          "checksum": 2495.9999981004817,
+          "ns_per_op": 391842.9487179487
+        },
+        {
+          "elapsed_ns": 14607333,
+          "iterations": 39,
+          "checksum": 2495.9999981004817,
+          "ns_per_op": 374547.0
+        },
+        {
+          "elapsed_ns": 14859833,
+          "iterations": 39,
+          "checksum": 2495.9999981004817,
+          "ns_per_op": 381021.358974359
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 233,
+      "median_ns": 86103.89699570816,
+      "min_ns": 85851.57510729614,
+      "max_ns": 87151.4678111588,
+      "mad_ns": 252.32188841201423,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 20062208,
+          "iterations": 233,
+          "checksum": 14912.000000973767,
+          "ns_per_op": 86103.89699570816
+        },
+        {
+          "elapsed_ns": 20306292,
+          "iterations": 233,
+          "checksum": 14912.000000973767,
+          "ns_per_op": 87151.4678111588
+        },
+        {
+          "elapsed_ns": 20003417,
+          "iterations": 233,
+          "checksum": 14912.000000973767,
+          "ns_per_op": 85851.57510729614
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 223,
+      "median_ns": 88846.9730941704,
+      "min_ns": 88627.05381165919,
+      "max_ns": 89352.95067264573,
+      "mad_ns": 219.91928251121135,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 19925708,
+          "iterations": 223,
+          "checksum": 14272.000000931985,
+          "ns_per_op": 89352.95067264573
+        },
+        {
+          "elapsed_ns": 19812875,
+          "iterations": 223,
+          "checksum": 14272.000000931985,
+          "ns_per_op": 88846.9730941704
+        },
+        {
+          "elapsed_ns": 19763833,
+          "iterations": 223,
+          "checksum": 14272.000000931985,
+          "ns_per_op": 88627.05381165919
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 25,
+      "median_ns": 621315.0,
+      "min_ns": 610920.0,
+      "max_ns": 623255.0,
+      "mad_ns": 1940.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 15581375,
+          "iterations": 25,
+          "checksum": 1600.000000104486,
+          "ns_per_op": 623255.0
+        },
+        {
+          "elapsed_ns": 15532875,
+          "iterations": 25,
+          "checksum": 1600.000000104486,
+          "ns_per_op": 621315.0
+        },
+        {
+          "elapsed_ns": 15273000,
+          "iterations": 25,
+          "checksum": 1600.000000104486,
+          "ns_per_op": 610920.0
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 224,
+      "median_ns": 88780.50446428571,
+      "min_ns": 88636.71875,
+      "max_ns": 88916.29464285714,
+      "mad_ns": 135.7901785714348,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 19917250,
+          "iterations": 224,
+          "checksum": 14336.000000936163,
+          "ns_per_op": 88916.29464285714
+        },
+        {
+          "elapsed_ns": 19886833,
+          "iterations": 224,
+          "checksum": 14336.000000936163,
+          "ns_per_op": 88780.50446428571
+        },
+        {
+          "elapsed_ns": 19854625,
+          "iterations": 224,
+          "checksum": 14336.000000936163,
+          "ns_per_op": 88636.71875
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 159,
+      "median_ns": 123529.35220125786,
+      "min_ns": 122535.90566037736,
+      "max_ns": 124698.11320754717,
+      "mad_ns": 993.4465408804972,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 19827000,
+          "iterations": 159,
+          "checksum": 10176.000000664579,
+          "ns_per_op": 124698.11320754717
+        },
+        {
+          "elapsed_ns": 19641167,
+          "iterations": 159,
+          "checksum": 10176.000000664579,
+          "ns_per_op": 123529.35220125786
+        },
+        {
+          "elapsed_ns": 19483209,
+          "iterations": 159,
+          "checksum": 10176.000000664579,
+          "ns_per_op": 122535.90566037736
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 168,
+      "median_ns": 112522.82142857143,
+      "min_ns": 112207.58928571429,
+      "max_ns": 112629.46428571429,
+      "mad_ns": 106.64285714285506,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 18921750,
+          "iterations": 168,
+          "checksum": 10752.000000702183,
+          "ns_per_op": 112629.46428571429
+        },
+        {
+          "elapsed_ns": 18903834,
+          "iterations": 168,
+          "checksum": 10752.000000702183,
+          "ns_per_op": 112522.82142857143
+        },
+        {
+          "elapsed_ns": 18850875,
+          "iterations": 168,
+          "checksum": 10752.000000702183,
+          "ns_per_op": 112207.58928571429
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 125,
+      "median_ns": 156193.664,
+      "min_ns": 153630.0,
+      "max_ns": 157319.336,
+      "mad_ns": 1125.6720000000205,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 19524208,
+          "iterations": 125,
+          "checksum": 8000.000000522511,
+          "ns_per_op": 156193.664
+        },
+        {
+          "elapsed_ns": 19203750,
+          "iterations": 125,
+          "checksum": 8000.000000522511,
+          "ns_per_op": 153630.0
+        },
+        {
+          "elapsed_ns": 19664917,
+          "iterations": 125,
+          "checksum": 8000.000000522511,
+          "ns_per_op": 157319.336
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 45,
+      "median_ns": 400160.0,
+      "min_ns": 398688.8888888889,
+      "max_ns": 400955.55555555556,
+      "mad_ns": 795.555555555562,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 18043000,
+          "iterations": 45,
+          "checksum": 2880.0000001880703,
+          "ns_per_op": 400955.55555555556
+        },
+        {
+          "elapsed_ns": 18007200,
+          "iterations": 45,
+          "checksum": 2880.0000001880703,
+          "ns_per_op": 400160.0
+        },
+        {
+          "elapsed_ns": 17941000,
+          "iterations": 45,
+          "checksum": 2880.0000001880703,
+          "ns_per_op": 398688.8888888889
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 5078364.75,
+      "min_ns": 5055948.0,
+      "max_ns": 5098500.0,
+      "mad_ns": 20135.25,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 20313459,
+          "iterations": 4,
+          "checksum": 256.0000000167185,
+          "ns_per_op": 5078364.75
+        },
+        {
+          "elapsed_ns": 20394000,
+          "iterations": 4,
+          "checksum": 256.0000000167185,
+          "ns_per_op": 5098500.0
+        },
+        {
+          "elapsed_ns": 20223792,
+          "iterations": 4,
+          "checksum": 256.0000000167185,
+          "ns_per_op": 5055948.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 93,
+      "median_ns": 151882.62365591398,
+      "min_ns": 151251.3440860215,
+      "max_ns": 156233.4193548387,
+      "mad_ns": 631.2795698924747,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 14125084,
+          "iterations": 93,
+          "checksum": 5952.000000388721,
+          "ns_per_op": 151882.62365591398
+        },
+        {
+          "elapsed_ns": 14529708,
+          "iterations": 93,
+          "checksum": 5952.000000388721,
+          "ns_per_op": 156233.4193548387
+        },
+        {
+          "elapsed_ns": 14066375,
+          "iterations": 93,
+          "checksum": 5952.000000388721,
+          "ns_per_op": 151251.3440860215
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_ilu_reused",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 1928025.0,
+      "min_ns": 1908300.0,
+      "max_ns": 1974375.0,
+      "mad_ns": 19725.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 7712100,
+          "iterations": 4,
+          "checksum": 256.00000001671856,
+          "ns_per_op": 1928025.0
+        },
+        {
+          "elapsed_ns": 7897500,
+          "iterations": 4,
+          "checksum": 256.00000001671856,
+          "ns_per_op": 1974375.0
+        },
+        {
+          "elapsed_ns": 7633200,
+          "iterations": 4,
+          "checksum": 256.00000001671856,
+          "ns_per_op": 1908300.0
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 157,
+      "median_ns": 128570.85987261146,
+      "min_ns": 126987.0,
+      "max_ns": 129092.89171974522,
+      "mad_ns": 522.0318471337669,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 20185625,
+          "iterations": 157,
+          "checksum": 10048.000000656222,
+          "ns_per_op": 128570.85987261146
+        },
+        {
+          "elapsed_ns": 20267584,
+          "iterations": 157,
+          "checksum": 10048.000000656222,
+          "ns_per_op": 129092.89171974522
+        },
+        {
+          "elapsed_ns": 19936959,
+          "iterations": 157,
+          "checksum": 10048.000000656222,
+          "ns_per_op": 126987.0
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 1930000.0,
+      "min_ns": 1904650.0,
+      "max_ns": 1950800.0,
+      "mad_ns": 20800.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 7618600,
+          "iterations": 4,
+          "checksum": 256.00000001671856,
+          "ns_per_op": 1904650.0
+        },
+        {
+          "elapsed_ns": 7720000,
+          "iterations": 4,
+          "checksum": 256.00000001671856,
+          "ns_per_op": 1930000.0
+        },
+        {
+          "elapsed_ns": 7803200,
+          "iterations": 4,
+          "checksum": 256.00000001671856,
+          "ns_per_op": 1950800.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 90,
+      "median_ns": 159927.3111111111,
+      "min_ns": 156408.33333333334,
+      "max_ns": 164430.1,
+      "mad_ns": 3518.9777777777635,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 14393458,
+          "iterations": 90,
+          "checksum": 5760.000000376178,
+          "ns_per_op": 159927.3111111111
+        },
+        {
+          "elapsed_ns": 14076750,
+          "iterations": 90,
+          "checksum": 5760.000000376178,
+          "ns_per_op": 156408.33333333334
+        },
+        {
+          "elapsed_ns": 14798709,
+          "iterations": 90,
+          "checksum": 5760.000000376178,
+          "ns_per_op": 164430.1
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 5188104.0,
+      "min_ns": 5179750.0,
+      "max_ns": 5418656.25,
+      "mad_ns": 8354.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 20752416,
+          "iterations": 4,
+          "checksum": 256.0000000167185,
+          "ns_per_op": 5188104.0
+        },
+        {
+          "elapsed_ns": 20719000,
+          "iterations": 4,
+          "checksum": 256.0000000167185,
+          "ns_per_op": 5179750.0
+        },
+        {
+          "elapsed_ns": 21674625,
+          "iterations": 4,
+          "checksum": 256.0000000167185,
+          "ns_per_op": 5418656.25
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 216,
+      "median_ns": 91415.125,
+      "min_ns": 90337.96296296296,
+      "max_ns": 93334.875,
+      "mad_ns": 1077.1620370370365,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 19745667,
+          "iterations": 216,
+          "checksum": 13824.000000902737,
+          "ns_per_op": 91415.125
+        },
+        {
+          "elapsed_ns": 19513000,
+          "iterations": 216,
+          "checksum": 13824.000000902737,
+          "ns_per_op": 90337.96296296296
+        },
+        {
+          "elapsed_ns": 20160333,
+          "iterations": 216,
+          "checksum": 13824.000000902737,
+          "ns_per_op": 93334.875
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 228,
+      "median_ns": 88487.02631578948,
+      "min_ns": 87887.79385964913,
+      "max_ns": 92745.79824561403,
+      "mad_ns": 599.2324561403511,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 20175042,
+          "iterations": 228,
+          "checksum": 14592.000000952876,
+          "ns_per_op": 88487.02631578948
+        },
+        {
+          "elapsed_ns": 20038417,
+          "iterations": 228,
+          "checksum": 14592.000000952876,
+          "ns_per_op": 87887.79385964913
+        },
+        {
+          "elapsed_ns": 21146042,
+          "iterations": 228,
+          "checksum": 14592.000000952876,
+          "ns_per_op": 92745.79824561403
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 45,
+      "median_ns": 414933.3333333333,
+      "min_ns": 414271.1111111111,
+      "max_ns": 427060.0,
+      "mad_ns": 662.2222222221899,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 18672000,
+          "iterations": 45,
+          "checksum": 2880.0000001880703,
+          "ns_per_op": 414933.3333333333
+        },
+        {
+          "elapsed_ns": 18642200,
+          "iterations": 45,
+          "checksum": 2880.0000001880703,
+          "ns_per_op": 414271.1111111111
+        },
+        {
+          "elapsed_ns": 19217700,
+          "iterations": 45,
+          "checksum": 2880.0000001880703,
+          "ns_per_op": 427060.0
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 223,
+      "median_ns": 90676.94618834081,
+      "min_ns": 90346.9730941704,
+      "max_ns": 94192.82511210762,
+      "mad_ns": 329.9730941704038,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 20220959,
+          "iterations": 223,
+          "checksum": 14272.000000931985,
+          "ns_per_op": 90676.94618834081
+        },
+        {
+          "elapsed_ns": 20147375,
+          "iterations": 223,
+          "checksum": 14272.000000931985,
+          "ns_per_op": 90346.9730941704
+        },
+        {
+          "elapsed_ns": 21005000,
+          "iterations": 223,
+          "checksum": 14272.000000931985,
+          "ns_per_op": 94192.82511210762
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 123,
+      "median_ns": 153659.88617886178,
+      "min_ns": 152328.59349593497,
+      "max_ns": 158141.9349593496,
+      "mad_ns": 1331.2926829268108,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 19451458,
+          "iterations": 123,
+          "checksum": 7872.000000514149,
+          "ns_per_op": 158141.9349593496
+        },
+        {
+          "elapsed_ns": 18900166,
+          "iterations": 123,
+          "checksum": 7872.000000514149,
+          "ns_per_op": 153659.88617886178
+        },
+        {
+          "elapsed_ns": 18736417,
+          "iterations": 123,
+          "checksum": 7872.000000514149,
+          "ns_per_op": 152328.59349593497
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 24,
+      "median_ns": 655625.0,
+      "min_ns": 647057.2916666666,
+      "max_ns": 1173815.9583333333,
+      "mad_ns": 8567.708333333372,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 15529375,
+          "iterations": 24,
+          "checksum": 1536.0000001003066,
+          "ns_per_op": 647057.2916666666
+        },
+        {
+          "elapsed_ns": 15735000,
+          "iterations": 24,
+          "checksum": 1536.0000001003066,
+          "ns_per_op": 655625.0
+        },
+        {
+          "elapsed_ns": 28171583,
+          "iterations": 24,
+          "checksum": 1536.0000001003066,
+          "ns_per_op": 1173815.9583333333
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_ilu_total",
+      "size": 8,
+      "status": "passed",
+      "iterations": 175,
+      "median_ns": 114324.28571428571,
+      "min_ns": 113540.0,
+      "max_ns": 121978.33142857143,
+      "mad_ns": 784.2857142857101,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 2,
+      "solver_iterations": 13,
+      "restart": 20,
+      "restart_count": 0,
+      "logical_workspace_bytes": 18880,
+      "logical_preconditioner_bytes": 5640,
+      "samples": [
+        {
+          "elapsed_ns": 20006750,
+          "iterations": 175,
+          "checksum": 11200.00000073143,
+          "ns_per_op": 114324.28571428571
+        },
+        {
+          "elapsed_ns": 19869500,
+          "iterations": 175,
+          "checksum": 11200.00000073143,
+          "ns_per_op": 113540.0
+        },
+        {
+          "elapsed_ns": 21346208,
+          "iterations": 175,
+          "checksum": 11200.00000073143,
+          "ns_per_op": 121978.33142857143
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2791,
+      "median_ns": 6717.111787889646,
+      "min_ns": 6697.061984951631,
+      "max_ns": 6725.44177714081,
+      "mad_ns": 8.32998925116408,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 18770708,
+          "iterations": 2791,
+          "checksum": 4108352,
+          "ns_per_op": 6725.44177714081
+        },
+        {
+          "elapsed_ns": 18747459,
+          "iterations": 2791,
+          "checksum": 4108352,
+          "ns_per_op": 6717.111787889646
+        },
+        {
+          "elapsed_ns": 18691500,
+          "iterations": 2791,
+          "checksum": 4108352,
+          "ns_per_op": 6697.061984951631
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1312,
+      "median_ns": 11526.613567073171,
+      "min_ns": 11516.227896341463,
+      "max_ns": 12090.288109756097,
+      "mad_ns": 10.38567073170816,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 15862458,
+          "iterations": 1312,
+          "checksum": 1931264,
+          "ns_per_op": 12090.288109756097
+        },
+        {
+          "elapsed_ns": 15122917,
+          "iterations": 1312,
+          "checksum": 1931264,
+          "ns_per_op": 11526.613567073171
+        },
+        {
+          "elapsed_ns": 15109291,
+          "iterations": 1312,
+          "checksum": 1931264,
+          "ns_per_op": 11516.227896341463
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3665,
+      "median_ns": 5364.142974079127,
+      "min_ns": 5362.710504774897,
+      "max_ns": 5393.678854024557,
+      "mad_ns": 1.432469304229926,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 19659584,
+          "iterations": 3665,
+          "checksum": 5394880,
+          "ns_per_op": 5364.142974079127
+        },
+        {
+          "elapsed_ns": 19654334,
+          "iterations": 3665,
+          "checksum": 5394880,
+          "ns_per_op": 5362.710504774897
+        },
+        {
+          "elapsed_ns": 19767833,
+          "iterations": 3665,
+          "checksum": 5394880,
+          "ns_per_op": 5393.678854024557
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2514,
+      "median_ns": 7392.667859984089,
+      "min_ns": 7360.215990453461,
+      "max_ns": 7734.238265712012,
+      "mad_ns": 32.451869530627846,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 18585167,
+          "iterations": 2514,
+          "checksum": 3700608,
+          "ns_per_op": 7392.667859984089
+        },
+        {
+          "elapsed_ns": 19443875,
+          "iterations": 2514,
+          "checksum": 3700608,
+          "ns_per_op": 7734.238265712012
+        },
+        {
+          "elapsed_ns": 18503583,
+          "iterations": 2514,
+          "checksum": 3700608,
+          "ns_per_op": 7360.215990453461
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 564,
+      "median_ns": 28808.510638297874,
+      "min_ns": 28731.205673758865,
+      "max_ns": 30484.574468085106,
+      "mad_ns": 77.30496453900923,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 16204400,
+          "iterations": 564,
+          "checksum": 830208,
+          "ns_per_op": 28731.205673758865
+        },
+        {
+          "elapsed_ns": 17193300,
+          "iterations": 564,
+          "checksum": 830208,
+          "ns_per_op": 30484.574468085106
+        },
+        {
+          "elapsed_ns": 16248000,
+          "iterations": 564,
+          "checksum": 830208,
+          "ns_per_op": 28808.510638297874
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2858,
+      "median_ns": 6698.944366689993,
+      "min_ns": 6695.6497550734775,
+      "max_ns": 6736.71833449965,
+      "mad_ns": 3.2946116165157946,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 19253541,
+          "iterations": 2858,
+          "checksum": 4206976,
+          "ns_per_op": 6736.71833449965
+        },
+        {
+          "elapsed_ns": 19145583,
+          "iterations": 2858,
+          "checksum": 4206976,
+          "ns_per_op": 6698.944366689993
+        },
+        {
+          "elapsed_ns": 19136167,
+          "iterations": 2858,
+          "checksum": 4206976,
+          "ns_per_op": 6695.6497550734775
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1785,
+      "median_ns": 24053.664985994397,
+      "min_ns": 23678.664985994397,
+      "max_ns": 24459.943977591036,
+      "mad_ns": 375.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 42935792,
+          "iterations": 1785,
+          "checksum": 2627520.0,
+          "ns_per_op": 24053.664985994397
+        },
+        {
+          "elapsed_ns": 42266417,
+          "iterations": 1785,
+          "checksum": 2627520.0,
+          "ns_per_op": 23678.664985994397
+        },
+        {
+          "elapsed_ns": 43661000,
+          "iterations": 1785,
+          "checksum": 2627520.0,
+          "ns_per_op": 24459.943977591036
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 83,
+      "median_ns": 49299.19277108434,
+      "min_ns": 48018.57831325301,
+      "max_ns": 54735.93975903615,
+      "mad_ns": 1280.6144578313251,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 4543083,
+          "iterations": 83,
+          "checksum": 122176,
+          "ns_per_op": 54735.93975903615
+        },
+        {
+          "elapsed_ns": 3985542,
+          "iterations": 83,
+          "checksum": 122176,
+          "ns_per_op": 48018.57831325301
+        },
+        {
+          "elapsed_ns": 4091833,
+          "iterations": 83,
+          "checksum": 122176,
+          "ns_per_op": 49299.19277108434
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 43,
+      "median_ns": 468593.9767441861,
+      "min_ns": 467958.32558139536,
+      "max_ns": 468960.27906976745,
+      "mad_ns": 366.30232558137504,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20149541,
+          "iterations": 43,
+          "checksum": 63296.0,
+          "ns_per_op": 468593.9767441861
+        },
+        {
+          "elapsed_ns": 20165292,
+          "iterations": 43,
+          "checksum": 63296.0,
+          "ns_per_op": 468960.27906976745
+        },
+        {
+          "elapsed_ns": 20122208,
+          "iterations": 43,
+          "checksum": 63296.0,
+          "ns_per_op": 467958.32558139536
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 828,
+      "median_ns": 9034.469806763285,
+      "min_ns": 8982.538647342995,
+      "max_ns": 9452.596618357487,
+      "mad_ns": 51.93115942028999,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 7826750,
+          "iterations": 828,
+          "checksum": 1218816,
+          "ns_per_op": 9452.596618357487
+        },
+        {
+          "elapsed_ns": 7480541,
+          "iterations": 828,
+          "checksum": 1218816,
+          "ns_per_op": 9034.469806763285
+        },
+        {
+          "elapsed_ns": 7437542,
+          "iterations": 828,
+          "checksum": 1218816,
+          "ns_per_op": 8982.538647342995
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "ilu_setup",
+      "size": 16,
+      "status": "passed",
+      "iterations": 564,
+      "median_ns": 33209.21985815603,
+      "min_ns": 32964.00709219858,
+      "max_ns": 33263.65248226951,
+      "mad_ns": 54.43262411347678,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 0,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 18730000,
+          "iterations": 564,
+          "checksum": 830208,
+          "ns_per_op": 33209.21985815603
+        },
+        {
+          "elapsed_ns": 18591700,
+          "iterations": 564,
+          "checksum": 830208,
+          "ns_per_op": 32964.00709219858
+        },
+        {
+          "elapsed_ns": 18760700,
+          "iterations": 564,
+          "checksum": 830208,
+          "ns_per_op": 33263.65248226951
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 171,
+      "median_ns": 20559.701754385966,
+      "min_ns": 19527.292397660818,
+      "max_ns": 26395.7134502924,
+      "mad_ns": 1032.4093567251475,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 4513667,
+          "iterations": 171,
+          "checksum": 11903.297591390316,
+          "ns_per_op": 26395.7134502924
+        },
+        {
+          "elapsed_ns": 3515709,
+          "iterations": 171,
+          "checksum": 11903.297591390316,
+          "ns_per_op": 20559.701754385966
+        },
+        {
+          "elapsed_ns": 3339167,
+          "iterations": 171,
+          "checksum": 11903.297591390316,
+          "ns_per_op": 19527.292397660818
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 102,
+      "median_ns": 198478.35294117648,
+      "min_ns": 196125.41176470587,
+      "max_ns": 200846.4019607843,
+      "mad_ns": 2352.941176470602,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20244792,
+          "iterations": 102,
+          "checksum": 7100.21259837312,
+          "ns_per_op": 198478.35294117648
+        },
+        {
+          "elapsed_ns": 20004792,
+          "iterations": 102,
+          "checksum": 7100.21259837312,
+          "ns_per_op": 196125.41176470587
+        },
+        {
+          "elapsed_ns": 20486333,
+          "iterations": 102,
+          "checksum": 7100.21259837312,
+          "ns_per_op": 200846.4019607843
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3357,
+      "median_ns": 4985.490318736967,
+      "min_ns": 4972.172475424486,
+      "max_ns": 5054.947572237116,
+      "mad_ns": 13.317843312481273,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 16691583,
+          "iterations": 3357,
+          "checksum": 233680.52639927785,
+          "ns_per_op": 4972.172475424486
+        },
+        {
+          "elapsed_ns": 16736291,
+          "iterations": 3357,
+          "checksum": 233680.52639927785,
+          "ns_per_op": 4985.490318736967
+        },
+        {
+          "elapsed_ns": 16969459,
+          "iterations": 3357,
+          "checksum": 233680.52639927785,
+          "ns_per_op": 5054.947572237116
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1399,
+      "median_ns": 19121.729807005002,
+      "min_ns": 19082.558970693353,
+      "max_ns": 19926.733380986418,
+      "mad_ns": 39.1708363116486,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 27877500,
+          "iterations": 1399,
+          "checksum": 97384.28848160921,
+          "ns_per_op": 19926.733380986418
+        },
+        {
+          "elapsed_ns": 26696500,
+          "iterations": 1399,
+          "checksum": 97384.28848160921,
+          "ns_per_op": 19082.558970693353
+        },
+        {
+          "elapsed_ns": 26751300,
+          "iterations": 1399,
+          "checksum": 97384.28848160921,
+          "ns_per_op": 19121.729807005002
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2652,
+      "median_ns": 7164.797134238311,
+      "min_ns": 7162.503016591252,
+      "max_ns": 7170.0290346908,
+      "mad_ns": 2.294117647058556,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 18994958,
+          "iterations": 2652,
+          "checksum": 184605.52755764523,
+          "ns_per_op": 7162.503016591252
+        },
+        {
+          "elapsed_ns": 19001042,
+          "iterations": 2652,
+          "checksum": 184605.52755764523,
+          "ns_per_op": 7164.797134238311
+        },
+        {
+          "elapsed_ns": 19014917,
+          "iterations": 2652,
+          "checksum": 184605.52755764523,
+          "ns_per_op": 7170.0290346908
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2841,
+      "median_ns": 5490.188313973953,
+      "min_ns": 5448.154875043999,
+      "max_ns": 6294.365012319606,
+      "mad_ns": 42.03343892995417,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 17882291,
+          "iterations": 2841,
+          "checksum": 197761.80384284887,
+          "ns_per_op": 6294.365012319606
+        },
+        {
+          "elapsed_ns": 15478208,
+          "iterations": 2841,
+          "checksum": 197761.80384284887,
+          "ns_per_op": 5448.154875043999
+        },
+        {
+          "elapsed_ns": 15597625,
+          "iterations": 2841,
+          "checksum": 197761.80384284887,
+          "ns_per_op": 5490.188313973953
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 936,
+      "median_ns": 18601.272435897437,
+      "min_ns": 18200.053418803418,
+      "max_ns": 19031.383547008547,
+      "mad_ns": 401.21901709401936,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 17813375,
+          "iterations": 936,
+          "checksum": 65154.8920791784,
+          "ns_per_op": 19031.383547008547
+        },
+        {
+          "elapsed_ns": 17035250,
+          "iterations": 936,
+          "checksum": 65154.8920791784,
+          "ns_per_op": 18200.053418803418
+        },
+        {
+          "elapsed_ns": 17410791,
+          "iterations": 936,
+          "checksum": 65154.8920791784,
+          "ns_per_op": 18601.272435897437
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 396,
+      "median_ns": 19582.174242424244,
+      "min_ns": 19013.99494949495,
+      "max_ns": 20991.161616161615,
+      "mad_ns": 568.1792929292933,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 7754541,
+          "iterations": 396,
+          "checksum": 27565.53126427072,
+          "ns_per_op": 19582.174242424244
+        },
+        {
+          "elapsed_ns": 7529542,
+          "iterations": 396,
+          "checksum": 27565.53126427072,
+          "ns_per_op": 19013.99494949495
+        },
+        {
+          "elapsed_ns": 8312500,
+          "iterations": 396,
+          "checksum": 27565.53126427072,
+          "ns_per_op": 20991.161616161615
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3266,
+      "median_ns": 5173.734231475812,
+      "min_ns": 5140.130740967545,
+      "max_ns": 5385.142375995101,
+      "mad_ns": 33.60349050826699,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 17587875,
+          "iterations": 3266,
+          "checksum": 227346.02300269832,
+          "ns_per_op": 5385.142375995101
+        },
+        {
+          "elapsed_ns": 16787667,
+          "iterations": 3266,
+          "checksum": 227346.02300269832,
+          "ns_per_op": 5140.130740967545
+        },
+        {
+          "elapsed_ns": 16897416,
+          "iterations": 3266,
+          "checksum": 227346.02300269832,
+          "ns_per_op": 5173.734231475812
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1227,
+      "median_ns": 22180.032599837,
+      "min_ns": 22168.867155664222,
+      "max_ns": 22205.297473512634,
+      "mad_ns": 11.165444172776915,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 27245900,
+          "iterations": 1227,
+          "checksum": 85411.38096277953,
+          "ns_per_op": 22205.297473512634
+        },
+        {
+          "elapsed_ns": 27201200,
+          "iterations": 1227,
+          "checksum": 85411.38096277953,
+          "ns_per_op": 22168.867155664222
+        },
+        {
+          "elapsed_ns": 27214900,
+          "iterations": 1227,
+          "checksum": 85411.38096277953,
+          "ns_per_op": 22180.032599837
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "ilu_apply",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2400,
+      "median_ns": 7402.413333333333,
+      "min_ns": 7110.50375,
+      "max_ns": 7428.715,
+      "mad_ns": 26.301666666667188,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "restart": 20,
+      "logical_workspace_bytes": 2048,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 17828916,
+          "iterations": 2400,
+          "checksum": 167063.82584404037,
+          "ns_per_op": 7428.715
+        },
+        {
+          "elapsed_ns": 17065209,
+          "iterations": 2400,
+          "checksum": 167063.82584404037,
+          "ns_per_op": 7110.50375
+        },
+        {
+          "elapsed_ns": 17765792,
+          "iterations": 2400,
+          "checksum": 167063.82584404037,
+          "ns_per_op": 7402.413333333333
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 100555125.0,
+      "min_ns": 98226875.0,
+      "max_ns": 107098666.0,
+      "mad_ns": 2328250.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 100555125,
+          "iterations": 1,
+          "checksum": 255.9999990907728,
+          "ns_per_op": 100555125.0
+        },
+        {
+          "elapsed_ns": 98226875,
+          "iterations": 1,
+          "checksum": 255.9999990907728,
+          "ns_per_op": 98226875.0
+        },
+        {
+          "elapsed_ns": 107098666,
+          "iterations": 1,
+          "checksum": 255.9999990907728,
+          "ns_per_op": 107098666.0
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 20583250.0,
+      "min_ns": 19846166.0,
+      "max_ns": 40794875.0,
+      "mad_ns": 737084.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20583250,
+          "iterations": 1,
+          "checksum": 255.99999909074137,
+          "ns_per_op": 20583250.0
+        },
+        {
+          "elapsed_ns": 19846166,
+          "iterations": 1,
+          "checksum": 255.99999909074137,
+          "ns_per_op": 19846166.0
+        },
+        {
+          "elapsed_ns": 40794875,
+          "iterations": 1,
+          "checksum": 255.99999909074137,
+          "ns_per_op": 40794875.0
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 34517800.0,
+      "min_ns": 34488900.0,
+      "max_ns": 34861500.0,
+      "mad_ns": 28900.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 34488900,
+          "iterations": 1,
+          "checksum": 255.9999990907187,
+          "ns_per_op": 34488900.0
+        },
+        {
+          "elapsed_ns": 34861500,
+          "iterations": 1,
+          "checksum": 255.9999990907187,
+          "ns_per_op": 34861500.0
+        },
+        {
+          "elapsed_ns": 34517800,
+          "iterations": 1,
+          "checksum": 255.9999990907187,
+          "ns_per_op": 34517800.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 15836208.5,
+      "min_ns": 15771187.5,
+      "max_ns": 15947521.0,
+      "mad_ns": 65021.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 31672417,
+          "iterations": 2,
+          "checksum": 511.9999981821069,
+          "ns_per_op": 15836208.5
+        },
+        {
+          "elapsed_ns": 31895042,
+          "iterations": 2,
+          "checksum": 511.9999981821069,
+          "ns_per_op": 15947521.0
+        },
+        {
+          "elapsed_ns": 31542375,
+          "iterations": 2,
+          "checksum": 511.9999981821069,
+          "ns_per_op": 15771187.5
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 14148333.0,
+      "min_ns": 14119708.5,
+      "max_ns": 14180750.0,
+      "mad_ns": 28624.5,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 28296666,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 14148333.0
+        },
+        {
+          "elapsed_ns": 28361500,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 14180750.0
+        },
+        {
+          "elapsed_ns": 28239417,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 14119708.5
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 761225750.0,
+      "min_ns": 756861584.0,
+      "max_ns": 773116083.0,
+      "mad_ns": 4364166.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 756861584,
+          "iterations": 1,
+          "checksum": 255.9999990907728,
+          "ns_per_op": 756861584.0
+        },
+        {
+          "elapsed_ns": 773116083,
+          "iterations": 1,
+          "checksum": 255.9999990907728,
+          "ns_per_op": 773116083.0
+        },
+        {
+          "elapsed_ns": 761225750,
+          "iterations": 1,
+          "checksum": 255.9999990907728,
+          "ns_per_op": 761225750.0
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 39554800.0,
+      "min_ns": 31077700.0,
+      "max_ns": 46108800.0,
+      "mad_ns": 6554000.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 39554800,
+          "iterations": 1,
+          "checksum": 255.9999990907187,
+          "ns_per_op": 39554800.0
+        },
+        {
+          "elapsed_ns": 46108800,
+          "iterations": 1,
+          "checksum": 255.9999990907187,
+          "ns_per_op": 46108800.0
+        },
+        {
+          "elapsed_ns": 31077700,
+          "iterations": 1,
+          "checksum": 255.9999990907187,
+          "ns_per_op": 31077700.0
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 10233500.0,
+      "min_ns": 10082562.5,
+      "max_ns": 10358875.0,
+      "mad_ns": 125375.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20717750,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 10358875.0
+        },
+        {
+          "elapsed_ns": 20165125,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 10082562.5
+        },
+        {
+          "elapsed_ns": 20467000,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 10233500.0
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 16712542.0,
+      "min_ns": 16650333.5,
+      "max_ns": 17080916.5,
+      "mad_ns": 62208.5,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 33300667,
+          "iterations": 2,
+          "checksum": 511.99999818169726,
+          "ns_per_op": 16650333.5
+        },
+        {
+          "elapsed_ns": 33425084,
+          "iterations": 2,
+          "checksum": 511.99999818169726,
+          "ns_per_op": 16712542.0
+        },
+        {
+          "elapsed_ns": 34161833,
+          "iterations": 2,
+          "checksum": 511.99999818169726,
+          "ns_per_op": 17080916.5
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 9673236.0,
+      "min_ns": 9614444.333333334,
+      "max_ns": 9694513.666666666,
+      "mad_ns": 21277.666666666046,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 28843333,
+          "iterations": 3,
+          "checksum": 767.9999972714206,
+          "ns_per_op": 9614444.333333334
+        },
+        {
+          "elapsed_ns": 29019708,
+          "iterations": 3,
+          "checksum": 767.9999972714206,
+          "ns_per_op": 9673236.0
+        },
+        {
+          "elapsed_ns": 29083541,
+          "iterations": 3,
+          "checksum": 767.9999972714206,
+          "ns_per_op": 9694513.666666666
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_none",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 10172187.5,
+      "min_ns": 10095416.5,
+      "max_ns": 10328375.0,
+      "mad_ns": 76771.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 529,
+      "restart": 20,
+      "restart_count": 26,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20656750,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 10328375.0
+        },
+        {
+          "elapsed_ns": 20190833,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 10095416.5
+        },
+        {
+          "elapsed_ns": 20344375,
+          "iterations": 2,
+          "checksum": 511.9999981809471,
+          "ns_per_op": 10172187.5
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 7,
+      "median_ns": 2971547.5714285714,
+      "min_ns": 2952916.714285714,
+      "max_ns": 3000863.1428571427,
+      "mad_ns": 18630.857142857276,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21006042,
+          "iterations": 7,
+          "checksum": 1792.0000013211315,
+          "ns_per_op": 3000863.1428571427
+        },
+        {
+          "elapsed_ns": 20670417,
+          "iterations": 7,
+          "checksum": 1792.0000013211315,
+          "ns_per_op": 2952916.714285714
+        },
+        {
+          "elapsed_ns": 20800833,
+          "iterations": 7,
+          "checksum": 1792.0000013211315,
+          "ns_per_op": 2971547.5714285714
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 12,
+      "median_ns": 1941777.75,
+      "min_ns": 1853593.75,
+      "max_ns": 1962965.25,
+      "mad_ns": 21187.5,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 23555583,
+          "iterations": 12,
+          "checksum": 3072.0000022647932,
+          "ns_per_op": 1962965.25
+        },
+        {
+          "elapsed_ns": 22243125,
+          "iterations": 12,
+          "checksum": 3072.0000022647932,
+          "ns_per_op": 1853593.75
+        },
+        {
+          "elapsed_ns": 23301333,
+          "iterations": 12,
+          "checksum": 3072.0000022647932,
+          "ns_per_op": 1941777.75
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 12,
+      "median_ns": 1775704.8333333333,
+      "min_ns": 1736406.25,
+      "max_ns": 1977791.6666666667,
+      "mad_ns": 39298.583333333256,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21308458,
+          "iterations": 12,
+          "checksum": 3072.0000022647932,
+          "ns_per_op": 1775704.8333333333
+        },
+        {
+          "elapsed_ns": 20836875,
+          "iterations": 12,
+          "checksum": 3072.0000022647932,
+          "ns_per_op": 1736406.25
+        },
+        {
+          "elapsed_ns": 23733500,
+          "iterations": 12,
+          "checksum": 3072.0000022647932,
+          "ns_per_op": 1977791.6666666667
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 8,
+      "median_ns": 2585187.5,
+      "min_ns": 2568578.125,
+      "max_ns": 2706875.0,
+      "mad_ns": 16609.375,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20548625,
+          "iterations": 8,
+          "checksum": 2048.0000015098653,
+          "ns_per_op": 2568578.125
+        },
+        {
+          "elapsed_ns": 21655000,
+          "iterations": 8,
+          "checksum": 2048.0000015098653,
+          "ns_per_op": 2706875.0
+        },
+        {
+          "elapsed_ns": 20681500,
+          "iterations": 8,
+          "checksum": 2048.0000015098653,
+          "ns_per_op": 2585187.5
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 6724500.0,
+      "min_ns": 6579166.666666667,
+      "max_ns": 6752300.0,
+      "mad_ns": 27800.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20173500,
+          "iterations": 3,
+          "checksum": 768.0000005661981,
+          "ns_per_op": 6724500.0
+        },
+        {
+          "elapsed_ns": 19737500,
+          "iterations": 3,
+          "checksum": 768.0000005661981,
+          "ns_per_op": 6579166.666666667
+        },
+        {
+          "elapsed_ns": 20256900,
+          "iterations": 3,
+          "checksum": 768.0000005661981,
+          "ns_per_op": 6752300.0
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 7,
+      "median_ns": 3168785.714285714,
+      "min_ns": 3084035.714285714,
+      "max_ns": 3193178.5714285714,
+      "mad_ns": 24392.857142857276,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 22352250,
+          "iterations": 7,
+          "checksum": 1792.0000013211318,
+          "ns_per_op": 3193178.5714285714
+        },
+        {
+          "elapsed_ns": 21588250,
+          "iterations": 7,
+          "checksum": 1792.0000013211318,
+          "ns_per_op": 3084035.714285714
+        },
+        {
+          "elapsed_ns": 22181500,
+          "iterations": 7,
+          "checksum": 1792.0000013211318,
+          "ns_per_op": 3168785.714285714
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 11,
+      "median_ns": 1894996.1818181819,
+      "min_ns": 1811803.0,
+      "max_ns": 1903776.4545454546,
+      "mad_ns": 8780.272727272706,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 20941541,
+          "iterations": 11,
+          "checksum": 2816.0000020760613,
+          "ns_per_op": 1903776.4545454546
+        },
+        {
+          "elapsed_ns": 19929833,
+          "iterations": 11,
+          "checksum": 2816.0000020760613,
+          "ns_per_op": 1811803.0
+        },
+        {
+          "elapsed_ns": 20844958,
+          "iterations": 11,
+          "checksum": 2816.0000020760613,
+          "ns_per_op": 1894996.1818181819
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 6,
+      "median_ns": 3981027.6666666665,
+      "min_ns": 3624305.5,
+      "max_ns": 4396791.666666667,
+      "mad_ns": 356722.1666666665,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 21745833,
+          "iterations": 6,
+          "checksum": 1536.0000011323982,
+          "ns_per_op": 3624305.5
+        },
+        {
+          "elapsed_ns": 23886166,
+          "iterations": 6,
+          "checksum": 1536.0000011323982,
+          "ns_per_op": 3981027.6666666665
+        },
+        {
+          "elapsed_ns": 26380750,
+          "iterations": 6,
+          "checksum": 1536.0000011323982,
+          "ns_per_op": 4396791.666666667
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 139585083.0,
+      "min_ns": 137222209.0,
+      "max_ns": 145380167.0,
+      "mad_ns": 2362874.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 139585083,
+          "iterations": 1,
+          "checksum": 256.00000018873254,
+          "ns_per_op": 139585083.0
+        },
+        {
+          "elapsed_ns": 145380167,
+          "iterations": 1,
+          "checksum": 256.00000018873254,
+          "ns_per_op": 145380167.0
+        },
+        {
+          "elapsed_ns": 137222209,
+          "iterations": 1,
+          "checksum": 256.00000018873254,
+          "ns_per_op": 137222209.0
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 12112250.0,
+      "min_ns": 11995350.0,
+      "max_ns": 12757200.0,
+      "mad_ns": 116900.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 23990700,
+          "iterations": 2,
+          "checksum": 512.0000003774651,
+          "ns_per_op": 11995350.0
+        },
+        {
+          "elapsed_ns": 25514400,
+          "iterations": 2,
+          "checksum": 512.0000003774651,
+          "ns_per_op": 12757200.0
+        },
+        {
+          "elapsed_ns": 24224500,
+          "iterations": 2,
+          "checksum": 512.0000003774651,
+          "ns_per_op": 12112250.0
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 18749854.5,
+      "min_ns": 18429125.0,
+      "max_ns": 20720312.5,
+      "mad_ns": 320729.5,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 94,
+      "restart": 20,
+      "restart_count": 4,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 0,
+      "samples": [
+        {
+          "elapsed_ns": 41440625,
+          "iterations": 2,
+          "checksum": 512.000000377465,
+          "ns_per_op": 20720312.5
+        },
+        {
+          "elapsed_ns": 36858250,
+          "iterations": 2,
+          "checksum": 512.000000377465,
+          "ns_per_op": 18429125.0
+        },
+        {
+          "elapsed_ns": 37499709,
+          "iterations": 2,
+          "checksum": 512.000000377465,
+          "ns_per_op": 18749854.5
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 37763791.0,
+      "min_ns": 37275917.0,
+      "max_ns": 39376042.0,
+      "mad_ns": 487874.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 37763791,
+          "iterations": 1,
+          "checksum": 256.00000012929394,
+          "ns_per_op": 37763791.0
+        },
+        {
+          "elapsed_ns": 39376042,
+          "iterations": 1,
+          "checksum": 256.00000012929394,
+          "ns_per_op": 39376042.0
+        },
+        {
+          "elapsed_ns": 37275917,
+          "iterations": 1,
+          "checksum": 256.00000012929394,
+          "ns_per_op": 37275917.0
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 10,
+      "median_ns": 3246360.0,
+      "min_ns": 3235550.0,
+      "max_ns": 3251650.0,
+      "mad_ns": 5290.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 32355500,
+          "iterations": 10,
+          "checksum": 2560.000001292938,
+          "ns_per_op": 3235550.0
+        },
+        {
+          "elapsed_ns": 32516500,
+          "iterations": 10,
+          "checksum": 2560.000001292938,
+          "ns_per_op": 3251650.0
+        },
+        {
+          "elapsed_ns": 32463600,
+          "iterations": 10,
+          "checksum": 2560.000001292938,
+          "ns_per_op": 3246360.0
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 19,
+      "median_ns": 1046508.7894736842,
+      "min_ns": 1046236.8421052631,
+      "max_ns": 1053796.0526315789,
+      "mad_ns": 271.94736842100974,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20022125,
+          "iterations": 19,
+          "checksum": 4864.000002456577,
+          "ns_per_op": 1053796.0526315789
+        },
+        {
+          "elapsed_ns": 19878500,
+          "iterations": 19,
+          "checksum": 4864.000002456577,
+          "ns_per_op": 1046236.8421052631
+        },
+        {
+          "elapsed_ns": 19883667,
+          "iterations": 19,
+          "checksum": 4864.000002456577,
+          "ns_per_op": 1046508.7894736842
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 17,
+      "median_ns": 905845.5882352941,
+      "min_ns": 903894.6470588235,
+      "max_ns": 912475.5294117647,
+      "mad_ns": 1950.941176470602,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 15512084,
+          "iterations": 17,
+          "checksum": 4352.000002198004,
+          "ns_per_op": 912475.5294117647
+        },
+        {
+          "elapsed_ns": 15366209,
+          "iterations": 17,
+          "checksum": 4352.000002198004,
+          "ns_per_op": 903894.6470588235
+        },
+        {
+          "elapsed_ns": 15399375,
+          "iterations": 17,
+          "checksum": 4352.000002198004,
+          "ns_per_op": 905845.5882352941
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 23,
+      "median_ns": 877070.6521739131,
+      "min_ns": 870802.5217391305,
+      "max_ns": 878775.3478260869,
+      "mad_ns": 1704.695652173832,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20211833,
+          "iterations": 23,
+          "checksum": 5888.000002973723,
+          "ns_per_op": 878775.3478260869
+        },
+        {
+          "elapsed_ns": 20172625,
+          "iterations": 23,
+          "checksum": 5888.000002973723,
+          "ns_per_op": 877070.6521739131
+        },
+        {
+          "elapsed_ns": 20028458,
+          "iterations": 23,
+          "checksum": 5888.000002973723,
+          "ns_per_op": 870802.5217391305
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 8,
+      "median_ns": 2546162.5,
+      "min_ns": 2529312.5,
+      "max_ns": 2550325.0,
+      "mad_ns": 4162.5,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20369300,
+          "iterations": 8,
+          "checksum": 2048.000001034345,
+          "ns_per_op": 2546162.5
+        },
+        {
+          "elapsed_ns": 20402600,
+          "iterations": 8,
+          "checksum": 2048.000001034345,
+          "ns_per_op": 2550325.0
+        },
+        {
+          "elapsed_ns": 20234500,
+          "iterations": 8,
+          "checksum": 2048.000001034345,
+          "ns_per_op": 2529312.5
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 4256491.8,
+      "min_ns": 4182816.6,
+      "max_ns": 4264308.2,
+      "mad_ns": 7816.4000000003725,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 21282459,
+          "iterations": 5,
+          "checksum": 1280.0000006464684,
+          "ns_per_op": 4256491.8
+        },
+        {
+          "elapsed_ns": 20914083,
+          "iterations": 5,
+          "checksum": 1280.0000006464684,
+          "ns_per_op": 4182816.6
+        },
+        {
+          "elapsed_ns": 21321541,
+          "iterations": 5,
+          "checksum": 1280.0000006464684,
+          "ns_per_op": 4264308.2
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 29,
+      "median_ns": 623485.6206896552,
+      "min_ns": 621212.6206896552,
+      "max_ns": 625971.275862069,
+      "mad_ns": 2273.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 18153167,
+          "iterations": 29,
+          "checksum": 7424.000003749442,
+          "ns_per_op": 625971.275862069
+        },
+        {
+          "elapsed_ns": 18081083,
+          "iterations": 29,
+          "checksum": 7424.000003749442,
+          "ns_per_op": 623485.6206896552
+        },
+        {
+          "elapsed_ns": 18015166,
+          "iterations": 29,
+          "checksum": 7424.000003749442,
+          "ns_per_op": 621212.6206896552
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 31,
+      "median_ns": 621771.4838709678,
+      "min_ns": 621348.0967741936,
+      "max_ns": 642567.1935483871,
+      "mad_ns": 423.3870967741823,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 19919583,
+          "iterations": 31,
+          "checksum": 7936.000004008015,
+          "ns_per_op": 642567.1935483871
+        },
+        {
+          "elapsed_ns": 19274916,
+          "iterations": 31,
+          "checksum": 7936.000004008015,
+          "ns_per_op": 621771.4838709678
+        },
+        {
+          "elapsed_ns": 19261791,
+          "iterations": 31,
+          "checksum": 7936.000004008015,
+          "ns_per_op": 621348.0967741936
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 33,
+      "median_ns": 604960.8484848485,
+      "min_ns": 603306.8181818182,
+      "max_ns": 627935.6060606061,
+      "mad_ns": 1654.0303030302748,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20721875,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 627935.6060606061
+        },
+        {
+          "elapsed_ns": 19963708,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 604960.8484848485
+        },
+        {
+          "elapsed_ns": 19909125,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 603306.8181818182
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_ilu_reused",
+      "size": 16,
+      "status": "passed",
+      "iterations": 17,
+      "median_ns": 769326.0,
+      "min_ns": 766909.2941176471,
+      "max_ns": 794879.8823529412,
+      "mad_ns": 2416.7058823528932,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 13512958,
+          "iterations": 17,
+          "checksum": 4352.000002198004,
+          "ns_per_op": 794879.8823529412
+        },
+        {
+          "elapsed_ns": 13078542,
+          "iterations": 17,
+          "checksum": 4352.000002198004,
+          "ns_per_op": 769326.0
+        },
+        {
+          "elapsed_ns": 13037458,
+          "iterations": 17,
+          "checksum": 4352.000002198004,
+          "ns_per_op": 766909.2941176471
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 4213175.0,
+      "min_ns": 4211150.0,
+      "max_ns": 4229541.8,
+      "mad_ns": 2025.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 21065875,
+          "iterations": 5,
+          "checksum": 1280.0000006464684,
+          "ns_per_op": 4213175.0
+        },
+        {
+          "elapsed_ns": 21147709,
+          "iterations": 5,
+          "checksum": 1280.0000006464684,
+          "ns_per_op": 4229541.8
+        },
+        {
+          "elapsed_ns": 21055750,
+          "iterations": 5,
+          "checksum": 1280.0000006464684,
+          "ns_per_op": 4211150.0
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 37854083.0,
+      "min_ns": 37722000.0,
+      "max_ns": 38037625.0,
+      "mad_ns": 132083.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 37722000,
+          "iterations": 1,
+          "checksum": 256.00000012929394,
+          "ns_per_op": 37722000.0
+        },
+        {
+          "elapsed_ns": 38037625,
+          "iterations": 1,
+          "checksum": 256.00000012929394,
+          "ns_per_op": 38037625.0
+        },
+        {
+          "elapsed_ns": 37854083,
+          "iterations": 1,
+          "checksum": 256.00000012929394,
+          "ns_per_op": 37854083.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 18,
+      "median_ns": 920833.3333333334,
+      "min_ns": 917731.5,
+      "max_ns": 923025.5,
+      "mad_ns": 2192.166666666628,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 16614459,
+          "iterations": 18,
+          "checksum": 4608.0000023272905,
+          "ns_per_op": 923025.5
+        },
+        {
+          "elapsed_ns": 16575000,
+          "iterations": 18,
+          "checksum": 4608.0000023272905,
+          "ns_per_op": 920833.3333333334
+        },
+        {
+          "elapsed_ns": 16519167,
+          "iterations": 18,
+          "checksum": 4608.0000023272905,
+          "ns_per_op": 917731.5
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 10,
+      "median_ns": 3385550.0,
+      "min_ns": 3382850.0,
+      "max_ns": 3391640.0,
+      "mad_ns": 2700.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 33855500,
+          "iterations": 10,
+          "checksum": 2560.000001292938,
+          "ns_per_op": 3385550.0
+        },
+        {
+          "elapsed_ns": 33916400,
+          "iterations": 10,
+          "checksum": 2560.000001292938,
+          "ns_per_op": 3391640.0
+        },
+        {
+          "elapsed_ns": 33828500,
+          "iterations": 10,
+          "checksum": 2560.000001292938,
+          "ns_per_op": 3382850.0
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 32,
+      "median_ns": 629007.8125,
+      "min_ns": 628690.09375,
+      "max_ns": 646509.125,
+      "mad_ns": 317.71875,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20128250,
+          "iterations": 32,
+          "checksum": 8192.0000041373,
+          "ns_per_op": 629007.8125
+        },
+        {
+          "elapsed_ns": 20118083,
+          "iterations": 32,
+          "checksum": 8192.0000041373,
+          "ns_per_op": 628690.09375
+        },
+        {
+          "elapsed_ns": 20688292,
+          "iterations": 32,
+          "checksum": 8192.0000041373,
+          "ns_per_op": 646509.125
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 33,
+      "median_ns": 636053.0303030303,
+      "min_ns": 632570.7272727273,
+      "max_ns": 655133.8181818182,
+      "mad_ns": 3482.303030302981,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20874834,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 632570.7272727273
+        },
+        {
+          "elapsed_ns": 20989750,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 636053.0303030303
+        },
+        {
+          "elapsed_ns": 21619416,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 655133.8181818182
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 26,
+      "median_ns": 771774.0384615385,
+      "min_ns": 771009.6153846154,
+      "max_ns": 778676.2692307692,
+      "mad_ns": 764.4230769231217,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20066125,
+          "iterations": 26,
+          "checksum": 6656.0000033615825,
+          "ns_per_op": 771774.0384615385
+        },
+        {
+          "elapsed_ns": 20046250,
+          "iterations": 26,
+          "checksum": 6656.0000033615825,
+          "ns_per_op": 771009.6153846154
+        },
+        {
+          "elapsed_ns": 20245583,
+          "iterations": 26,
+          "checksum": 6656.0000033615825,
+          "ns_per_op": 778676.2692307692
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 33,
+      "median_ns": 617453.2727272727,
+      "min_ns": 614608.6060606061,
+      "max_ns": 619863.6363636364,
+      "mad_ns": 2410.363636363647,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20455500,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 619863.6363636364
+        },
+        {
+          "elapsed_ns": 20282084,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 614608.6060606061
+        },
+        {
+          "elapsed_ns": 20375958,
+          "iterations": 33,
+          "checksum": 8448.000004266609,
+          "ns_per_op": 617453.2727272727
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 20,
+      "median_ns": 1068552.1,
+      "min_ns": 1058079.2,
+      "max_ns": 1150383.35,
+      "mad_ns": 10472.90000000014,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 21161584,
+          "iterations": 20,
+          "checksum": 5120.0000025858635,
+          "ns_per_op": 1058079.2
+        },
+        {
+          "elapsed_ns": 21371042,
+          "iterations": 20,
+          "checksum": 5120.0000025858635,
+          "ns_per_op": 1068552.1
+        },
+        {
+          "elapsed_ns": 23007667,
+          "iterations": 20,
+          "checksum": 5120.0000025858635,
+          "ns_per_op": 1150383.35
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 23,
+      "median_ns": 896586.9565217391,
+      "min_ns": 884141.304347826,
+      "max_ns": 969884.0434782609,
+      "mad_ns": 12445.652173913084,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 20335250,
+          "iterations": 23,
+          "checksum": 5888.000002973723,
+          "ns_per_op": 884141.304347826
+        },
+        {
+          "elapsed_ns": 20621500,
+          "iterations": 23,
+          "checksum": 5888.000002973723,
+          "ns_per_op": 896586.9565217391
+        },
+        {
+          "elapsed_ns": 22307333,
+          "iterations": 23,
+          "checksum": 5888.000002973723,
+          "ns_per_op": 969884.0434782609
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_ilu_total",
+      "size": 16,
+      "status": "passed",
+      "iterations": 8,
+      "median_ns": 2694475.0,
+      "min_ns": 2682812.5,
+      "max_ns": 2757625.0,
+      "mad_ns": 11662.5,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 2,
+      "solver_iterations": 21,
+      "restart": 20,
+      "restart_count": 1,
+      "logical_workspace_bytes": 63424,
+      "logical_preconditioner_bytes": 23560,
+      "samples": [
+        {
+          "elapsed_ns": 21462500,
+          "iterations": 8,
+          "checksum": 2048.000001034345,
+          "ns_per_op": 2682812.5
+        },
+        {
+          "elapsed_ns": 21555800,
+          "iterations": 8,
+          "checksum": 2048.000001034345,
+          "ns_per_op": 2694475.0
+        },
+        {
+          "elapsed_ns": 22061000,
+          "iterations": 8,
+          "checksum": 2048.000001034345,
+          "ns_per_op": 2757625.0
+        }
+      ]
+    }
+  ],
+  "profiles": []
+}

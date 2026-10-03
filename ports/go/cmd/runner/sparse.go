@@ -37,7 +37,7 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
-	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres") || jacobi > 1 || capture > 1 {
+	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ilu_setup" && op != "ilu_apply") || jacobi > 3 || (op != "gmres" && jacobi > 1) || capture > 1 {
 		return errors.New("invalid sparse operation/options")
 	}
 	raw, e := io.ReadAll(os.Stdin)
@@ -97,6 +97,13 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
+	var factor *matrix.ILU0
+	if op == "ilu_apply" || (op == "gmres" && jacobi == 2) {
+		factor, e = matrix.NewILU0(a)
+		if e != nil {
+			return e
+		}
+	}
 	var dense, right *matrix.Matrix
 	if op == "dense" {
 		dv := make([]float64, rows*cols)
@@ -115,6 +122,16 @@ func sparseRun(args []string) error {
 		}
 	}
 	compute := func() ([]float64, error) {
+		if op == "ilu_setup" {
+			f, e := matrix.NewILU0(a)
+			if e != nil {
+				return nil, e
+			}
+			return []float64{float64(f.Size()), float64(f.NNZ())}, nil
+		}
+		if op == "ilu_apply" {
+			return factor.Apply(b)
+		}
 		if op == "spmv" {
 			return a.Matvec(b)
 		}
@@ -131,7 +148,14 @@ func sparseRun(args []string) error {
 			if e != nil {
 				return nil, e
 			}
-			r, e := a.GMRES(b, matrix.GMRESOptions{Restart: restart, RelativeTolerance: rtol, AbsoluteTolerance: atol, MaxIterations: limit, Jacobi: jacobi != 0, Capture: capture != 0})
+			current := factor
+			if jacobi == 3 {
+				current, e = matrix.NewILU0(a)
+				if e != nil {
+					return nil, e
+				}
+			}
+			r, e := a.GMRES(b, matrix.GMRESOptions{Restart: restart, RelativeTolerance: rtol, AbsoluteTolerance: atol, MaxIterations: limit, Jacobi: jacobi == 1, Capture: capture != 0, Preconditioner: current})
 			if e != nil {
 				return nil, e
 			}

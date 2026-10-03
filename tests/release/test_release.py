@@ -47,6 +47,7 @@ class ReleaseTests(unittest.TestCase):
         # The solver is imported lazily; basic import tests missed its omission.
         metadata=(ROOT/'ports/python/pyproject.toml').read_text()
         self.assertIn('"solve"',metadata)
+        self.assertIn('"ilu"',metadata)
 
     def test_audit_rejects_paths_inside_compiled_packages(self):
         with tempfile.TemporaryDirectory() as d:
@@ -62,7 +63,7 @@ class ReleaseTests(unittest.TestCase):
     def test_tagged_release_rejects_unverified_source_only_build(self):
         with tempfile.TemporaryDirectory() as d:
             result=subprocess.run([sys.executable,str(ROOT/'release/build.py'),
-                '--tag','v0.5.0','--source-only','--output',d],capture_output=True,text=True)
+                '--tag','v0.6.0','--source-only','--output',d],capture_output=True,text=True)
             self.assertNotEqual(result.returncode,0)
             self.assertIn('tagged releases require',result.stderr)
             self.assertFalse((Path(d)/'release.json').exists())
@@ -73,10 +74,11 @@ class ReleaseTests(unittest.TestCase):
             files=build.kit_files(port,manifest['ports'][port],manifest['version'])
             self.assertIn('ports/c/solve_core.h',files)
             self.assertIn('ports/c/sparse_core.h',files)
+            self.assertIn('ports/c/ilu_core.h',files)
             self.assertIn('ports/SPARSE.md',files)
             self.assertIn('ports/c/general_eigen.h',files)
             self.assertIn('LICENSE',files)
-            self.assertIn('docs/api/0.5.0/README.md',files)
+            self.assertIn('docs/api/0.6.0/README.md',files)
             self.assertFalse(any('.build/' in name or 'node_modules/' in name or '.git/' in name for name in files))
 
 if __name__=='__main__': unittest.main()

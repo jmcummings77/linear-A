@@ -340,7 +340,18 @@ export async function createMatrixAPI({
     dispose(){if(this.#pointer)runtime._wm_factor_destroy(this.#pointer);this.#pointer=0;}
   }
 
+  let csrPointer,iluPointer;
+  class ILU0 {
+    #pointer;#size;#nnz;
+    static {iluPointer=f=>f.#alive();}
+    constructor(a){this.#size=a.rows;this.#nnz=a.nnz;this.#pointer=checkedHandle(runtime._wm_ilu0_create(csrPointer(a)));}
+    get size(){return this.#size;}get nnz(){return this.#nnz;}
+    #alive(){if(!this.#pointer)throw new Error('ILU0 has been disposed');return this.#pointer;}
+    dispose(){if(this.#pointer){runtime._wm_ilu0_destroy(this.#pointer);this.#pointer=0;}}
+    apply(values){let b,out;try{b=new Matrix(values.length,1,values);out=new Matrix(runtime._wm_ilu0_apply(this.#alive(),matrixPointer(b)),0,undefined,ownedHandle);return out.toArray();}finally{b?.dispose();out?.dispose();}}
+  }
   class CSRMatrix {
+    static {csrPointer=a=>a.#alive();}
     #pointer=0; #rows; #cols; #offsets; #indices; #values;
     constructor(rows,cols,offsets,indices,values){
       this.#rows=dimension(rows);this.#cols=dimension(cols);
@@ -379,11 +390,11 @@ export async function createMatrixAPI({
         return {x,residuals,iterates,iterations,reason,converged:reason==='converged'};
       }finally{if(handle)runtime._wm_cg_destroy(handle);b?.dispose();}
     }
-    gmres(values,{restart=30,rtol=1e-10,atol=0,maxIterations=1000,jacobi=false,capture=false}={}){
+    gmres(values,{restart=30,rtol=1e-10,atol=0,maxIterations=1000,jacobi=false,capture=false,preconditioner}={}){
       if(!Number.isInteger(restart)||restart<1||restart>1024||!Number.isInteger(maxIterations)||maxIterations<0||maxIterations>100000||typeof jacobi!=='boolean'||typeof capture!=='boolean')throw new RangeError('invalid GMRES options');
       finite(rtol);finite(atol);let b,handle;
       try{
-        b=new Matrix(values.length,1,values);handle=checkedHandle(runtime._wm_csr_gmres(this.#alive(),matrixPointer(b),restart,rtol,atol,maxIterations,+jacobi,+capture));
+        b=new Matrix(values.length,1,values);handle=checkedHandle(runtime._wm_csr_gmres_preconditioned(this.#alive(),matrixPointer(b),restart,rtol,atol,maxIterations,+jacobi,+capture,preconditioner?iluPointer(preconditioner):0));
         const iterations=runtime._wm_gmres_iterations(handle),reason=['converged','iteration_limit','breakdown','nonfinite','stagnation'][runtime._wm_gmres_reason(handle)];
         const copy=(field,count)=>{const offset=runtime._wm_gmres_data(handle,field)>>>3;return Array.from(runtime.HEAPF64.subarray(offset,offset+count));};
         const x=copy(0,this.rows),residuals=copy(1,iterations+1),estimatedResiduals=copy(2,iterations+1),flat=capture?copy(3,(iterations+1)*this.rows):[];
@@ -399,5 +410,5 @@ export async function createMatrixAPI({
     Object.defineProperty(Matrix.prototype, Symbol.dispose, { value: Matrix.prototype.dispose });
     Object.defineProperty(Factorization.prototype, Symbol.dispose, { value: Factorization.prototype.dispose });
   }
-  return { Matrix, Factorization, CSRMatrix };
+  return { Matrix, Factorization, CSRMatrix, ILU0 };
 }

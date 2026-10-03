@@ -10,11 +10,11 @@ self.onmessage=async({data})=>{
       api=await createMatrixAPI({moduleUrl,locateFile:()=> 'embedded.wasm',wasmBinary:Uint8Array.from(atob(bundle.wasm_base64),c=>c.charCodeAt(0))});
       const {checkSparse}=await import(moduleURL(bundle.checks_source));
       verified=checkSparse(api,bundle.fixtures);
-      ({solveHeat}=await import(moduleURL(bundle.heat_source)));
+      const {createHeatSolver}=await import(moduleURL(bundle.heat_source));solveHeat=createHeatSolver(api);
       for(const url of urls)URL.revokeObjectURL(url);urls.length=0;
       self.postMessage({type:'ready',verified});return;
     }
     if(!api||!solveHeat)throw new Error('solver not initialized');
-    self.postMessage({type:'result',id:data.id,result:solveHeat(api,data.config),verified});
+    self.postMessage({type:'result',id:data.id,result:solveHeat(data.config),verified});
   } catch(error) {self.postMessage({type:'error',id:data.id,message:error.message||String(error)});}
 };

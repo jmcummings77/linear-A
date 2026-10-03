@@ -275,3 +275,19 @@ int wm_gmres_reason(const matrix_gmres_result *r){return r->reason;}
 size_t wm_gmres_restart_count(const matrix_gmres_result *r){return r->restart_count;}
 size_t *wm_gmres_restarts(matrix_gmres_result *r){return r->restarts;}
 double *wm_gmres_data(matrix_gmres_result *r,int field){return field==0?r->x:field==1?r->residuals:field==2?r->estimated_residuals:r->iterates;}
+
+matrix_ilu0 *wm_ilu0_create(const sparse_matrix *a){
+ matrix_ilu0 *f=calloc(1,sizeof(*f));if(!f){last_status=M_MEMORY;return NULL;}
+ last_status=m_ilu0_create(a,f);if(last_status){free(f);return NULL;}return f;
+}
+void wm_ilu0_destroy(matrix_ilu0 *f){if(f){m_ilu0_free(f);free(f);}}
+matrix *wm_ilu0_apply(const matrix_ilu0 *f,const matrix *b){
+ matrix *out=calloc(1,sizeof(*out));if(!out){last_status=M_MEMORY;return NULL;}
+ last_status=m_ilu0_apply(f,b,out);if(last_status){free(out);return NULL;}return out;
+}
+matrix_gmres_result *wm_csr_gmres_preconditioned(const sparse_matrix *a,const matrix *b,size_t restart,double rtol,double atol,size_t limit,int jacobi,int capture,const matrix_ilu0 *f){
+ if(!b||b->cols!=1||(jacobi!=0&&jacobi!=1)||(capture!=0&&capture!=1)){last_status=M_ARGUMENT;return NULL;}
+ matrix_gmres_result *out=calloc(1,sizeof(*out));if(!out){last_status=M_MEMORY;return NULL;}
+ last_status=m_csr_gmres_preconditioned(a,b->values,b->rows,restart,rtol,atol,limit,jacobi!=0,capture!=0,f,out);
+ if(last_status){free(out);return NULL;}return out;
+}

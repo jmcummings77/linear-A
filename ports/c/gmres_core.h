@@ -1,17 +1,19 @@
 #ifndef LINEAR_A_GMRES_CORE_H
 #define LINEAR_A_GMRES_CORE_H
 #include "sparse_core.h"
+#include "ilu_core.h"
 #include <float.h>
 typedef struct { double *x,*residuals,*estimated_residuals,*iterates; size_t *restarts; size_t size,iterations,restart_count; int reason; } la_gmres_result;
 static inline void la_gmres_free(la_gmres_result *r){if(r){free(r->x);free(r->residuals);free(r->estimated_residuals);free(r->iterates);free(r->restarts);memset(r,0,sizeof(*r));}}
 static inline int la_gmres_finite(size_t n,const double *v){for(size_t i=0;i<n;i++)if(!isfinite(v[i]))return 0;return 1;}
 /* Right Jacobi preconditioning keeps projected and true residuals in the same norm.
  * Reason codes: 0 converged, 1 limit, 2 breakdown, 3 nonfinite, 4 stagnation. */
-static inline int la_csr_gmres(const la_csr *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,int jacobi,int capture,la_gmres_result *out){
+static inline int la_csr_gmres_preconditioned(const la_csr *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,int jacobi,int capture,const la_ilu0 *preconditioner,la_gmres_result *out){
     if(!out||out->x||out->residuals||out->estimated_residuals||out->iterates||out->restarts||out->size||out->iterations||out->restart_count||out->reason)return 1;
     int code=la_csr_validate(a);if(code)return code;
     size_t n=a->rows,m=restart;if(m>n)m=n;if(m>limit)m=limit;
     if(n!=a->cols||count!=n||(!b&&n)||restart<1||restart>1024||limit>100000||!isfinite(rtol)||rtol<0||rtol>=1||!isfinite(atol)||atol<0||(jacobi!=0&&jacobi!=1)||(capture!=0&&capture!=1)||!la_gmres_finite(n,b))return 1;
+    if(preconditioner&&(jacobi||la_ilu0_validate(preconditioner)||preconditioner->factors.rows!=n))return 1;
     if(!la_sparse_count(n,8*sizeof(double))||n>SIZE_MAX/(m+1)/sizeof(double)||(capture&&n>SIZE_MAX/(limit+1)/sizeof(double)))return 2;
     double *work=(double*)calloc(n?n*8:1,sizeof(double)),*basis=(double*)calloc(n?(m+1)*n:1,sizeof(double)),*h=(double*)calloc((m+1)*(m?m:1),sizeof(double));
     double *cs=(double*)calloc(m+1,sizeof(double)),*sn=(double*)calloc(m+1,sizeof(double)),*g=(double*)calloc(m+1,sizeof(double)),*y=(double*)calloc(m+1,sizeof(double));
@@ -38,6 +40,7 @@ static inline int la_csr_gmres(const la_csr *a,const double *b,size_t count,size
             size_t steps=m;if(steps>limit-result.iterations)steps=limit-result.iterations;
             for(size_t j=0;j<steps;j++){
                 for(size_t i=0;i<n;i++)z[i]=basis[j*n+i]/diag[i];
+                if(preconditioner&&la_ilu0_apply(preconditioner,basis+j*n,n,z)){result.reason=3;goto done;}
                 if(la_csr_mv(a,z,w)){result.reason=3;goto done;}
                 double original=la_sparse_norm(n,w);
                 for(int pass=0;pass<2;pass++)for(size_t k=0;k<=j;k++){
@@ -58,7 +61,8 @@ static inline int la_csr_gmres(const la_csr *a,const double *b,size_t count,size
                 cs[j]=h[j*m+j]/pivot;sn[j]=h[(j+1)*m+j]/pivot;h[j*m+j]=pivot;h[(j+1)*m+j]=0;
                 g[j+1]=-sn[j]*g[j];g[j]=cs[j]*g[j];memcpy(y,g,(j+1)*sizeof(double));
                 for(size_t kk=j+1;kk>0;kk--){size_t k=kk-1;if(h[k*m+k]==0){result.reason=2;goto done;}double sum=0;for(size_t q=k+1;q<=j;q++)sum+=h[k*m+q]*y[q];y[k]=(y[k]-sum)/h[k*m+k];}
-                for(size_t i=0;i<n;i++){double sum=0;for(size_t k=0;k<=j;k++)sum+=basis[k*n+i]*y[k];candidate[i]=base[i]+sum/diag[i];}
+                for(size_t i=0;i<n;i++){double sum=0;for(size_t k=0;k<=j;k++)sum+=basis[k*n+i]*y[k];candidate[i]=preconditioner?sum:base[i]+sum/diag[i];}
+                if(preconditioner){if(la_ilu0_apply(preconditioner,candidate,n,candidate)){result.reason=3;goto done;}for(size_t i=0;i<n;i++)candidate[i]+=base[i];}
                 if(!la_gmres_finite(j+1,y)||!isfinite(g[j+1])||la_csr_mv(a,candidate,ax)){result.reason=3;goto done;}
                 for(size_t i=0;i<n;i++)res[i]=b[i]-ax[i];double length=la_sparse_norm(n,res);
                 if(!isfinite(length)){result.reason=3;goto done;}
@@ -73,4 +77,5 @@ static inline int la_csr_gmres(const la_csr *a,const double *b,size_t count,size
     }
 cleanup:free(work);free(basis);free(h);free(cs);free(sn);free(g);free(y);return code;
 }
+static inline int la_csr_gmres(const la_csr *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,int jacobi,int capture,la_gmres_result *out){return la_csr_gmres_preconditioned(a,b,count,restart,rtol,atol,limit,jacobi,capture,NULL,out);}
 #endif

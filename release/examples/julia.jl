@@ -21,3 +21,9 @@ cg=conjugate_gradient(sparse,[6.,7.];jacobi=true,capture=true)
 
 gm=gmres(sparse,[6.,7.];restart=2,jacobi=true,capture=true)
 @assert gm.converged && maximum(abs.(gm.x .- [1.,2.]))<1e-12
+
+f=ILU0(sparse)
+for (rhs,expected) in [([6.,7.],[1.,2.]),([11.,13.],[20/11,41/11])]
+    @assert maximum(abs.(ilu_apply(f,rhs).-expected))<1e-12
+    @assert gmres(sparse,rhs;preconditioner=f).converged
+end

@@ -9,7 +9,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPORTS = [
-    "wm_csr_gmres", "wm_gmres_destroy", "wm_gmres_iterations", "wm_gmres_reason", "wm_gmres_restart_count", "wm_gmres_restarts", "wm_gmres_data", "wm_csr_create", "wm_csr_destroy", "wm_csr_matvec", "wm_csr_cg", "wm_cg_destroy", "wm_cg_iterations", "wm_cg_reason", "wm_cg_data",
+    "wm_csr_gmres", "wm_csr_gmres_preconditioned", "wm_ilu0_create", "wm_ilu0_apply", "wm_ilu0_destroy", "wm_gmres_destroy", "wm_gmres_iterations", "wm_gmres_reason", "wm_gmres_restart_count", "wm_gmres_restarts", "wm_gmres_data", "wm_csr_create", "wm_csr_destroy", "wm_csr_matvec", "wm_csr_cg", "wm_cg_destroy", "wm_cg_iterations", "wm_cg_reason", "wm_cg_data",
     "wm_solve_ridge", "wm_svd", "wm_pseudoinverse", "wm_solve_minimum_norm", "wm_spectral_diagnostics",
     "wm_factorize", "wm_factor_destroy", "wm_factor_solve", "wm_factor_rcond",
     "wm_create", "wm_identity", "wm_destroy", "wm_rows", "wm_cols", "wm_data", "wm_copy",

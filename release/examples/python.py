@@ -24,3 +24,9 @@ assert cg.converged and max(abs(x-y) for x,y in zip(cg.x,[1,2]))<1e-12
 
 gm=sparse.gmres([6,7],restart=2,jacobi=True,capture=True)
 assert gm.converged and max(abs(x-y) for x,y in zip(gm.x,[1,2]))<1e-12
+
+from matrix import ILU0
+f=ILU0(sparse)
+for rhs,expected in [([6,7],[1,2]),([11,13],[20/11,41/11])]:
+    assert max(abs(x-y) for x,y in zip(f.apply(rhs),expected))<1e-12
+    assert sparse.gmres(rhs,preconditioner=f).converged

@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "linear-a-python"
-version = "0.5.0"
+version = "0.6.0"
 description = "A small dependency-free float64 matrix library"
 requires-python = ">=3.9"
 
 [tool.setuptools]
-py-modules = ["matrix", "general_eigen", "solve", "svd", "sparse", "gmres"]
+py-modules = ["matrix", "general_eigen", "solve", "svd", "sparse", "gmres", "ilu"]

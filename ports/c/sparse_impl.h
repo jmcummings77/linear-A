@@ -23,3 +23,13 @@ matrix_status m_csr_cg(const sparse_matrix *a,const double *b,size_t count,doubl
 
 matrix_status m_csr_gmres(const sparse_matrix *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,bool jacobi,bool capture,matrix_gmres_result *out){return sparse_status(la_csr_gmres(a,b,count,restart,rtol,atol,limit,jacobi,capture,out));}
 void m_gmres_free(matrix_gmres_result *r){la_gmres_free(r);}
+
+matrix_status m_ilu0_create(const sparse_matrix *a,matrix_ilu0 *out){int c=la_ilu0_create(a,out);return c==6?M_SINGULAR:sparse_status(c);}
+void m_ilu0_free(matrix_ilu0 *f){la_ilu0_free(f);}
+matrix_status m_ilu0_apply(const matrix_ilu0 *f,const matrix *b,matrix *out){
+ if(la_ilu0_validate(f)||validate(b)||!empty_output(out)||b==out)return M_ARGUMENT;
+ if(b->rows!=f->factors.rows||b->cols!=1)return M_SHAPE;
+ matrix result={0};matrix_status status=m_create(b->rows,1,&result);if(status)return status;
+ status=sparse_status(la_ilu0_apply(f,b->values,b->rows,result.values));if(status)m_free(&result);else *out=result;return status;
+}
+matrix_status m_csr_gmres_preconditioned(const sparse_matrix *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_ilu0 *preconditioner,matrix_gmres_result *out){return sparse_status(la_csr_gmres_preconditioned(a,b,count,restart,rtol,atol,limit,jacobi,capture,preconditioner,out));}

@@ -9,7 +9,7 @@ let run (args: string[]) =
     let integer i = Int32.Parse(args[i],CultureInfo.InvariantCulture)
     let number i = Double.Parse(args[i],CultureInfo.InvariantCulture)
     let op,rows,cols,nnz,iterations,rtol,atol,limit,jacobi,capture = args[1],integer 2,integer 3,integer 4,integer 5,number 6,number 7,integer 8,integer 9,integer 10
-    if not (List.contains op ["spmv";"dense";"cg";"gmres"]) || min rows (min cols (min nnz iterations))<0 || jacobi<0 || jacobi>1 || capture<0 || capture>1 then invalidArg "args" "Invalid sparse options."
+    if not (List.contains op ["spmv";"dense";"cg";"gmres";"ilu_setup";"ilu_apply"]) || min rows (min cols (min nnz iterations))<0 || jacobi<0 || jacobi>(if op="gmres" then 3 else 1) || capture<0 || capture>1 then invalidArg "args" "Invalid sparse options."
     let raw = Console.In.ReadToEnd().Split(Array.empty<char>,StringSplitOptions.RemoveEmptyEntries)
     let count = if op="cg" || op="gmres" then rows else cols
     if raw.Length<>rows+1+2*nnz+count then invalidArg "args" "Incorrect sparse input count."
@@ -20,16 +20,21 @@ let run (args: string[]) =
     let v = take nnz (fun x -> Double.Parse(x,CultureInfo.InvariantCulture))
     let b = take count (fun x -> Double.Parse(x,CultureInfo.InvariantCulture))
     let a = CSRMatrix(rows,cols,rp,ci,v)
+    let factor = if op="ilu_apply" || (op="gmres" && jacobi=2) then Some(ILU0(a)) else None
     let dense = if op="dense" then Matrix(rows,cols) else Matrix(0,0)
     let right = if op="dense" then Matrix.FromArray(cols,1,b) else Matrix(0,0)
     if op="dense" then
         for i in 0..rows-1 do
             for p in rp[i]..rp[i+1]-1 do dense[i,ci[p]] <- v[p]
     let compute () =
-        if op="spmv" then a.Matvec(b)
+        if op="ilu_setup" then
+            let f=ILU0(a)
+            [|float f.Size;float f.NNZ|]
+        elif op="ilu_apply" then factor.Value.Apply(b)
+        elif op="spmv" then a.Matvec(b)
         elif op="dense" then dense.Multiply(right).ToArray()
         elif op="gmres" then
-            let r = a.Gmres(b,restart=integer 11,relativeTolerance=rtol,absoluteTolerance=atol,maxIterations=limit,jacobi=(jacobi<>0),capture=(capture<>0))
+            let r = a.Gmres(b,restart=integer 11,relativeTolerance=rtol,absoluteTolerance=atol,maxIterations=limit,jacobi=(jacobi=1),capture=(capture<>0),?preconditioner=(if jacobi=3 then Some(ILU0(a)) else factor))
             if iterations>0 then
                 if not r.Converged then failwith ("Benchmark GMRES did not converge: "+r.Reason)
                 r.X

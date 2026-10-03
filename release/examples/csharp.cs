@@ -25,3 +25,7 @@ if(product[0]!=6 || product[1]!=7 || !cg.Converged || Math.Abs(cg.X[0]-1)>1e-12 
 
 var gm = sparse.Gmres(new[]{6.0,7}, restart:2, jacobi:true, capture:true);
 if(!gm.Converged || Math.Abs(gm.X[0]-1)>1e-12 || Math.Abs(gm.X[1]-2)>1e-12)throw new Exception("incorrect GMRES");
+
+var ilu=new ILU0(sparse);
+var second=ilu.Apply(new[]{11.0,13});
+if(Math.Abs(ilu.Apply(new[]{6.0,7})[0]-1)>1e-12 || Math.Abs(second[0]-20.0/11)>1e-12 || !sparse.Gmres(new[]{11.0,13},preconditioner:ilu).Converged)throw new Exception("incorrect ILU reuse");

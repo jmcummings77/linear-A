@@ -7,11 +7,12 @@ exception internal GmresStop of string
 [<AutoOpen>]
 module GmresExtensions =
     type CSRMatrix with
-        member a.Gmres(b:double[], ?restart:int, ?relativeTolerance:double, ?absoluteTolerance:double, ?maxIterations:int, ?jacobi:bool, ?capture:bool) =
+        member a.Gmres(b:double[], ?restart:int, ?relativeTolerance:double, ?absoluteTolerance:double, ?maxIterations:int, ?jacobi:bool, ?capture:bool, ?preconditioner:ILU0) =
             let restart,rtol,atol,limit,jacobi,capture = defaultArg restart 30,defaultArg relativeTolerance 1e-10,defaultArg absoluteTolerance 0.,defaultArg maxIterations 1000,defaultArg jacobi false,defaultArg capture false
             let n = a.Rows
             if a.Cols<>n || b.Length<>n || Array.exists (Double.IsFinite >> not) b then invalidArg "b" "GMRES requires square matrix and finite matching vector."
             if restart<1 || restart>1024 || limit<0 || limit>100000 || not(Double.IsFinite rtol) || rtol<0. || rtol>=1. || not(Double.IsFinite atol) || atol<0. then invalidArg "restart" "Invalid GMRES options."
+            if preconditioner |> Option.exists (fun p -> jacobi || p.Size<>n) then invalidArg "preconditioner" "Incompatible preconditioner."
             let diagonal = Array.create n 1.
             if jacobi then
                 let rp,ci,v = a.RowOffsets,a.ColumnIndices,a.Values
@@ -31,6 +32,9 @@ module GmresExtensions =
             if capture then frames.Add(Array.copy x)
             let threshold,m = max atol (rtol*history[0]),min restart (min n limit)
             let stop reason = raise(GmresStop reason)
+            let apply v =
+                try match preconditioner with Some p -> p.Apply(v) | None -> Array.mapi (fun i x -> x/diagonal[i]) v
+                with :? ArithmeticException -> stop "nonfinite" | :? ArgumentException -> stop "nonfinite"
             let product v =
                 try a.Matvec(v) with :? ArithmeticException -> stop "nonfinite" | :? ArgumentException -> stop "nonfinite"
             let mutable reason = "iteration_limit"
@@ -46,7 +50,7 @@ module GmresExtensions =
                     g[0] <- beta
                     let steps = min m (limit-(history.Count-1))
                     for j in 0..steps-1 do
-                        let w = product (Array.mapi (fun i v -> v/diagonal[i]) basis[j])
+                        let w = product (apply basis[j])
                         let original = norm w
                         for _ in 1..2 do
                             for k in 0..j do
@@ -80,10 +84,11 @@ module GmresExtensions =
                             let mutable sum = 0.
                             for q in k+1..j do sum <- sum+h[k,q]*y[q]
                             y[k] <- (y[k]-sum)/h[k,k]
-                        let candidate = Array.init n (fun i ->
+                        let correction = Array.init n (fun i ->
                             let mutable sum = 0.
                             for k in 0..j do sum <- sum+basis[k][i]*y[k]
-                            initial[i]+sum/diagonal[i])
+                            sum)
+                        let candidate = apply correction |> Array.mapi (fun i v -> initial[i]+v)
                         if not(finite y && finite candidate && Double.IsFinite g[j+1]) then stop "nonfinite"
                         let ax = product candidate
                         let residual = Array.mapi (fun i v -> v-ax[i]) b

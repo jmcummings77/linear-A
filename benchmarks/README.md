@@ -551,3 +551,15 @@ to rebuild the HTML without changing recorded measurements. The public report
 includes accepted iterations, restart count in JSON, and a logical workspace
 model alongside median runtime and variation. Solver frame capture is enabled
 only in the live browser demonstration and verification, not timed runs.
+
+### ILU(0) setup and reuse
+
+`python3 benchmarks/ilu_bench.py --require-all` records setup, standalone
+application, unpreconditioned GMRES, Jacobi GMRES, reused ILU GMRES and one-shot
+ILU GMRES. The default suite uses 8×8 and 16×16 transport grids with 1–100
+conductivity contrast. `--verify-only` checks the exact masked-Doolittle fixtures;
+these also run in the combined sparse conformance gate. Regenerate presentation
+with `--render-only benchmarks/reports/ilu/results.json` without rerunning
+measurements. The report's repeated-RHS chart is an explicitly labelled cost
+estimate from independent medians. Consumer examples test actual factor reuse
+with different RHS vectors.

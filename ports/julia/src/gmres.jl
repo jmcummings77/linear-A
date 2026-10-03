@@ -1,10 +1,12 @@
 """Restarted GMRES, right Jacobi preconditioning, and true residual stopping."""
-function gmres(a::CSRMatrix,b;restart=30,rtol=1e-10,atol=0.0,max_iterations=1000,jacobi=false,capture=false)
+function gmres(a::CSRMatrix,b;restart=30,rtol=1e-10,atol=0.0,max_iterations=1000,jacobi=false,capture=false,preconditioner=nothing)
     validate_csr(a.rows,a.cols,a.offsets,a.indices,a.values)
     n=a.rows;b=Float64.(b)
     a.cols==n && length(b)==n && all(isfinite,b) || throw(ArgumentError("GMRES requires square matrix and finite matching vector"))
     restart isa Integer && 1<=restart<=1024 && max_iterations isa Integer && 0<=max_iterations<=100000 && isfinite(rtol) && 0<=rtol<1 && isfinite(atol) && atol>=0 && jacobi isa Bool && capture isa Bool || throw(ArgumentError("invalid GMRES options"))
+    preconditioner===nothing || (preconditioner isa ILU0 && !jacobi && preconditioner.factors.rows==n) || throw(ArgumentError("incompatible preconditioner"))
     diagonal=ones(n)
+    apply(v)=preconditioner===nothing ? v./diagonal : ilu_apply(preconditioner,v)
     if jacobi
         for i in 1:n
             found=false
@@ -25,7 +27,7 @@ function gmres(a::CSRMatrix,b;restart=30,rtol=1e-10,atol=0.0,max_iterations=1000
         base=copy(x);beta=norm(r);basis=[r./beta];h=zeros(m+1,m);cs=zeros(m);sn=zeros(m);g=zeros(m+1);g[1]=beta
         steps=min(m,max_iterations-(length(history)-1))
         for j in 1:steps
-            w=try matvec(a,basis[j]./diagonal) catch e;e isa ArgumentError || e isa OverflowError || (e isa ErrorException && e.msg=="sparse multiplication outside float64 range") || rethrow();return result("nonfinite");end
+            w=try matvec(a,apply(basis[j])) catch e;e isa ArgumentError || e isa OverflowError || (e isa ErrorException && e.msg=="sparse multiplication outside float64 range") || rethrow();return result("nonfinite");end
             original=norm(w)
             for _ in 1:2,k in 1:j
                 dot=sum(basis[k][i]*w[i] for i in 1:n);h[k,j]+=dot
@@ -47,7 +49,8 @@ function gmres(a::CSRMatrix,b;restart=30,rtol=1e-10,atol=0.0,max_iterations=1000
                 for q in k+1:j;total+=h[k,q]*y[q];end
                 y[k]=(y[k]-total)/h[k,k]
             end
-            candidate=[base[i]+sum(basis[k][i]*y[k] for k in 1:j)/diagonal[i] for i in 1:n]
+            correction=try apply([sum(basis[k][i]*y[k] for k in 1:j) for i in 1:n]) catch e;e isa ArgumentError || e isa OverflowError || rethrow();return result("nonfinite");end
+            candidate=base.+correction
             all(isfinite,y) && all(isfinite,candidate) && isfinite(g[j+1]) || return result("nonfinite")
             ax=try matvec(a,candidate) catch e;e isa ArgumentError || e isa OverflowError || (e isa ErrorException && e.msg=="sparse multiplication outside float64 range") || rethrow();return result("nonfinite");end
             residual=b.-ax;resnorm=norm(residual);isfinite(resnorm) || return result("nonfinite")

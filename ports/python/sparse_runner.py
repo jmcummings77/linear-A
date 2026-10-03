@@ -1,16 +1,18 @@
 import sys,math
 from time import perf_counter_ns
 from sparse import CSRMatrix
+from ilu import ILU0
 from matrix import Matrix
 
 def run(args):
     if len(args)!=(11 if args and args[0]=='gmres' else 10):raise ValueError('expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE')
     op=args[0];rows,cols,nnz,iters=map(int,args[1:5]);rtol,atol=map(float,args[5:7]);limit,jacobi,capture=map(int,args[7:10]);restart=int(args[10]) if op=='gmres' else 30
-    if op not in ('spmv','dense','cg','gmres') or min(rows,cols,nnz,iters)<0 or jacobi not in (0,1) or capture not in (0,1):raise ValueError('invalid sparse protocol')
+    if op not in ('spmv','dense','cg','gmres','ilu_setup','ilu_apply') or min(rows,cols,nnz,iters)<0 or jacobi not in (range(4) if op=='gmres' else (0,1)) or capture not in (0,1):raise ValueError('invalid sparse protocol')
     raw=sys.stdin.read().split();count=rows if op in ('cg','gmres') else cols
     if len(raw)!=rows+1+2*nnz+count:raise ValueError('incorrect sparse input count')
     rp=list(map(int,raw[:rows+1]));ci=list(map(int,raw[rows+1:rows+1+nnz]));v=list(map(float,raw[rows+1+nnz:rows+1+2*nnz]));b=list(map(float,raw[rows+1+2*nnz:]))
     a=CSRMatrix(rows,cols,rp,ci,v)
+    factor=ILU0(a) if op=='ilu_apply' or (op=='gmres' and jacobi==2) else None
     dense=right=None
     if op=='dense':
         values=[0.]*(rows*cols)
@@ -18,9 +20,12 @@ def run(args):
             for p in range(rp[i],rp[i+1]):values[i*cols+ci[p]]=v[p]
         dense,right=Matrix(rows,cols,values),Matrix(cols,1,b)
     def compute():
+        if op=='ilu_setup':
+            f=ILU0(a);return [f.size,f.nnz]
+        if op=='ilu_apply':return factor.apply(b)
         if op=='dense':return dense.multiply(right).values
         if op=='spmv':return a.matvec(b)
-        r=a.gmres(b,restart,rtol,atol,limit,bool(jacobi),bool(capture)) if op=='gmres' else a.conjugate_gradient(b,rtol,atol,limit,bool(jacobi),bool(capture))
+        r=a.gmres(b,restart,rtol,atol,limit,jacobi==1,bool(capture),ILU0(a) if jacobi==3 else factor) if op=='gmres' else a.conjugate_gradient(b,rtol,atol,limit,bool(jacobi),bool(capture))
         if iters:
             if not r.converged:raise ValueError('benchmark CG did not converge: '+r.reason)
             return r.x

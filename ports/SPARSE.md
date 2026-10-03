@@ -178,3 +178,66 @@ The sparse runner protocol appends `RESTART` after the existing arguments for
 operation `gmres`. Verification output is one packed row:
 `reason, iterations, history_length, x..., true_residuals..., estimated_residuals..., restart_count, restart_indices..., captured_frames...`.
 Reason codes follow the five stop reasons above in order, starting at zero.
+
+## Reusable ILU(0) preconditioning
+
+ILU(0) performs incomplete LU elimination on the **stored CSR pattern**. It drops
+fill outside that pattern and retains explicit zero entries as potential factor
+entries. It never pivots, reorders, shifts the diagonal, or silently substitutes
+another preconditioner. A stored diagonal is required in every row. An exactly
+zero computed pivot or nonfinite factor arithmetic fails construction, even if
+the original matrix is nonsingular. Negative pivots are allowed. Very small
+nonzero pivots are accepted, but can make application overflow or convergence
+poor. This is not a general-purpose robust sparse factorization.
+
+The factor owns a snapshot and can be applied repeatedly to different finite
+vectors. `apply(b)` performs a unit-lower forward solve followed by an upper
+backward solve, returning a new vector. It does not solve the original system
+exactly unless the retained pattern admits the full LU factorization. Use it as
+a **right preconditioner** in GMRES; true residuals still refer to the original
+matrix. Factors need matching dimension, but can deliberately approximate a
+different matrix of that dimension. Jacobi and ILU cannot both be selected.
+
+| Port | Factor construction / application | GMRES integration |
+| --- | --- | --- |
+| C / ARM64 | `m_ilu0_create`, `m_ilu0_apply`, `m_ilu0_free` | `m_csr_gmres_preconditioned` |
+| C++ | `linear_a::ILU0(a)`, `apply(b)` | final `const ILU0*` argument to `gmres` |
+| C# / F# | `ILU0(a)`, `Apply(b)` | named `preconditioner` argument |
+| Go | `NewILU0(a)`, `Apply(b)` | `GMRESOptions.Preconditioner` |
+| Rust | `ILU0::new(&a)`, `apply(&b)` | `gmres_preconditioned(&b, options, &factor)` |
+| Python | `ILU0(a)` from `matrix`, `apply(b)` | `preconditioner=factor` |
+| TypeScript / WASM | `new ILU0(a)`, `apply(b)` | `{preconditioner: factor}` |
+| Julia | `ILU0(a)`, `ilu_apply(factor,b)` | `preconditioner=factor` |
+
+C output factors must be zero-initialized and freed before reuse; failures leave
+output ownership unchanged. C reports `M_SINGULAR` for a zero pivot and
+`M_SOLVER_RANGE` for nonfinite arithmetic. Do not shallow-copy owning C structs.
+C++ factors are noncopyable and free their storage on destruction. WASM factors
+require `dispose()`; disposing the original matrix does not invalidate a factor.
+Returned vectors remain independent after disposal. Julia's array fields and
+C's struct fields must not be mutated; public application revalidates their
+invariants. Go's zero-valued factor is not initialized; construct it with
+`NewILU0`. During GMRES, application overflow returns `nonfinite` with the last
+accepted result. Standalone application fails explicitly.
+
+Factorization uses binary searches in sorted CSR rows; no dense n×n workspace
+is allocated. Application is linear in the stored entry count, including
+validation. The report uses a portable logical factor-storage model with
+float64 values and 64-bit indices: `16*nnz + 16*n + 8` bytes (values, column
+indices, row offsets, and diagonal positions). Actual index widths and runtime
+object overhead differ. Setup time, reused solve time and measured one-shot
+time are reported separately. Their independently sampled medians need not add
+up. The repeated-RHS chart estimates `setup + count * reused_solve`; it does not
+claim to measure a multi-RHS batch or predict every new RHS's convergence.
+
+The live demo caches one ILU factor. Boundary-temperature changes modify only
+the RHS; restart changes modify only the solver. Both reuse the factor. Matrix
+coefficient changes rebuild it. Live setup/solve timings describe this browser,
+include captured frames, and are separate from the saved benchmark timings.
+
+The sparse benchmark protocol accepts `ilu_setup` and `ilu_apply` with the
+ordinary ten arguments. Setup returns `[dimension, nnz]`; application returns
+the preconditioned vector. For `gmres`, the preconditioner field formerly named
+`JACOBI` is 0 (none), 1 (Jacobi), 2 (saved ILU), or 3 (ILU built for each solve).
+CG retains only 0 and 1. Reused setup occurs outside the timed region. The
+versioned package examples exercise factor reuse across distinct RHS vectors.

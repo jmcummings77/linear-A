@@ -1,4 +1,8 @@
 const $=id=>document.getElementById(id),data=JSON.parse($('data').textContent),bundle=JSON.parse($('live').textContent);
+const hasIlu=bundle.capabilities?.includes('ilu0')===true;
+const hasGmres=bundle.capabilities?.includes('gmres')||bundle.fixtures?.some(test=>test.op==='gmres');
+if(!hasGmres){$('solver').value='cg';$('solver').disabled=true;$('speed').value='0';for(const id of ['speed','angle','restart'])$(id).disabled=true;}
+$('ilu-option').disabled=!hasIlu;$('hot').disabled=!hasIlu;$('capability-note').hidden=hasIlu;
 const add=(parent,tag,text)=>{const e=document.createElement(tag);e.textContent=text;parent.append(e);return e;};
 const colors=['#31766a','#b95122','#487ab6','#8865a3','#b34f79','#87711f','#2d8292','#8d6046','#6673aa','#986635','#6c7b3d'];
 const darkColors=['#82cbb1','#f1ad75','#94b9ed','#c6a2e7','#eda0bb','#d3bc69','#7cc6d1','#d8ad8f','#b1b9ec','#d9af73','#b6c683'];
@@ -17,7 +21,7 @@ function drawHeat(){const {ctx,w,h}=canvas('heat');if(!current)return;
  const stops=[[22,55,104],[52,135,168],[234,214,135],[236,96,43]];
  for(let y=0;y<n;y++)for(let x=0;x<n;x++){const t=Math.max(0,Math.min(1,v[y*n+x]/100))*3,k=Math.min(2,Math.floor(t)),f=t-k;ctx.fillStyle=`rgb(${stops[k].map((a,i)=>Math.round(a+(stops[k+1][i]-a)*f)).join(',')})`;ctx.fillRect(left+x*s/n,top+y*s/n,s/n+.3,s/n+.3);}
  if(current.speed>0){const angle=current.angle*Math.PI/180,cx=w/2,cy=top+s*.7,len=Math.min(30,s*.13),dx=Math.cos(angle),dy=Math.sin(angle);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-dx*len,cy-dy*len);ctx.lineTo(cx+dx*len,cy+dy*len);ctx.lineTo(cx+dx*(len-7)+dy*5,cy+dy*(len-7)-dx*5);ctx.moveTo(cx+dx*len,cy+dy*len);ctx.lineTo(cx+dx*(len-7)-dy*5,cy+dy*(len-7)+dx*5);ctx.stroke();ctx.lineWidth=1;}
- ctx.fillStyle=theme().getPropertyValue('--muted');ctx.textAlign='center';ctx.fillText('100 · hot boundary',w/2,13);ctx.fillText(`Iteration ${frame} · interior ${n} × ${n}`,w/2,h-8);
+ ctx.fillStyle=theme().getPropertyValue('--muted');ctx.textAlign='center';ctx.fillText(`${current.hot??100} · hot boundary`,w/2,13);ctx.fillText(`Iteration ${frame} · interior ${n} × ${n}`,w/2,h-8);
 }
 function drawResidual(){const {ctx,w,h}=canvas('residual');if(!current)return;
  const history=current.residuals,estimates=current.estimatedResiduals||[],positive=[...history,...estimates].filter(x=>x>0),floor=Math.max(Number.MIN_VALUE,Math.min(current.threshold,...positive)*.2),low=Math.log10(floor),high=Math.log10(Math.max(...positive,1)),span=Math.max(1,high-low),left=65,right=w-20,top=20,bottom=h-40;
@@ -36,7 +40,7 @@ function animate(time){if(playing&&current){if(!lastTime)lastTime=time;const dur
 requestAnimationFrame(animate);
 $('play').onclick=()=>{if(!playing&&current&&frame===current.iterations)updateFrame(0);setPlaying(!playing);};
 $('frame').oninput=()=>{setPlaying(false);updateFrame(Number($('frame').value));};
-function config(){return {size:Number($('grid').value),contrast:Number($('contrast').value),limit:Number($('limit').value),jacobi:$('jacobi').checked,solver:$('solver').value,restart:Number($('restart').value),diffusivity:Number($('diffusivity').value),speed:Number($('speed').value),angle:Number($('angle').value)};}
+function config(){return {size:Number($('grid').value),contrast:Number($('contrast').value),limit:Number($('limit').value),jacobi:$('preconditioner').value==='jacobi',ilu:$('preconditioner').value==='ilu0',hot:Number($('hot').value),solver:$('solver').value,restart:Number($('restart').value),diffusivity:Number($('diffusivity').value),speed:Number($('speed').value),angle:Number($('angle').value)};}
 function fail(message){clearTimeout(watchdog);$('status').textContent=message;setPlaying(false);$('play').disabled=true;$('frame').disabled=true;worker?.terminate();worker=undefined;ready=false;if(workerURL){URL.revokeObjectURL(workerURL);workerURL=undefined;}}
 function guard(){clearTimeout(watchdog);watchdog=setTimeout(()=>fail('The solver timed out. Change a setting to restart.'),30000);}
 function dispatch(){if(!ready||!pending)return;guard();worker.postMessage(pending);pending=undefined;}
@@ -46,13 +50,13 @@ function start(){if(worker)return;if(!bundle.available){fail(bundle.reason);retu
  if(m.id!==sequence)return;
  clearTimeout(watchdog);if(m.type==='error'){fail('Solver failed: '+m.message);return;}
  current=m.result;$('status').textContent=current.converged?'Converged: the true residual meets the requested tolerance.':`Stopped: ${current.reason.replaceAll('_',' ')}. The displayed estimate has not converged.`;
- $('stats').replaceChildren();for(const [value,label] of [[current.size**2,'unknowns'],[current.nnz,'nonzero coefficients'],[current.iterations,'accepted iterations'],[(current.restarts||[]).length,'restarts'],[current.residuals.at(-1).toExponential(2),'final true residual']]){const e=add($('stats'),'div','');e.className='stat';add(e,'strong',value);add(e,'span',label);}
+ $('stats').replaceChildren();for(const [value,label] of [[current.size**2,'unknowns'],[current.nnz,'nonzero coefficients'],[current.iterations,'accepted iterations'],[(current.restarts||[]).length,'restarts'],...(current.ilu?[[current.reusedFactor?'Reused':current.setupMilliseconds>0?number(current.setupMilliseconds)+' ms':'Below timer resolution','ILU setup'],[current.solveMilliseconds>0?number(current.solveMilliseconds)+' ms':'Below timer resolution','live solve']]:[]),[current.residuals.at(-1).toExponential(2),'final true residual']]){const e=add($('stats'),'div','');e.className='stat';add(e,'strong',value);add(e,'span',label);}
  $('frame').max=current.iterations;$('frame').disabled=false;$('play').disabled=current.iterations===0;setPlaying(false);updateFrame(current.iterations);
  };worker.postMessage({type:'init',bundle});}
 function schedule(){sequence++;pending={type:'solve',id:sequence,config:config()};clearTimeout(timer);setPlaying(false);$('play').disabled=true;$('frame').disabled=true;$('status').textContent='Updating solver…';timer=setTimeout(()=>{start();dispatch();},300);}
-function changed(){const cg=$('solver').value==='cg';$('restart').disabled=cg;$('speed').disabled=cg;$('angle').disabled=cg;if(cg)$('speed').value='0';$('angle-value').textContent=$('angle').value+'°';schedule();}
-for(const id of ['grid','contrast','limit','jacobi','solver','restart','diffusivity','speed','angle'])$(id).onchange=changed;
-$('angle').oninput=changed;
+function changed(){const cg=$('solver').value==='cg';$('restart').disabled=cg;$('speed').disabled=cg;$('angle').disabled=cg;$('ilu-option').disabled=cg||!hasIlu;if(cg){$('speed').value='0';if($('preconditioner').value==='ilu0')$('preconditioner').value='jacobi';}$('hot-value').textContent=$('hot').value;$('angle-value').textContent=$('angle').value+'°';schedule();}
+for(const id of ['grid','contrast','limit','preconditioner','hot','solver','restart','diffusivity','speed','angle'])$(id).onchange=changed;
+$('angle').oninput=changed;$('hot').oninput=changed;
 function compact(value){
  if(!Number.isFinite(value))return '—';
  if(value===0)return '0';
@@ -101,7 +105,7 @@ function drawTimings(){
  for(const row of [...rows].sort((a,b)=>(names.get(a.implementation)||a.implementation).localeCompare(names.get(b.implementation)||b.implementation)||a.size-b.size)){
   const tr=add($('timing-rows'),'tr','');
   if(row.implementation===highlighted)tr.className='series-selected';
-  for(const value of [names.get(row.implementation)||row.implementation,`${row.size} × ${row.size} / ${number(row.unknowns)}`,row.status==='passed'?duration(row.median_ns):row.status,row.status==='passed'?duration(row.mad_ns):'—',row.solver_iterations??row.cg_iterations??'—',row.logical_workspace_bytes===undefined?'—':bytes(row.logical_workspace_bytes)])add(tr,'td',value);
+  for(const value of [names.get(row.implementation)||row.implementation,`${row.size} × ${row.size} / ${number(row.unknowns)}`,row.status==='passed'?duration(row.median_ns):row.status,row.status==='passed'?duration(row.mad_ns):'—',row.solver_iterations??row.cg_iterations??'—',row.logical_workspace_bytes===undefined?'—':bytes(row.logical_workspace_bytes),row.logical_preconditioner_bytes===undefined?'—':bytes(row.logical_preconditioner_bytes)])add(tr,'td',value);
  }
  const {ctx,w,h}=canvas('timings'),valid=rows.filter(r=>r.status==='passed'&&Number.isFinite(r.median_ns));
  const plotted=valid.filter(r=>!logarithmic||r.median_ns>0);
@@ -138,7 +142,7 @@ for(const [index,impl] of data.implementations.entries()){
  label.append(input,key,document.createTextNode(impl.name||impl.id));
 }
 const workloads=[...new Set(data.results.map(r=>r.operation))];
-if(workloads.length){$('operation').replaceChildren();for(const op of workloads){const option=add($('operation'),'option',op.replaceAll('_',' ').replace('gmres','GMRES').replace('jacobi','+ Jacobi').replace('csr spmv','CSR matrix-vector product').replace('dense spmv','Dense matrix-vector product').replace('cg','CG'));option.value=op;}$('operation').value=workloads.includes('csr_spmv')?'csr_spmv':workloads[0];}
+if(workloads.length){$('operation').replaceChildren();for(const op of workloads){const option=add($('operation'),'option',({ilu_setup:'ILU(0) · setup',ilu_apply:'ILU(0) · triangular solves',gmres_none:'GMRES · no preconditioner',gmres_jacobi:'GMRES · Jacobi',gmres_ilu_reused:'GMRES · saved ILU(0)',gmres_ilu_total:'GMRES · ILU(0) setup + solve'}[op]||op.replaceAll('_',' ').replace('gmres','GMRES').replace('jacobi','+ Jacobi').replace('csr spmv','CSR matrix-vector product').replace('dense spmv','Dense matrix-vector product').replace('cg','CG')));option.value=op;}$('operation').value=workloads.includes('csr_spmv')?'csr_spmv':workloads[0];}
 $('operation').onchange=drawTimings;$('timing-scale').onchange=drawTimings;
 $('highlight').onchange=()=>{
  const id=$('highlight').value;
@@ -165,7 +169,29 @@ for(const impl of data.implementations){
  add($('toolchains'),'h3',`${impl.name||impl.id} · ${impl.status} · ${impl.checks?.filter(c=>c.passed).length||0} checks`);add($('toolchains'),'p',impl.toolchain||'');
  for(const command of impl.build_commands||[])add($('toolchains'),'pre',command.join(' '));
 }
-function redraw(){drawHeat();drawResidual();drawTimings();}
+
+function drawReuse(){
+ if(data.suite!=='ilu-reuse-v1')return;
+ const id=$('reuse-language').value,size=Number($('reuse-grid').value),count=Number($('rhs-count').value)||8;$('rhs-value').textContent=count;
+ const rows=new Map(data.results.filter(r=>r.implementation===id&&r.size===size&&r.status==='passed').map(r=>[r.operation,r.median_ns]));
+ const {ctx,w,h}=canvas('reuse-chart'),setup=rows.get('ilu_setup'),solve=rows.get('gmres_ilu_reused');
+ if(setup===undefined||solve===undefined){$('reuse-note').textContent='No complete measurements for this selection.';return;}
+ const series=[['None',rows.get('gmres_none')*count],['Jacobi',rows.get('gmres_jacobi')*count],['ILU rebuilt',rows.get('gmres_ilu_total')*count],['ILU reused',setup+solve*count]].filter(([,value])=>Number.isFinite(value));
+ $('reuse-values').replaceChildren();for(const [label,value] of series)add($('reuse-values'),'li',`${label}: ${duration(value)}`);
+ const maximum=Math.max(1,...series.map(s=>s[1])),left=Math.min(180,w*.4),right=w-100;
+ series.forEach(([label,value],i)=>{const y=30+i*55;ctx.fillStyle=theme().getPropertyValue('--muted');ctx.textAlign='right';ctx.fillText(label,left-10,y+15);ctx.fillStyle=seriesColor(i);ctx.fillRect(left,y,Math.max(1,(right-left)*value/maximum),24);ctx.textAlign='left';ctx.fillText(duration(value),left+(right-left)*value/maximum+8,y+16);});
+ const saving=rows.get('gmres_jacobi')-solve,breakEven=saving>0?Math.floor(setup/saving)+1:null;
+ $('reuse-note').textContent=`${count} RHS: setup + ${count} × reused solve. ${breakEven?`Estimated to beat Jacobi after ${breakEven} RHS.`:'These medians do not predict an advantage over Jacobi.'} Setup ${duration(setup)}; reused solve ${duration(solve)}. GC, warmup and workload changes can alter the result.`;
+}
+if(data.suite==='ilu-reuse-v1'){
+ $('reuse-section').hidden=false;
+ for(const impl of data.implementations){const option=add($('reuse-language'),'option',impl.name||impl.id);option.value=impl.id;}
+ $('reuse-language').value=data.implementations[0]?.id||'';
+ const widths=[...new Set(data.results.map(r=>r.size))].sort((a,b)=>a-b);for(const width of widths){const option=add($('reuse-grid'),'option',String(width));option.value=String(width);}$('reuse-grid').value=String(widths[0]);
+ for(const id of ['reuse-language','reuse-grid','rhs-count'])$(id).onchange=drawReuse;$('rhs-count').oninput=drawReuse;
+}
+
+function redraw(){drawHeat();drawResidual();drawTimings();drawReuse();}
 window.addEventListener('matrix-theme-change',redraw);
 new ResizeObserver(redraw).observe(document.querySelector('main'));
 window.addEventListener('pagehide',()=>{clearTimeout(timer);clearTimeout(watchdog);worker?.terminate();if(workerURL)URL.revokeObjectURL(workerURL);});

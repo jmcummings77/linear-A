@@ -1,4 +1,4 @@
-import { Matrix } from "linear-a-typescript";
+import { ILU0, Matrix } from "linear-a-typescript";
 const a = new Matrix(2, 2, [4, 1, 2, 3]);
 const b = new Matrix(2, 1, [6, 8]);
 const x: Matrix = a.solve(b);
@@ -23,3 +23,6 @@ if(product[0]!==6||product[1]!==7||!cg.converged||Math.abs(cg.x[0]-1)>1e-12||Mat
 
 const gm=sparse.gmres([6,7],{restart:2,jacobi:true,capture:true});
 if(!gm.converged||Math.abs(gm.x[0]-1)>1e-12||Math.abs(gm.x[1]-2)>1e-12)throw Error("incorrect GMRES");
+
+const ilu=new ILU0(sparse);
+if(Math.abs(ilu.apply([6,7])[0]-1)>1e-12||Math.abs(ilu.apply([11,13])[0]-20/11)>1e-12||!sparse.gmres([11,13],{preconditioner:ilu}).converged)throw Error("incorrect ILU reuse");

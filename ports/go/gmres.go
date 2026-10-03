@@ -6,6 +6,7 @@ import (
 )
 
 type GMRESOptions struct {
+	Preconditioner                       *ILU0
 	Restart                              int
 	RelativeTolerance, AbsoluteTolerance float64
 	MaxIterations                        int
@@ -38,6 +39,9 @@ func (a *CSRMatrix) GMRES(b []float64, o GMRESOptions) (*GMRESResult, error) {
 	}
 	if o.Restart < 1 || o.Restart > 1024 || o.MaxIterations < 0 || o.MaxIterations > 100000 || !isFinite(o.RelativeTolerance) || o.RelativeTolerance < 0 || o.RelativeTolerance >= 1 || !isFinite(o.AbsoluteTolerance) || o.AbsoluteTolerance < 0 {
 		return nil, errors.New("invalid GMRES options")
+	}
+	if o.Preconditioner != nil && (o.Jacobi || o.Preconditioner.a == nil || o.Preconditioner.Size() != n) {
+		return nil, errors.New("incompatible preconditioner")
 	}
 	diag := make([]float64, n)
 	for i := range diag {
@@ -117,6 +121,13 @@ func (a *CSRMatrix) GMRES(b []float64, o GMRESOptions) (*GMRESResult, error) {
 			for i := range z {
 				z[i] = basis[j][i] / diag[i]
 			}
+			if o.Preconditioner != nil {
+				var err error
+				z, err = o.Preconditioner.Apply(basis[j])
+				if err != nil {
+					return result("nonfinite")
+				}
+			}
 			w, err := a.Matvec(z)
 			if err != nil {
 				return result("nonfinite")
@@ -186,7 +197,21 @@ func (a *CSRMatrix) GMRES(b []float64, o GMRESOptions) (*GMRESResult, error) {
 				for k := 0; k <= j; k++ {
 					sum += basis[k][i] * y[k]
 				}
-				candidate[i] = base[i] + sum/diag[i]
+				if o.Preconditioner != nil {
+					candidate[i] = sum
+				} else {
+					candidate[i] = base[i] + sum/diag[i]
+				}
+			}
+			if o.Preconditioner != nil {
+				var err error
+				candidate, err = o.Preconditioner.Apply(candidate)
+				if err != nil {
+					return result("nonfinite")
+				}
+				for i := range candidate {
+					candidate[i] += base[i]
+				}
 			}
 			if !finite(y) || !finite(candidate) || !isFinite(g[j+1]) {
 				return result("nonfinite")

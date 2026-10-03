@@ -22,14 +22,26 @@ export function diffusionGrid(size, contrast=0, {diffusivity=1,speed=0,angle=0}=
   }
   return {size,n,offsets,indices,values,b};
 }
-export function solveHeat(api,{size=16,contrast=2,jacobi=true,limit=400,solver='cg',restart=20,diffusivity=1,speed=0,angle=30}={}) {
+export function solveHeat(api,{size=16,contrast=2,jacobi=true,limit=400,solver='cg',restart=20,diffusivity=1,speed=0,angle=30,ilu=false,hot=100}={},cache) {
   if(typeof jacobi!=='boolean'||!Number.isInteger(limit)||limit<0||limit>800||!['cg','gmres'].includes(solver)||!Number.isInteger(restart)||restart<1||restart>100)throw new RangeError('invalid solver settings');
+  if(typeof ilu!=='boolean'||!Number.isFinite(hot)||hot<0||hot>100||(ilu&&(jacobi||solver!=='gmres')))throw new RangeError('invalid preconditioner or boundary');
   if(solver==='cg'&&speed!==0)throw new RangeError('CG requires symmetric diffusion: set flow speed to zero or select GMRES.');
   const grid=diffusionGrid(size,contrast,{diffusivity,speed,angle});
   const a=new api.CSRMatrix(grid.n,grid.n,grid.offsets,grid.indices,grid.values);
+  let factor,setupMilliseconds=0,reusedFactor=false;
   try {
-    const options={restart,rtol:1e-8,atol:0,maxIterations:limit,jacobi,capture:true};
-    const result=solver==='gmres'?a.gmres(grid.b,options):a.conjugateGradient(grid.b,options);
-    return {...result,estimatedResiduals:result.estimatedResiduals||[],restarts:result.restarts||[],solver,restart,speed,angle,diffusivity,size,nnz:grid.values.length,threshold:1e-8*Math.hypot(...grid.b)};
-  } finally {a.dispose?.();}
+    if(ilu){
+      const key=JSON.stringify([size,contrast,diffusivity,speed,angle]);
+      if(cache?.key===key&&cache.factor){factor=cache.factor;reusedFactor=true;}
+      else{const start=performance.now();factor=new api.ILU0(a);setupMilliseconds=performance.now()-start;if(cache){cache.factor?.dispose?.();cache.factor=factor;cache.key=key;}}
+    }
+    const b=grid.b.map(v=>v*hot/100);
+    const options={restart,rtol:1e-8,atol:0,maxIterations:limit,jacobi,capture:true,preconditioner:factor};
+    const start=performance.now();
+    const result=solver==='gmres'?a.gmres(b,options):a.conjugateGradient(b,options);
+    return {...result,setupMilliseconds,solveMilliseconds:performance.now()-start,reusedFactor,ilu,hot,estimatedResiduals:result.estimatedResiduals||[],restarts:result.restarts||[],solver,restart,speed,angle,diffusivity,size,nnz:grid.values.length,threshold:1e-8*Math.hypot(...b)};
+  } finally {if(!cache)factor?.dispose?.();a.dispose?.();}
 }
+
+/** Cache owned factors while only RHS, restart, tolerance or playback settings change. */
+export function createHeatSolver(api){const cache={};const solve=config=>solveHeat(api,config,cache);solve.dispose=()=>{cache.factor?.dispose?.();delete cache.factor;delete cache.key;};return solve;}

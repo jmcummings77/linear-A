@@ -32,6 +32,14 @@ int main(void) {
     if(!failed)failed=m_csr_gmres(&sparse,rhs,2,2,1e-10,0,1000,true,true,&gm);
     if(!failed)failed=gm.reason!=0||fabs(gm.x[0]-1)>1e-12||fabs(gm.x[1]-2)>1e-12;
     m_gmres_free(&gm);
+    matrix_ilu0 ilu={0};matrix applied={0};
+    if(!failed)failed=m_ilu0_create(&sparse,&ilu);
+    if(!failed){vector.values[0]=6;vector.values[1]=7;failed=m_ilu0_apply(&ilu,&vector,&applied);}
+    if(!failed)failed=fabs(applied.values[0]-1)>1e-12;m_free(&applied);
+    if(!failed){vector.values[0]=11;vector.values[1]=13;failed=m_ilu0_apply(&ilu,&vector,&applied);}
+    if(!failed)failed=fabs(applied.values[0]-20.0/11)>1e-12;m_free(&applied);
+    if(!failed)failed=m_csr_gmres_preconditioned(&sparse,rhs,2,20,1e-10,0,1000,false,false,&ilu,&gm);
+    if(!failed)failed=gm.reason!=0;m_gmres_free(&gm);m_ilu0_free(&ilu);
     m_free(&vector);m_free(&product);m_cg_free(&cg);m_csr_free(&sparse);
     if (!failed) puts("solution: 1, 2");
     return failed;

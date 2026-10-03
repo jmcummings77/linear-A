@@ -25,5 +25,11 @@ func main() {
  if !gm.Converged||math.Abs(gm.X[0]-1)>1e-12||math.Abs(gm.X[1]-2)>1e-12{panic("incorrect GMRES")}
  cg,err:=sparse.ConjugateGradient([]float64{6,7},options);if err!=nil{panic(err)}
  if product[0]!=6||product[1]!=7||!cg.Converged||math.Abs(cg.X[0]-1)>1e-12||math.Abs(cg.X[1]-2)>1e-12{panic("incorrect sparse solver")}
+ ilu,err:=matrix.NewILU0(sparse);if err!=nil{panic(err)}
+ first,err:=ilu.Apply([]float64{6,7});if err!=nil{panic(err)}
+ second,err:=ilu.Apply([]float64{11,13});if err!=nil{panic(err)}
+ if math.Abs(first[0]-1)>1e-12||math.Abs(second[0]-20.0/11)>1e-12{panic("incorrect ILU reuse")}
+ iluOptions:=matrix.DefaultGMRESOptions();iluOptions.Preconditioner=ilu
+ solved,err:=sparse.GMRES([]float64{11,13},iluOptions);if err!=nil||!solved.Converged{panic("incorrect ILU GMRES")}
  fmt.Println("solution: 1, 2")
 }

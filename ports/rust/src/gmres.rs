@@ -1,4 +1,4 @@
-use crate::{CSRMatrix, MatrixError};
+use crate::{CSRMatrix, MatrixError, ILU0};
 #[derive(Clone, Copy, Debug)]
 pub struct GMRESOptions {
     pub restart: usize,
@@ -33,7 +33,26 @@ pub struct GMRESResult {
 }
 impl CSRMatrix {
     pub fn gmres(&self, b: &[f64], o: GMRESOptions) -> Result<GMRESResult, MatrixError> {
+        self.gmres_impl(b, o, None)
+    }
+    pub fn gmres_preconditioned(
+        &self,
+        b: &[f64],
+        o: GMRESOptions,
+        preconditioner: &ILU0,
+    ) -> Result<GMRESResult, MatrixError> {
+        self.gmres_impl(b, o, Some(preconditioner))
+    }
+    fn gmres_impl(
+        &self,
+        b: &[f64],
+        o: GMRESOptions,
+        preconditioner: Option<&ILU0>,
+    ) -> Result<GMRESResult, MatrixError> {
         let n = self.rows();
+        if preconditioner.map_or(false, |p| o.jacobi || p.size() != n) {
+            return Err(MatrixError::new("incompatible preconditioner"));
+        }
         if self.cols() != n || b.len() != n || b.iter().any(|v| !v.is_finite()) {
             return Err(MatrixError::new(
                 "GMRES requires square matrix and finite matching vector",
@@ -100,11 +119,17 @@ impl CSRMatrix {
                 g[0] = beta;
                 let steps = m.min(o.max_iterations - (history.len() - 1));
                 for j in 0..steps {
-                    let z: Vec<f64> = basis[j]
+                    let mut z: Vec<f64> = basis[j]
                         .iter()
                         .enumerate()
                         .map(|(i, v)| v / diag[i])
                         .collect();
+                    if let Some(p) = preconditioner {
+                        z = match p.apply(&basis[j]) {
+                            Ok(v) => v,
+                            Err(_) => break 'solve "nonfinite",
+                        };
+                    }
                     let mut w = match self.matvec(&z) {
                         Ok(v) => v,
                         Err(_) => break 'solve "nonfinite",
@@ -157,11 +182,24 @@ impl CSRMatrix {
                         let sum = (k + 1..=j).map(|q| h[k][q] * y[q]).sum::<f64>();
                         y[k] = (y[k] - sum) / h[k][k];
                     }
-                    let candidate: Vec<f64> = (0..n)
+                    let mut candidate: Vec<f64> = (0..n)
                         .map(|i| {
-                            base[i] + (0..=j).map(|k| basis[k][i] * y[k]).sum::<f64>() / diag[i]
+                            if preconditioner.is_some() {
+                                (0..=j).map(|k| basis[k][i] * y[k]).sum::<f64>()
+                            } else {
+                                base[i] + (0..=j).map(|k| basis[k][i] * y[k]).sum::<f64>() / diag[i]
+                            }
                         })
                         .collect();
+                    if let Some(p) = preconditioner {
+                        candidate = match p.apply(&candidate) {
+                            Ok(v) => v,
+                            Err(_) => break 'solve "nonfinite",
+                        };
+                        for i in 0..n {
+                            candidate[i] += base[i];
+                        }
+                    }
                     if !finite(&y) || !finite(&candidate) || !g[j + 1].is_finite() {
                         break 'solve "nonfinite";
                     }

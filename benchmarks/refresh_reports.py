@@ -43,7 +43,7 @@ def refresh():
     count = 0
     for path in sorted((ROOT / 'benchmarks/reports').glob('*/index.html')):
         data = embedded(path, 'data')
-        if path.parent.name in ('sparse', 'gmres'):
+        if path.parent.name in ('sparse', 'gmres', 'ilu'):
             live = embedded(path, 'live')
             sparse.render(data, path, live_override=live)
             assert embedded(path, 'live') == live

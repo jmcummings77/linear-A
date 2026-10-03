@@ -68,7 +68,7 @@ def table(manifest):
     lines = ['# API compatibility: ' + manifest['version'], '',
              'This is the shared float64 contract for these release kits. A check mark is',
              'a declared capability validated by the shared conformance suite in CI.',
-             'Package installation tests separately exercise solving, multiplication, SVD and its inverse APIs, CSR multiplication and conjugate gradient.', '',
+             'Package installation tests separately exercise solving, multiplication, SVD and its inverse APIs, CSR multiplication, conjugate gradient, GMRES and ILU(0) reuse.', '',
              '| Port | Required runtime/toolchain | ' + ' | '.join(manifest['capabilities']) + ' |',
              '| --- | --- | ' + ' | '.join('---' for _ in manifest['capabilities']) + ' |']
     for name, port in manifest['ports'].items():
