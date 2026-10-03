@@ -124,4 +124,8 @@ void m_csr_free(sparse_matrix *a);
 matrix_status m_csr_matvec(const sparse_matrix *a,const matrix *x,matrix *out);
 matrix_status m_csr_cg(const sparse_matrix *a,const double *b,size_t count,double rtol,double atol,size_t limit,bool jacobi,bool capture,matrix_cg_result *out);
 void m_cg_free(matrix_cg_result *result);
+#include "gmres_core.h"
+typedef la_gmres_result matrix_gmres_result;
+matrix_status m_csr_gmres(const sparse_matrix *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,bool jacobi,bool capture,matrix_gmres_result *out);
+void m_gmres_free(matrix_gmres_result *r);
 #endif

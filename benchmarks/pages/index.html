@@ -4,185 +4,151 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Saved linear-A matrix benchmarks, algorithm comparisons, profiles, and live WebAssembly checks.">
-  <title>linear-A · Benchmark reports</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --paper: #f5f4ed;
-      --card: #fffef9;
-      --ink: #192927;
-      --muted: #62716d;
-      --line: #d9ddd1;
-      --green: #24594b;
-      --orange: #b95122;
-      --tint: #e4eee5;
-      --primary: #24594b;
-      --primary-ink: #fffef9;
-      --primary-muted: #dce9dd;
-      --focus: #a14319;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        color-scheme: dark;
-        --paper: #101a18;
-        --card: #182622;
-        --ink: #e5eee8;
-        --muted: #a6b8ad;
-        --line: #344c42;
-        --green: #86cbb0;
-        --orange: #f1ad75;
-        --tint: #263e31;
-        --primary: #284f40;
-        --primary-ink: #f0f6ed;
-        --primary-muted: #cadfce;
-        --focus: #f1ad75;
-      }
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--paper);
-      color: var(--ink);
-      font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    main { width: min(1080px, 100%); margin: 0 auto; padding: 36px 32px 26px; }
-    a { color: var(--green); text-underline-offset: .2em; }
-    a:focus-visible, summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 5px; }
-    .topline { display: flex; justify-content: space-between; align-items: center; gap: 18px; }
-    .wordmark { font: 700 29px/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: -1.7px; }
-    .wordmark span { color: var(--orange); }
-    .source { font-size: 13px; }
-    header { padding: 66px 0 34px; max-width: 730px; }
-    .eyebrow { margin: 0 0 13px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
-    h1 { margin: 0 0 20px; font-size: clamp(36px, 6vw, 61px); line-height: 1.05; font-weight: 600; letter-spacing: -.055em; }
-    header p:last-child { margin: 0; max-width: 640px; color: var(--muted); font-size: 17px; }
-    .reports { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-    .report {
-      display: flex; flex-direction: column; min-width: 0; padding: 25px;
-      border: 1px solid var(--line); border-radius: 12px;
-      color: var(--ink); background: var(--card); text-decoration: none;
-    }
-    .report:hover { border-color: var(--green); }
-    .report h2 { margin: 0 0 12px; font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -.025em; }
-    .report p { margin: 0 0 25px; color: var(--muted); font-size: 14px; }
-    .report .open { margin-top: auto; color: var(--green); font-size: 13px; font-weight: 650; }
-    .report .open span { margin-left: 5px; }
-    .primary { grid-column: 1 / -1; padding: 33px; color: var(--primary-ink); background: var(--primary); border-color: var(--primary); }
-    .primary h2 { font-size: 32px; margin-bottom: 10px; }
-    .primary p { max-width: 640px; margin-bottom: 22px; color: var(--primary-muted); font-size: 16px; }
-    .primary .eyebrow, .primary .open { color: var(--primary-ink); }
-    .primary .eyebrow { font-size: 10px; margin-bottom: 15px; }
-    .primary .open { align-self: flex-start; border-bottom: 1px solid var(--primary-muted); padding-bottom: 3px; }
-    .context { margin: 24px 0 35px; padding-left: 17px; border-left: 2px solid var(--line); color: var(--muted); font-size: 13px; max-width: 790px; }
-    .context strong { color: var(--ink); font-weight: 600; }
-    .secondary { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; border-top: 1px solid var(--line); padding-top: 27px; }
-    .experiment { padding: 0; border: 0; border-radius: 0; background: transparent; }
-    .experiment h2 { font-size: 19px; }
-    .experiment p { max-width: 390px; margin-bottom: 14px; }
-    .experiment .eyebrow { color: var(--muted); font-size: 10px; margin-bottom: 10px; }
-    details { align-self: start; padding: 17px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
-    summary { cursor: pointer; font-weight: 600; font-size: 15px; }
-    details p { margin: 12px 0 8px; font-size: 12px; color: var(--muted); }
-    details ul { margin: 0; padding-left: 20px; font-size: 13px; }
-    details li { margin: 7px 0; }
-    footer { margin-top: 42px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-    footer p { margin: 0; }
-    @media (max-width: 700px) {
-      main { padding: 25px 21px; }
-      header { padding: 46px 0 27px; }
-      header p:last-child { font-size: 15px; }
-      .reports { grid-template-columns: 1fr; gap: 12px; }
-      .report { padding: 23px; }
-      .report p { margin-bottom: 18px; }
-      .primary { padding: 27px 23px; }
-      .primary h2 { font-size: 28px; }
-      .secondary { grid-template-columns: 1fr; gap: 27px; }
-      .experiment { padding: 0; }
-      .context { margin-bottom: 28px; }
-    }
+  <meta name="description" content="Saved linear-A benchmarks, numerical explorations, and optimization studies.">
+  <title>linear-A · All reports</title>
+  <script id="report-appearance">/** Apply the saved or system theme before the report's first paint. */
+(() => {
+  const key = "linear-a-report-theme";
+  const preferences = new Set(["system", "light", "dark"]);
+  let preference = "system";
+  try {
+    const saved = window.localStorage.getItem(key);
+    if (preferences.has(saved)) preference = saved;
+  } catch { /* Storage can be unavailable in private or local-file contexts. */ }
+
+  const media = typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+  function apply() {
+    const theme = preference === "system" ? (media?.matches ? "dark" : "light") : preference;
+    if (document.documentElement.dataset.theme === theme) return;
+    document.documentElement.dataset.theme = theme;
+    window.dispatchEvent(new Event("matrix-theme-change"));
+  }
+
+  function systemChanged() {
+    if (preference === "system") apply();
+  }
+  if (typeof media?.addEventListener === "function") media.addEventListener("change", systemChanged);
+  else if (typeof media?.addListener === "function") media.addListener(systemChanged);
+  apply();
+
+  function bindSelect() {
+    const select = document.getElementById("report-theme");
+    if (!select) return;
+    select.value = preference;
+    select.addEventListener("change", () => {
+      if (!preferences.has(select.value)) { select.value = preference; return; }
+      preference = select.value;
+      try {
+        if (preference === "system") window.localStorage.removeItem(key);
+        else window.localStorage.setItem(key, preference);
+      } catch { /* The current report still changes theme when persistence fails. */ }
+      apply();
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindSelect, { once: true });
+  else bindSelect();
+})();
+</script>
+<style>
+    .wordmark{font:700 26px/1 ui-monospace,monospace;letter-spacing:-1.5px;color:var(--ink);text-decoration:none}.wordmark span{color:var(--orange)}
+    header{padding:30px 0 12px;max-width:790px}header h1{margin:12px 0 18px}header p{max-width:65ch}.eyebrow{text-transform:uppercase;color:var(--green);font-weight:700}
+    .directory-section{margin:36px 0}.directory-section>p{margin:8px 0 20px;max-width:75ch}.reports{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+    .report{display:flex;flex-direction:column;padding:24px;border:1px solid var(--line);border-radius:10px;color:var(--ink);background:var(--card);text-decoration:none;min-width:0}.report:hover{border-color:var(--green)}.report h3{font-size:22px;margin:0 0 10px}.report p{font-size:15px;margin:0 0 18px}.report .open{margin-top:auto;font-size:14px;font-weight:650;color:var(--green)}.report .run-meta{margin-bottom:16px;color:var(--muted)}
+    .primary{grid-column:1/-1;background:var(--primary);color:#f0f6ed;border-color:var(--primary);padding:28px}.primary h3{font-size:30px;color:#f0f6ed}.primary p,.primary .run-meta{color:#dce9dd}.primary .open,.primary .eyebrow{color:#f0f6ed}.primary .eyebrow{font-size:11px;margin-bottom:12px}.primary p{max-width:70ch}
+    .context{max-width:82ch;border-left:3px solid var(--line);padding-left:16px;font-size:14px}.archive-links{display:flex;gap:12px 24px;flex-wrap:wrap;padding:0;list-style:none}.archive-links a{font-weight:600}footer{display:flex;gap:20px;justify-content:space-between;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px;margin-top:36px}
+    @media(max-width:650px){.reports{grid-template-columns:1fr}.report{padding:21px}.primary{padding:24px}.primary h3{font-size:27px}header{padding-top:15px}.directory-section{margin:28px 0}}
   </style>
+<style id="report-design">
+/* Shared by every report; inlined at publication time for portable offline HTML. */
+:root {
+  color-scheme: light;
+  --paper: #f5f4ed; --bg: #f5f4ed; --card: #fffef9;
+  --ink: #192927; --muted: #53665e; --line: #d3dcd1;
+  --green: #24594b; --accent: #24594b; --orange: #b95122;
+  --track: #e6ece3; --code: #edf0e7; --tint: #e4eee5; --panel: var(--card); --plot: var(--code);
+  --focus: #a14319; --primary: #24594b; --primary-ink: #fffef9;
+  --primary-muted: #dce9dd; --bar: #397a62;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #101a18; --bg: #101a18; --card: #182622;
+  --ink: #e5eee8; --muted: #b0c0b5; --line: #3a5247;
+  --green: #96d3b9; --accent: #96d3b9; --orange: #f1ad75;
+  --track: #2b3e35; --code: #122019; --tint: #263e31; --panel: var(--card); --plot: var(--code);
+  --focus: #f1ad75; --primary: #284f40; --primary-ink: #10241b;
+  --primary-muted: #cadfce; --bar: #96d3b9;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 100px; background: var(--paper); color: var(--ink); }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+main { width: min(1240px, 100%); margin: 0 auto; padding: 32px 32px 48px; }
+main > *, section, .panel, .controls, label { min-width: 0; }
+h1 { color: var(--ink); font-size: clamp(32px, 4.4vw, 54px); line-height: 1.08; letter-spacing: -.045em; }
+h2 { color: var(--ink); font-size: 25px; line-height: 1.25; letter-spacing: -.025em; }
+h3 { font-size: 17px; line-height: 1.4; }
+p { color: var(--muted); }
+a { color: var(--green); text-underline-offset: .2em; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+button, select, input { color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 6px; font: inherit; min-width: 0; max-width: 100%; }
+button, select, .link-button { min-height: 40px; padding: 8px 12px; font-size: 14px; }
+button, summary { cursor: pointer; }
+button:hover, .link-button:hover { border-color: var(--green); }
+input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--green); }
+label { font-size: 13px; line-height: 1.45; color: var(--muted); }
+.small, small, .note, .run-meta { font-size: 13px; line-height: 1.6; }
+.eyebrow { font-size: 11px; letter-spacing: .13em; }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 24px; margin: 24px 0; }
+.report-prose { padding: 24px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+.report-prose p { max-width: 82ch; }
+.report-topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding-bottom: 18px; font-size: 14px; }
+.report-topbar label { display: flex; align-items: center; gap: 8px; }
+.report-nav { display: flex; gap: 6px 18px; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; padding: 12px 0; margin: 18px 0 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); font-size: 14px; }
+.report-nav a { padding: 3px 0; font-weight: 600; white-space: nowrap; }
+.report-context { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: 13px; padding: 12px 0; }
+.report-context p { margin: 0; }
+section[id], details[id], h2[id], header[id] { scroll-margin-top: 12px; }
+.scroll { overflow: auto; max-width: 100%; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { color: var(--muted); font-size: 13px; line-height: 1.45; }
+td, th { padding: 11px 12px; border-bottom: 1px solid var(--line); }
+td { vertical-align: top; }
+pre, code { background: var(--code); color: var(--ink); }
+pre { font-size: 13px; }
+summary { padding: 5px 0; }
+footer { font-size: 13px; color: var(--muted); }
+[hidden] { display: none !important; }
+@media (max-width: 760px) {
+  main { padding: 22px 16px 36px; }
+  .panel { padding: 18px; margin: 20px 0; }
+  .report-prose { padding: 20px 0; }
+  .report-nav { gap: 4px 16px; font-size: 13px; }
+  .report-topbar { align-items: center; }
+  table { font-size: 13px; }
+  td, th { padding: 10px 8px; }
+  .controls { gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+</style>
 </head>
-<body>
-  <main>
-    <div class="topline">
-      <div class="wordmark" aria-label="linear-A">linear-<span>A</span></div>
-      <a class="source" href="https://github.com/jmcummings77/linear-A">View repository <span aria-hidden="true">↗</span></a>
-    </div>
-    <header>
-      <p class="eyebrow">Benchmark reports</p>
-      <h1>Matrix performance lab.</h1>
-      <p>A hobby linear algebra library, across languages. Explore the recorded comparisons, look inside sampled profiles, and try the math in your browser.</p>
-    </header>
-
-    <nav class="reports" aria-label="Main benchmark reports">
-      <a class="report" href="sparse/"><h2>Sparse systems</h2><p>Live heat equilibrium, solver iterations, and dense/CSR runtime and storage scaling.</p><span class="open">Explore sparse systems →</span></a>
-      <a class="report primary" href="latest/">
-        <p class="eyebrow">Start here</p>
-        <h2>Full comparison</h2>
-        <p>Cross-language matrix timings, sample variation, and flamecharts, with live WebAssembly checks and an interactive geometry view.</p>
-        <span class="open">Open the main report <span aria-hidden="true">→</span></span>
-      </a>
-      <a class="report" href="determinants/">
-        <h2>Determinants</h2>
-        <p>Compare determinant algorithms on general, small, and positive-definite matrices.</p>
-        <span class="open">Explore algorithms <span aria-hidden="true">→</span></span>
-      </a>
-      <a class="report" href="eigen/">
-        <h2>Eigenvalues &amp; eigenvectors</h2>
-        <p>Saved symmetric eigensolver timings, checked against independent analytic spectra.</p>
-        <span class="open">Explore eigensolvers <span aria-hidden="true">→</span></span>
-      </a>
-      <a class="report" href="vectors/">
-        <h2>Vectors &amp; rotations</h2>
-        <p>Cross products, 2D rotations, and 3D axis-angle rotations across implementations.</p>
-        <span class="open">Explore vector operations <span aria-hidden="true">→</span></span>
-      </a>
-    </nav>
-
-    <p class="context"><strong>Saved measurements, live checks.</strong> Each report records its run, hardware, and source revision. Where embedded WebAssembly is available, live checks and browser timings run on your device; they do not replace the saved comparison.</p>
-
-    <section class="secondary" aria-label="Experiments and verification">
-      <a class="report experiment" href="compare/">
-        <p class="eyebrow">Across revisions</p>
-        <h2>Compare benchmark snapshots</h2>
-        <p>Match workloads, inspect sample variation, and check toolchain and timing differences before interpreting a change.</p>
-        <span class="open">Open the comparison <span aria-hidden="true">→</span></span>
-      </a>
-      <a class="report experiment" href="applications/">
-        <p class="eyebrow">Interactive applications</p>
-        <h2>Numerical playground</h2>
-        <p>Drag PCA points, fit observations with QR, and explore low-rank image reconstruction in WebAssembly.</p>
-        <span class="open">Open the playground <span aria-hidden="true">→</span></span>
-      </a>
-      <a class="report experiment" href="matmul-locality/">
-        <p class="eyebrow">Optimization study</p>
-        <h2>Matrix multiplication locality</h2>
-        <p>Scalar loops, reordered loops, cache blocking and ARM64 SIMD, with allocation boundaries and sampled profiles.</p>
-        <span class="open">Open the study <span aria-hidden="true">→</span></span>
-      </a>
-      <a class="report experiment" href="machine-code-dot/">
-        <p class="eyebrow">Separate experiment</p>
-        <h2>Machine-code dot product</h2>
-        <p>A closer look at dot-product implementations and native machine-code execution.</p>
-        <span class="open">Open the experiment <span aria-hidden="true">→</span></span>
-      </a>
-      <details>
-        <summary>Validation snapshots</summary>
-        <p>Saved correctness and profiling checks from earlier runs.</p>
-        <ul>
-          <li><a href="validation/">Cross-language verification</a></li>
-          <li><a href="wasm-profile-check/">WebAssembly profiling check</a></li>
-          <li><a href="wasm-verification/">WebAssembly verification</a></li>
-        </ul>
-      </details>
-    </section>
-
-    <footer>
-      <p>linear-A · Hobby linear algebra, across languages.<br>© 2026 J.M. Cummings.</p>
-      <p>No external assets or analytics. Appearance follows your device.</p>
-    </footer>
-  </main>
-</body>
-</html>
+<body><main>
+  <div class="report-topbar"><a class="wordmark" href="./" aria-label="linear-A reports">linear-<span>A</span></a><label>Appearance<select id="report-theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></div>
+  <header><p class="eyebrow">Benchmark reports</p><h1>Matrix performance lab.</h1><p>Compare recorded performance, explore numerical behavior, and inspect how these implementations work.</p></header>
+  <nav class="report-nav" aria-label="Report categories"><a href="#benchmarks">Benchmarks</a><a href="#compare">Compare runs</a><a href="#explore">Explore live</a><a href="#studies">Studies</a><a href="#verification">Verification</a></nav>
+  <section class="directory-section" id="benchmarks"><h2>Compare implementations</h2><p>Saved measurements with correctness checks, sample variation, and reproducible run details.</p><div class="reports">
+    <a class="report primary" href="latest/"><p class="eyebrow">Start here</p><h3>Full comparison</h3><p>Cross-language timings for matrix arithmetic and determinants, with sampled stack profiles and downloadable measurements.</p><span class="run-meta">2026-10-02 · 11 verified implementations · 231 timed workloads</span><span class="open">Open the main report →</span></a>
+    <a class="report" href="gmres/"><h3>Restarted GMRES</h3><p>Compare restart lengths, runtime and workspace across eleven ports. Explore nonsymmetric flow and diffusion with live solver frames.</p><span class="open">Explore GMRES →</span></a>
+    <a class="report" href="sparse/"><h3>Sparse systems</h3><p>Compare dense and CSR runtime and storage scaling, then explore heat equilibrium with a live iterative solver.</p><span class="run-meta">2026-10-03 · 11 verified implementations · 132 timed workloads</span><span class="open">Explore sparse systems →</span></a>
+    <a class="report" href="determinants/"><h3>Determinants</h3><p>Compare algorithms on general, small, and positive-definite matrices.</p><span class="run-meta">2026-10-02 · 34 verified implementations · 97 timed workloads</span><span class="open">Compare determinant algorithms →</span></a>
+    <a class="report" href="eigen/"><h3>Eigenvalues &amp; eigenvectors</h3><p>Symmetric eigensolver timings checked against independent analytic spectra.</p><span class="run-meta">2026-10-02 · 11 verified implementations · 22 timed workloads</span><span class="open">Compare eigensolvers →</span></a>
+    <a class="report" href="vectors/"><h3>Vectors &amp; rotations</h3><p>Cross products, 2D rotations, and 3D axis-angle rotations.</p><span class="run-meta">2026-10-02 · 11 verified implementations · 33 timed workloads</span><span class="open">Compare vector operations →</span></a>
+  </div></section>
+  <p class="context"><strong>Saved measurements, live exploration.</strong> Each report identifies its recorded run. Interactive tools calculate on your device and keep their results separate from saved comparisons.</p>
+  <section class="directory-section" id="compare"><h2>Compare snapshots</h2><p>Inspect changes between recorded runs, with workload matching and comparability checks.</p><div class="reports"><a class="report" href="compare/"><h3>What changed between runs?</h3><p>Compare median times and individual samples. Hardware, toolchain, and timing differences stay visible beside the evidence.</p><span class="open">Open snapshot comparison →</span></a></div></section>
+  <section class="directory-section" id="explore"><h2>Explore numerical behavior</h2><p>Change an input and see what the mathematics does.</p><div class="reports"><a class="report" href="applications/"><h3>Numerical playground</h3><p>Drag PCA points, fit observations with QR, and explore low-rank image reconstruction.</p><span class="open">Open the playground →</span></a><a class="report" href="latest/#explore"><h3>Accuracy &amp; geometry</h3><p>Perturb a linear system, watch a matrix transform space, or run a benchmark in your browser.</p><span class="open">Explore the WebAssembly library →</span></a></div></section>
+  <section class="directory-section" id="studies"><h2>Optimization studies</h2><p>Focused experiments with their own measurement boundaries.</p><div class="reports"><a class="report" href="matmul-locality/"><h3>Multiplication locality</h3><p>Follow memory access from scalar loops to cache blocking and ARM64 SIMD, with allocation boundaries and profiles.</p><span class="open">Read the locality study →</span></a><a class="report" href="machine-code-dot/"><h3>Machine-code dot product</h3><p>A 36-byte function compared with implementations of the same scalar operation.</p><span class="open">Read the dot-product study →</span></a></div></section>
+  <section class="directory-section report-prose" id="verification"><h2>Verification archive</h2><p>Earlier correctness and profiling snapshots. These record checks rather than a current performance comparison.</p><ul class="archive-links"><li><a href="validation/">Cross-language verification</a></li><li><a href="wasm-profile-check/">WebAssembly profiling check</a></li><li><a href="wasm-verification/">WebAssembly verification</a></li></ul></section>
+  <footer><span>linear-A · © 2026 J.M. Cummings.</span><a href="https://github.com/jmcummings77/linear-A">Source repository ↗</a><span>Local charts. No external assets or analytics.</span></footer>
+</main></body></html>

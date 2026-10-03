@@ -23,3 +23,6 @@ let sparse = CSRMatrix(2,2,[|0;2;4|],[|0;1;0;1|],[|4.;1.;1.;3.|])
 if sparse.Matvec([|1.;2.|]) <> [|6.;7.|] then failwith "incorrect sparse product"
 let cg = sparse.ConjugateGradient([|6.;7.|],jacobi=true,capture=true)
 if not cg.Converged || abs(cg.X[0]-1.)>1e-12 || abs(cg.X[1]-2.)>1e-12 then failwith "incorrect CG"
+
+let gm = sparse.Gmres([|6.;7.|],restart=2,jacobi=true,capture=true)
+if not gm.Converged || abs(gm.X[0]-1.)>1e-12 || abs(gm.X[1]-2.)>1e-12 then failwith "incorrect GMRES"

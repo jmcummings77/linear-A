@@ -262,3 +262,16 @@ void wm_cg_destroy(matrix_cg_result *r){if(r){m_cg_free(r);free(r);}}
 size_t wm_cg_iterations(const matrix_cg_result *r){return r->iterations;}
 int wm_cg_reason(const matrix_cg_result *r){return r->reason;}
 double *wm_cg_data(matrix_cg_result *r,int field){return field==0?r->x:field==1?r->residuals:r->iterates;}
+
+matrix_gmres_result *wm_csr_gmres(const sparse_matrix *a,const matrix *b,size_t restart,double rtol,double atol,size_t limit,int jacobi,int capture){
+    if(!b||b->cols!=1){last_status=M_ARGUMENT;return NULL;}
+    matrix_gmres_result *out=calloc(1,sizeof(matrix_gmres_result));if(!out){last_status=M_MEMORY;return NULL;}
+    last_status=m_csr_gmres(a,b->values,b->rows,restart,rtol,atol,limit,jacobi!=0,capture!=0,out);
+    if(last_status){free(out);return NULL;}return out;
+}
+void wm_gmres_destroy(matrix_gmres_result *r){if(r){m_gmres_free(r);free(r);}}
+size_t wm_gmres_iterations(const matrix_gmres_result *r){return r->iterations;}
+int wm_gmres_reason(const matrix_gmres_result *r){return r->reason;}
+size_t wm_gmres_restart_count(const matrix_gmres_result *r){return r->restart_count;}
+size_t *wm_gmres_restarts(matrix_gmres_result *r){return r->restarts;}
+double *wm_gmres_data(matrix_gmres_result *r,int field){return field==0?r->x:field==1?r->residuals:field==2?r->estimated_residuals:r->iterates;}

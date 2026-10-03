@@ -6,6 +6,7 @@ from pathlib import Path, PurePosixPath
 import re
 import subprocess
 from publication import PublicSanitizer
+from report_design import apply_report_design
 ROOT=Path(__file__).resolve().parents[1]
 HERE=Path(__file__).resolve().parent/'comparison'
 
@@ -37,7 +38,7 @@ def render(snapshots,destination):
     model=(HERE/'model.mjs').read_text().replace('export ','')
     replacements={'__SNAPSHOTS__':encoded,'__SCRIPT__':model+'\n'+(HERE/'app.mjs').read_text()}
     html=re.sub('|'.join(replacements),lambda m:replacements[m[0]],(HERE/'template.html').read_text())
-    destination.parent.mkdir(parents=True,exist_ok=True);destination.write_text(html)
+    destination.parent.mkdir(parents=True,exist_ok=True);destination.write_text(apply_report_design(html))
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)

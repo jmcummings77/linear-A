@@ -58,6 +58,7 @@ def protocol(case,iterations=0):
     a=case['a'];o={**dict(rtol=1e-10,atol=0,limit=1000,jacobi=0,capture=0),**case.get('options',{})}
     args=['sparse',case['op'],str(a['rows']),str(a['cols']),str(len(a['values'])),str(iterations),str(o['rtol']),str(o['atol']),str(o['limit']),str(o['jacobi']),str(o['capture'])]
     data=a['offsets']+a['indices']+a['values']+case['b']
+    if case['op']=='gmres':args.append(str(o.get('restart',30)))
     return args,' '.join(str(x) for x in data)
 
 def check_result(actual,case):

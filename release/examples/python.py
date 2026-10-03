@@ -21,3 +21,6 @@ sparse=CSRMatrix(2,2,[0,2,4],[0,1,0,1],[4,1,1,3])
 assert sparse.matvec([1,2])==[6,7]
 cg=sparse.conjugate_gradient([6,7],jacobi=True,capture=True)
 assert cg.converged and max(abs(x-y) for x,y in zip(cg.x,[1,2]))<1e-12
+
+gm=sparse.gmres([6,7],restart=2,jacobi=True,capture=True)
+assert gm.converged and max(abs(x-y) for x,y in zip(gm.x,[1,2]))<1e-12

@@ -31,13 +31,14 @@ const timing=(implementation,operation,size,median)=>({implementation,operation,
 function fixture(){return {implementations:[{id:'csharp',name:'C#',status:'passed'},{id:'rust',name:'Rust',status:'passed'},{id:'python',name:'Python',status:'passed'},{id:'java',name:'Java',status:'failed'}],results:[timing('csharp','multiply',8,10),timing('rust','multiply',8,20),timing('python','multiply',8,100),timing('csharp','multiply',16,30),timing('rust','multiply',16,60),timing('python','multiply',16,300),timing('csharp','transpose',8,2),timing('python','transpose',8,10),{...timing('java','multiply',8,1000),status:'failed'}]};}
 function report(data=fixture()){
   const original=JSON.stringify(data),nodes=new Map(),listeners=new Map();
-  for(const [id,tag]of Object.entries({operation:'select',size:'select',baseline:'select',chart:'div',samples:'table','chart-note':'p','timing-languages':'details','timing-language-summary':'summary','timing-language-options':'fieldset','timing-language-all':'button','timing-language-none':'button',profile:'select','profile-note':'p'}))nodes.set(id,new Element(tag));
+  for(const [id,tag]of Object.entries({operation:'select',size:'select',baseline:'select',chart:'div',samples:'table','chart-note':'p','timing-languages':'details','timing-language-summary':'summary','timing-language-options':'fieldset','timing-language-all':'button','timing-language-none':'button',profile:'select','profile-note':'p','timing-scale':'select','timing-axis':'div','timing-workload':'p'}))nodes.set(id,new Element(tag));
   const get=id=>{assert.ok(nodes.has(id),`unknown DOM id ${id}`);return nodes.get(id);};
   get('timing-languages').append(get('timing-language-summary'),get('timing-language-options'),get('timing-language-all'),get('timing-language-none'));
   get('profile-note').textContent='Untouched profile selection';
   const document={getElementById:get,createElement:tag=>new Element(tag),createTextNode:text=>{const node=new Element('#text');node.textContent=text;return node;},addEventListener(type,handler){if(!listeners.has(type))listeners.set(type,[]);listeners.get(type).push(handler);}};
   const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
   const addOption=(select,value,text)=>{const option=el('option',text);option.value=value;select.append(option);};
+  addOption(get('timing-scale'),'linear','Linear bars');addOption(get('timing-scale'),'log','Logarithmic dots');
   const context={data,passed:data.implementations.filter(x=>x.status==='passed'),valid:data.results.filter(x=>x.status==='passed'),names:Object.fromEntries(data.implementations.map(x=>[x.id,x.name])),$:get,el,addOption,time:n=>`${n.toFixed(1)} ns`,speed:n=>n.toFixed(2),document};
   vm.runInNewContext(source,context);
   const checkboxes=()=>get('timing-language-options').querySelectorAll('input');
@@ -128,4 +129,27 @@ test('missing successful timing data retains an explicit empty chart and usable 
   assert.deepEqual(page.rows(),[]);assert.equal(page.get('baseline').disabled,true);assert.equal(page.get('chart-note').textContent,'');
   assert.match(page.get('chart').textContent,/no|empty|unavailable/i);page.click('timing-language-all');page.click('timing-language-none');
   assert.deepEqual(page.rows(),[]);assert.equal(JSON.stringify(page.data),page.original);
+});
+
+test('logarithmic dots show positive medians and observed ranges without altering rankings or data',()=>{
+  const page=report();page.choose('timing-scale','log');
+  assert.deepEqual(page.labels(),['C#','Rust','Python']);
+  const positions=page.rows().map(row=>Number.parseFloat(row.querySelector('.timing-dot').style.left));
+  assert.ok(positions.every(Number.isFinite));assert.ok(positions[0]<positions[1]&&positions[1]<positions[2]);
+  assert.ok(page.rows().every(row=>Number.parseFloat(row.querySelector('.timing-range').style.width)>0));
+  assert.match(page.get('chart').textContent,/MAD 1.0 ns/);assert.match(page.get('chart').textContent,/9.0 ns – 11.0 ns/);
+  assert.match(page.get('chart-note').textContent,/logarithmic dots/);
+  page.language('python',false);assert.deepEqual(page.labels(),['C#','Rust']);
+  page.choose('timing-scale','linear');assert.deepEqual(page.widths(),['50%','100%']);
+  assert.equal(JSON.stringify(page.data),page.original);
+});
+
+test('logarithmic view handles equal and zero medians explicitly with no nonfinite geometry',()=>{
+  const data=fixture();data.results=[timing('csharp','multiply',8,0),timing('rust','multiply',8,10)];
+  const page=report(data);page.choose('timing-scale','log');
+  assert.match(page.rows()[0].textContent,/Zero is not on a log scale/);
+  assert.ok(Number.isFinite(Number.parseFloat(page.rows()[1].querySelector('.timing-dot').style.left)));
+  assert.doesNotMatch(page.get('chart').textContent,/NaN|Infinity/);
+  assert.equal(page.get('operation').options[0].textContent,'Matrix multiplication');
+  assert.match(page.get('timing-workload').textContent,/Matrix multiplication · 8 × 8/);
 });

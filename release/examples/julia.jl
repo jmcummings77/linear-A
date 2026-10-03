@@ -18,3 +18,6 @@ sparse=CSRMatrix(2,2,[0,2,4],[0,1,0,1],[4.,1.,1.,3.])
 @assert matvec(sparse,[1.,2.])==[6.,7.]
 cg=conjugate_gradient(sparse,[6.,7.];jacobi=true,capture=true)
 @assert cg.converged && maximum(abs.(cg.x .- [1.,2.]))<1e-12
+
+gm=gmres(sparse,[6.,7.];restart=2,jacobi=true,capture=true)
+@assert gm.converged && maximum(abs.(gm.x .- [1.,2.]))<1e-12

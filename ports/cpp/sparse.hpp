@@ -2,8 +2,10 @@
 #define LINEAR_A_CPP_SPARSE_HPP
 #include "matrix.hpp"
 #include "../c/sparse_core.h"
+#include "../c/gmres_core.h"
 namespace linear_a {
 struct CGResult {std::vector<double> x,residuals;std::vector<std::vector<double>> iterates;std::size_t iterations;std::string reason;bool converged;};
+struct GMRESResult {std::vector<double> x,residuals,estimated_residuals;std::vector<std::vector<double>> iterates;std::vector<std::size_t> restarts;std::size_t iterations;std::string reason;bool converged;};
 class CSRMatrix {
     std::size_t rows_,cols_;std::vector<std::size_t> rp_,ci_;std::vector<double> v_;
     la_csr view() const {return {rows_,cols_,v_.size(),const_cast<std::size_t*>(rp_.data()),const_cast<std::size_t*>(ci_.data()),const_cast<double*>(v_.data())};}
@@ -34,6 +36,16 @@ public:
             la_cg_free(&r);return result;
         }catch(...){la_cg_free(&r);throw;}
     }
+    GMRESResult gmres(const std::vector<double>& b,std::size_t restart=30,double rtol=1e-10,double atol=0,std::size_t limit=1000,bool jacobi=false,bool capture=false)const{
+        auto a=view();la_gmres_result r={};int code=la_csr_gmres(&a,b.data(),b.size(),restart,rtol,atol,limit,jacobi,capture,&r);
+        if(code==2)throw std::bad_alloc();if(code)throw std::invalid_argument("invalid GMRES input, options or Jacobi diagonal");
+        const char *reasons[]={"converged","iteration_limit","breakdown","nonfinite","stagnation"};
+        try{GMRESResult result;result.x.assign(r.x,r.x+r.size);result.residuals.assign(r.residuals,r.residuals+r.iterations+1);result.estimated_residuals.assign(r.estimated_residuals,r.estimated_residuals+r.iterations+1);result.restarts.assign(r.restarts,r.restarts+r.restart_count);result.iterations=r.iterations;result.reason=reasons[r.reason];result.converged=r.reason==0;
+            if(capture)for(std::size_t i=0;i<=r.iterations;i++)result.iterates.emplace_back(r.iterates+i*r.size,r.iterates+(i+1)*r.size);
+            la_gmres_free(&r);return result;
+        }catch(...){la_gmres_free(&r);throw;}
+    }
+
 };
 }
 #endif

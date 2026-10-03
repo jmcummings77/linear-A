@@ -20,6 +20,7 @@ ROOT = HERE.parents[1]
 BUILD = HERE / '.build'
 sys.path.insert(0, str(ROOT / 'benchmarks'))
 from publication import PublicSanitizer
+from report_design import apply_report_design
 from profile_publication import sanitize_macos_sample
 from profiles import parse_macos_sample
 
@@ -167,7 +168,7 @@ def collect_profile(runner,variant,iterations,output):
 def render(data,output):
     template=(HERE/'report.html').read_text()
     encoded=json.dumps(public(data),allow_nan=False).replace('<','\\u003c')
-    (output/'index.html').write_text(template.replace('__DATA__',encoded))
+    (output/'index.html').write_text(apply_report_design(template.replace('__DATA__',encoded)))
 
 
 def shape(text):

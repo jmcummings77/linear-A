@@ -369,3 +369,5 @@ mod tests {
             .is_err());
     }
 }
+mod gmres;
+pub use gmres::{GMRESOptions, GMRESResult};

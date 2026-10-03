@@ -1,0 +1,5215 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-03T10:02:54.791354+00:00",
+  "revision": "09d5067a65a4c25a5c0b362ea34ad176ab4c1514",
+  "dirty": true,
+  "source_sha256": "c63b505bc98a9af21a11af345964d1267722f663cc3a54226abe12d55bb1dc7b",
+  "suite": "gmres-transport-v1",
+  "seed": 2026,
+  "total_seconds": 335.331543209,
+  "machine": {
+    "os": "Darwin",
+    "release": "25.5.0",
+    "architecture": "arm64",
+    "logical_cpus": 8
+  },
+  "methodology": {
+    "numeric_type": "IEEE 754 binary64",
+    "matrix_layout": "Canonical CSR, five-point diffusion plus first-order upwind transport. Conductivity 1\u201310, diffusivity 0.2, speed 4, angle 30 degrees clockwise from right, zero Dirichlet boundaries. Known x=ones defines b=A*x.",
+    "timing": "In-process monotonic timer. Include solver validation, allocations, copies, true-residual checks and checksum; exclude parsing, CSR construction, compilation, serialization and process startup.",
+    "warmup": "Three warmup calls per fresh process; Julia warms the identical checksum loop. One excluded calibration batch targets 20 ms, capped at 10,000 calls.",
+    "sampling": "Serial samples, seeded randomized port order each round; median and MAD. No frame capture during timed runs.",
+    "profiles": "No profiles collected for this suite.",
+    "limitations": "GMRES uses two-pass modified Gram\u2013Schmidt, Givens rotations, right Jacobi when selected, x0=0, rtol=1e-10, atol=0, total limit=1500. True residual is recomputed every accepted step. Workspace is a logical float64 model: 8*((m+1)*n+(m+1)*m+8*n+4*(m+1)) bytes, m=min(restart,n,limit). Excludes matrix storage, results, histories, snapshots, runtime objects, allocator overhead and transient copies; not measured RSS. Restart can cause stagnation; nonsingular input does not guarantee convergence. Small workloads, JIT/GC and machine scheduling limit generalization; these are implementation comparisons, not language rankings."
+  },
+  "implementations": [
+    {
+      "id": "csharp",
+      "name": "C#",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "Matrix<double>; type-aware determinant with pivoting and scaling; rectangular array storage",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "benchmarks/dotnet/Runner.csproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/csharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "fsharp",
+      "name": "F#",
+      "status": "passed",
+      "toolchain": "10.0.401",
+      "detail": "F# float64 matrix; managed flat storage; partial-pivot determinant",
+      "build_commands": [
+        [
+          "dotnet",
+          "build",
+          "ports/fsharp/Runner.fsproj",
+          "-c",
+          "Release",
+          "-o",
+          ".build/fsharp",
+          "--disable-build-servers",
+          "-m:1"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "rust",
+      "name": "Rust",
+      "status": "passed",
+      "toolchain": "rustc 1.69.0 (84c898d65 2023-04-16)",
+      "detail": "Rust f64 matrix; contiguous storage; optimized release build",
+      "build_commands": [
+        [
+          "cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--manifest-path",
+          "ports/rust/Cargo.toml",
+          "--target-dir",
+          ".build/rust"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "go",
+      "name": "Go",
+      "status": "passed",
+      "toolchain": "go version go1.24.1 darwin/arm64",
+      "detail": "Go float64 matrix; contiguous storage; default optimizing compiler",
+      "build_commands": [
+        [
+          "go",
+          "build",
+          "-o",
+          ".build/go/runner",
+          "./cmd/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "name": "TypeScript",
+      "status": "passed",
+      "toolchain": "v25.9.0; TypeScript 7.0.2",
+      "detail": "TypeScript compiled to JavaScript; Float64Array; Node.js JIT",
+      "build_commands": [
+        [
+          "npm",
+          "ci",
+          "--ignore-scripts"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "status": "passed",
+      "toolchain": "Python 3.9.6",
+      "detail": "Python float matrix; interpreted loops; no NumPy",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "cpp",
+      "name": "C++",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "C++ double matrix; optimized native build; no fast-math; shared C general eigen, SVD and factorization kernels",
+      "build_commands": [
+        [
+          "clang++",
+          "-std=c++17",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/cpp/runner.cpp",
+          "-lm",
+          "-o",
+          ".build/cpp/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "name": "C",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "C double matrix; optimized native build; no fast-math",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "-lm",
+          "-o",
+          ".build/c/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "assembly",
+      "name": "ARM64 Assembly",
+      "status": "passed",
+      "toolchain": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "detail": "ARM64 arithmetic kernels with C allocation, validation, pivot control, shared real eigensolvers, SVD and system solvers",
+      "build_commands": [
+        [
+          "clang",
+          "-std=c11",
+          "-O3",
+          "-g",
+          "-ffp-contract=off",
+          "-DMATRIX_USE_ASM",
+          "ports/c/matrix.c",
+          "ports/c/runner.c",
+          "ports/assembly/kernels.S",
+          "-lm",
+          "-o",
+          ".build/assembly/runner"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "julia",
+      "name": "Julia",
+      "status": "passed",
+      "toolchain": "julia version 1.13.1",
+      "detail": "Julia Float64 matrix; handwritten loops; JIT; no BLAS calls",
+      "build_commands": [],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "wasm",
+      "name": "WebAssembly",
+      "status": "passed",
+      "toolchain": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.10 (d6c521a7f05449857c76bd99e396895583cf2083); Node.js v25.9.0",
+      "detail": "C double matrix compiled with Emscripten; Node.js WebAssembly runtime; JS/WASM dispatch, allocation, checksum reads, and disposal included",
+      "build_commands": [
+        [
+          "python3",
+          "ports/wasm/build.py",
+          "--emcc",
+          "emcc",
+          "--output",
+          ".build/wasm"
+        ]
+      ],
+      "checks": [
+        {
+          "name": "GMRES nonsymmetric analytic",
+          "passed": true
+        },
+        {
+          "name": "GMRES right Jacobi",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart one",
+          "passed": true
+        },
+        {
+          "name": "GMRES partial last cycle",
+          "passed": true
+        },
+        {
+          "name": "GMRES no iterations",
+          "passed": true
+        },
+        {
+          "name": "GMRES absolute stop",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES empty",
+          "passed": true
+        },
+        {
+          "name": "GMRES no capture",
+          "passed": true
+        },
+        {
+          "name": "GMRES large restart capped by dimension",
+          "passed": true
+        },
+        {
+          "name": "GMRES happy breakdown identity",
+          "passed": true
+        },
+        {
+          "name": "GMRES negative Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rotation indefinite",
+          "passed": true
+        },
+        {
+          "name": "GMRES restart stagnation",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero operator breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES singular inconsistent",
+          "passed": true
+        },
+        {
+          "name": "GMRES false happy breakdown",
+          "passed": true
+        },
+        {
+          "name": "GMRES tiny RHS",
+          "passed": true
+        },
+        {
+          "name": "GMRES nonfinite product",
+          "passed": true
+        },
+        {
+          "name": "GMRES preconditioner overflow",
+          "passed": true
+        },
+        {
+          "name": "GMRES missing Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES zero Jacobi diagonal",
+          "passed": true
+        },
+        {
+          "name": "GMRES rectangular",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart0",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid restart1025",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid rtol1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid atol-1",
+          "passed": true
+        },
+        {
+          "name": "GMRES invalid limit100001",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 2 Jacobi 1",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 0",
+          "passed": true
+        },
+        {
+          "name": "GMRES transport restart 5 Jacobi 1",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "implementation": "julia",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 19,
+      "median_ns": 1073199.5789473683,
+      "min_ns": 1054559.2105263157,
+      "max_ns": 7148875.0,
+      "mad_ns": 18640.368421052583,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 20390792,
+          "iterations": 19,
+          "checksum": 1215.9999996637498,
+          "ns_per_op": 1073199.5789473683
+        },
+        {
+          "elapsed_ns": 20036625,
+          "iterations": 19,
+          "checksum": 1215.9999996637498,
+          "ns_per_op": 1054559.2105263157
+        },
+        {
+          "elapsed_ns": 135828625,
+          "iterations": 19,
+          "checksum": 1215.9999996637498,
+          "ns_per_op": 7148875.0
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 28377792.0,
+      "min_ns": 27909458.0,
+      "max_ns": 180717583.0,
+      "mad_ns": 468334.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 28377792,
+          "iterations": 1,
+          "checksum": 63.99999998230262,
+          "ns_per_op": 28377792.0
+        },
+        {
+          "elapsed_ns": 27909458,
+          "iterations": 1,
+          "checksum": 63.99999998230262,
+          "ns_per_op": 27909458.0
+        },
+        {
+          "elapsed_ns": 180717583,
+          "iterations": 1,
+          "checksum": 63.99999998230262,
+          "ns_per_op": 180717583.0
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 45,
+      "median_ns": 455926.84444444446,
+      "min_ns": 452245.3777777778,
+      "max_ns": 1820478.6888888888,
+      "mad_ns": 3681.4666666666744,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 20351042,
+          "iterations": 45,
+          "checksum": 2879.999999203624,
+          "ns_per_op": 452245.3777777778
+        },
+        {
+          "elapsed_ns": 20516708,
+          "iterations": 45,
+          "checksum": 2879.999999203624,
+          "ns_per_op": 455926.84444444446
+        },
+        {
+          "elapsed_ns": 81921541,
+          "iterations": 45,
+          "checksum": 2879.999999203624,
+          "ns_per_op": 1820478.6888888888
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 3612625.0,
+      "min_ns": 3530841.8,
+      "max_ns": 5931925.0,
+      "mad_ns": 81783.20000000019,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 18063125,
+          "iterations": 5,
+          "checksum": 319.99999991151304,
+          "ns_per_op": 3612625.0
+        },
+        {
+          "elapsed_ns": 17654209,
+          "iterations": 5,
+          "checksum": 319.99999991151304,
+          "ns_per_op": 3530841.8
+        },
+        {
+          "elapsed_ns": 29659625,
+          "iterations": 5,
+          "checksum": 319.99999991151304,
+          "ns_per_op": 5931925.0
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 24,
+      "median_ns": 822963.5416666666,
+      "min_ns": 817824.6666666666,
+      "max_ns": 1105611.125,
+      "mad_ns": 5138.875,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 19751125,
+          "iterations": 24,
+          "checksum": 1535.9999995752644,
+          "ns_per_op": 822963.5416666666
+        },
+        {
+          "elapsed_ns": 19627792,
+          "iterations": 24,
+          "checksum": 1535.9999995752644,
+          "ns_per_op": 817824.6666666666
+        },
+        {
+          "elapsed_ns": 26534667,
+          "iterations": 24,
+          "checksum": 1535.9999995752644,
+          "ns_per_op": 1105611.125
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 40,
+      "median_ns": 484422.9,
+      "min_ns": 476594.8,
+      "max_ns": 844160.425,
+      "mad_ns": 7828.100000000035,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 19376916,
+          "iterations": 40,
+          "checksum": 2559.999999292111,
+          "ns_per_op": 484422.9
+        },
+        {
+          "elapsed_ns": 19063792,
+          "iterations": 40,
+          "checksum": 2559.999999292111,
+          "ns_per_op": 476594.8
+        },
+        {
+          "elapsed_ns": 33766417,
+          "iterations": 40,
+          "checksum": 2559.999999292111,
+          "ns_per_op": 844160.425
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 20,
+      "median_ns": 870847.95,
+      "min_ns": 859093.75,
+      "max_ns": 1384389.55,
+      "mad_ns": 11754.199999999953,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 17181875,
+          "iterations": 20,
+          "checksum": 1279.9999996460513,
+          "ns_per_op": 859093.75
+        },
+        {
+          "elapsed_ns": 17416959,
+          "iterations": 20,
+          "checksum": 1279.9999996460513,
+          "ns_per_op": 870847.95
+        },
+        {
+          "elapsed_ns": 27687791,
+          "iterations": 20,
+          "checksum": 1279.9999996460513,
+          "ns_per_op": 1384389.55
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 29,
+      "median_ns": 682705.4827586206,
+      "min_ns": 673229.8620689656,
+      "max_ns": 985622.1379310344,
+      "mad_ns": 9475.620689655072,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 19523666,
+          "iterations": 29,
+          "checksum": 1855.9999994867806,
+          "ns_per_op": 673229.8620689656
+        },
+        {
+          "elapsed_ns": 19798459,
+          "iterations": 29,
+          "checksum": 1855.9999994867806,
+          "ns_per_op": 682705.4827586206
+        },
+        {
+          "elapsed_ns": 28583042,
+          "iterations": 29,
+          "checksum": 1855.9999994867806,
+          "ns_per_op": 985622.1379310344
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 4327000.0,
+      "min_ns": 4317600.0,
+      "max_ns": 16834433.333333332,
+      "mad_ns": 9400.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 12952800,
+          "iterations": 3,
+          "checksum": 191.9999999469075,
+          "ns_per_op": 4317600.0
+        },
+        {
+          "elapsed_ns": 12981000,
+          "iterations": 3,
+          "checksum": 191.9999999469075,
+          "ns_per_op": 4327000.0
+        },
+        {
+          "elapsed_ns": 50503300,
+          "iterations": 3,
+          "checksum": 191.9999999469075,
+          "ns_per_op": 16834433.333333332
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 6,
+      "median_ns": 3191966.6666666665,
+      "min_ns": 3185516.6666666665,
+      "max_ns": 4862733.333333333,
+      "mad_ns": 6450.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 19113100,
+          "iterations": 6,
+          "checksum": 383.9999998938151,
+          "ns_per_op": 3185516.6666666665
+        },
+        {
+          "elapsed_ns": 19151800,
+          "iterations": 6,
+          "checksum": 383.9999998938151,
+          "ns_per_op": 3191966.6666666665
+        },
+        {
+          "elapsed_ns": 29176400,
+          "iterations": 6,
+          "checksum": 383.9999998938151,
+          "ns_per_op": 4862733.333333333
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_restart_5",
+      "size": 8,
+      "status": "passed",
+      "iterations": 43,
+      "median_ns": 483465.11627906974,
+      "min_ns": 482094.9534883721,
+      "max_ns": 668960.2558139535,
+      "mad_ns": 1370.16279069765,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 131,
+      "restart": 5,
+      "restart_count": 26,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 20789000,
+          "iterations": 43,
+          "checksum": 2751.999999239019,
+          "ns_per_op": 483465.11627906974
+        },
+        {
+          "elapsed_ns": 20730083,
+          "iterations": 43,
+          "checksum": 2751.999999239019,
+          "ns_per_op": 482094.9534883721
+        },
+        {
+          "elapsed_ns": 28765291,
+          "iterations": 43,
+          "checksum": 2751.999999239019,
+          "ns_per_op": 668960.2558139535
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 20,
+      "median_ns": 903830.0,
+      "min_ns": 896050.0,
+      "max_ns": 909230.0,
+      "mad_ns": 5400.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 18076600,
+          "iterations": 20,
+          "checksum": 1279.9999998185442,
+          "ns_per_op": 903830.0
+        },
+        {
+          "elapsed_ns": 17921000,
+          "iterations": 20,
+          "checksum": 1279.9999998185442,
+          "ns_per_op": 896050.0
+        },
+        {
+          "elapsed_ns": 18184600,
+          "iterations": 20,
+          "checksum": 1279.9999998185442,
+          "ns_per_op": 909230.0
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 6,
+      "median_ns": 1779900.0,
+      "min_ns": 1701250.0,
+      "max_ns": 1800800.0,
+      "mad_ns": 20900.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 10207500,
+          "iterations": 6,
+          "checksum": 383.99999994556424,
+          "ns_per_op": 1701250.0
+        },
+        {
+          "elapsed_ns": 10679400,
+          "iterations": 6,
+          "checksum": 383.99999994556424,
+          "ns_per_op": 1779900.0
+        },
+        {
+          "elapsed_ns": 10804800,
+          "iterations": 6,
+          "checksum": 383.99999994556424,
+          "ns_per_op": 1800800.0
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 35,
+      "median_ns": 590413.0857142857,
+      "min_ns": 543333.3142857143,
+      "max_ns": 646047.6285714286,
+      "mad_ns": 47079.77142857143,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 19016666,
+          "iterations": 35,
+          "checksum": 2239.9999996824395,
+          "ns_per_op": 543333.3142857143
+        },
+        {
+          "elapsed_ns": 20664458,
+          "iterations": 35,
+          "checksum": 2239.9999996824395,
+          "ns_per_op": 590413.0857142857
+        },
+        {
+          "elapsed_ns": 22611667,
+          "iterations": 35,
+          "checksum": 2239.9999996824395,
+          "ns_per_op": 646047.6285714286
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 47,
+      "median_ns": 464510.6382978723,
+      "min_ns": 449504.44680851063,
+      "max_ns": 464885.6382978723,
+      "mad_ns": 375.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 21126709,
+          "iterations": 47,
+          "checksum": 3007.9999995735616,
+          "ns_per_op": 449504.44680851063
+        },
+        {
+          "elapsed_ns": 21832000,
+          "iterations": 47,
+          "checksum": 3007.9999995735616,
+          "ns_per_op": 464510.6382978723
+        },
+        {
+          "elapsed_ns": 21849625,
+          "iterations": 47,
+          "checksum": 3007.9999995735616,
+          "ns_per_op": 464885.6382978723
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 79,
+      "median_ns": 253295.35443037975,
+      "min_ns": 251837.55696202532,
+      "max_ns": 282054.84810126584,
+      "mad_ns": 1457.7974683544307,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 19895167,
+          "iterations": 79,
+          "checksum": 5055.99999928329,
+          "ns_per_op": 251837.55696202532
+        },
+        {
+          "elapsed_ns": 22282333,
+          "iterations": 79,
+          "checksum": 5055.99999928329,
+          "ns_per_op": 282054.84810126584
+        },
+        {
+          "elapsed_ns": 20010333,
+          "iterations": 79,
+          "checksum": 5055.99999928329,
+          "ns_per_op": 253295.35443037975
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 34,
+      "median_ns": 499696.0882352941,
+      "min_ns": 480029.4117647059,
+      "max_ns": 531057.5882352941,
+      "mad_ns": 19666.676470588194,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 16989667,
+          "iterations": 34,
+          "checksum": 2175.9999996915126,
+          "ns_per_op": 499696.0882352941
+        },
+        {
+          "elapsed_ns": 18055958,
+          "iterations": 34,
+          "checksum": 2175.9999996915126,
+          "ns_per_op": 531057.5882352941
+        },
+        {
+          "elapsed_ns": 16321000,
+          "iterations": 34,
+          "checksum": 2175.9999996915126,
+          "ns_per_op": 480029.4117647059
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 15817250.0,
+      "min_ns": 15054500.0,
+      "max_ns": 20609584.0,
+      "mad_ns": 762750.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 20609584,
+          "iterations": 1,
+          "checksum": 63.9999999909274,
+          "ns_per_op": 20609584.0
+        },
+        {
+          "elapsed_ns": 15817250,
+          "iterations": 1,
+          "checksum": 63.9999999909274,
+          "ns_per_op": 15817250.0
+        },
+        {
+          "elapsed_ns": 15054500,
+          "iterations": 1,
+          "checksum": 63.9999999909274,
+          "ns_per_op": 15054500.0
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 85,
+      "median_ns": 237735.29411764705,
+      "min_ns": 237405.4,
+      "max_ns": 239433.82352941178,
+      "mad_ns": 329.8941176470544,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 20207500,
+          "iterations": 85,
+          "checksum": 5439.999999228879,
+          "ns_per_op": 237735.29411764705
+        },
+        {
+          "elapsed_ns": 20351875,
+          "iterations": 85,
+          "checksum": 5439.999999228879,
+          "ns_per_op": 239433.82352941178
+        },
+        {
+          "elapsed_ns": 20179459,
+          "iterations": 85,
+          "checksum": 5439.999999228879,
+          "ns_per_op": 237405.4
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 80,
+      "median_ns": 254206.7625,
+      "min_ns": 248278.125,
+      "max_ns": 256216.675,
+      "mad_ns": 2009.9124999999767,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 19862250,
+          "iterations": 80,
+          "checksum": 5119.999999274221,
+          "ns_per_op": 248278.125
+        },
+        {
+          "elapsed_ns": 20336541,
+          "iterations": 80,
+          "checksum": 5119.999999274221,
+          "ns_per_op": 254206.7625
+        },
+        {
+          "elapsed_ns": 20497334,
+          "iterations": 80,
+          "checksum": 5119.999999274221,
+          "ns_per_op": 256216.675
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 10,
+      "median_ns": 1911262.5,
+      "min_ns": 1893854.2,
+      "max_ns": 2135966.7,
+      "mad_ns": 17408.300000000047,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 18938542,
+          "iterations": 10,
+          "checksum": 639.9999999092743,
+          "ns_per_op": 1893854.2
+        },
+        {
+          "elapsed_ns": 19112625,
+          "iterations": 10,
+          "checksum": 639.9999999092743,
+          "ns_per_op": 1911262.5
+        },
+        {
+          "elapsed_ns": 21359667,
+          "iterations": 10,
+          "checksum": 639.9999999092743,
+          "ns_per_op": 2135966.7
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 53,
+      "median_ns": 363404.88679245283,
+      "min_ns": 346982.71698113205,
+      "max_ns": 372470.90566037735,
+      "mad_ns": 9066.018867924518,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 66,
+      "restart": 5,
+      "restart_count": 13,
+      "logical_workspace_bytes": 7600,
+      "samples": [
+        {
+          "elapsed_ns": 18390084,
+          "iterations": 53,
+          "checksum": 3391.999999519123,
+          "ns_per_op": 346982.71698113205
+        },
+        {
+          "elapsed_ns": 19260459,
+          "iterations": 53,
+          "checksum": 3391.999999519123,
+          "ns_per_op": 363404.88679245283
+        },
+        {
+          "elapsed_ns": 19740958,
+          "iterations": 53,
+          "checksum": 3391.999999519123,
+          "ns_per_op": 372470.90566037735
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 54,
+      "median_ns": 389791.6666666667,
+      "min_ns": 371755.4074074074,
+      "max_ns": 645935.1851851852,
+      "mad_ns": 18036.25925925927,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 20074792,
+          "iterations": 54,
+          "checksum": 3456.0000002420347,
+          "ns_per_op": 371755.4074074074
+        },
+        {
+          "elapsed_ns": 34880500,
+          "iterations": 54,
+          "checksum": 3456.0000002420347,
+          "ns_per_op": 645935.1851851852
+        },
+        {
+          "elapsed_ns": 21048750,
+          "iterations": 54,
+          "checksum": 3456.0000002420347,
+          "ns_per_op": 389791.6666666667
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 27959666.0,
+      "min_ns": 27628667.0,
+      "max_ns": 30014042.0,
+      "mad_ns": 330999.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 27628667,
+          "iterations": 1,
+          "checksum": 64.00000000448179,
+          "ns_per_op": 27628667.0
+        },
+        {
+          "elapsed_ns": 27959666,
+          "iterations": 1,
+          "checksum": 64.00000000448179,
+          "ns_per_op": 27959666.0
+        },
+        {
+          "elapsed_ns": 30014042,
+          "iterations": 1,
+          "checksum": 64.00000000448179,
+          "ns_per_op": 30014042.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 24,
+      "median_ns": 684888.9166666666,
+      "min_ns": 662390.625,
+      "max_ns": 690838.5416666666,
+      "mad_ns": 5949.625,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 16580125,
+          "iterations": 24,
+          "checksum": 1536.0000001075605,
+          "ns_per_op": 690838.5416666666
+        },
+        {
+          "elapsed_ns": 16437334,
+          "iterations": 24,
+          "checksum": 1536.0000001075605,
+          "ns_per_op": 684888.9166666666
+        },
+        {
+          "elapsed_ns": 15897375,
+          "iterations": 24,
+          "checksum": 1536.0000001075605,
+          "ns_per_op": 662390.625
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 11,
+      "median_ns": 543768.9090909091,
+      "min_ns": 530416.6363636364,
+      "max_ns": 1085215.9090909092,
+      "mad_ns": 13352.272727272706,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 5834583,
+          "iterations": 11,
+          "checksum": 704.0000000493001,
+          "ns_per_op": 530416.6363636364
+        },
+        {
+          "elapsed_ns": 11937375,
+          "iterations": 11,
+          "checksum": 704.0000000493001,
+          "ns_per_op": 1085215.9090909092
+        },
+        {
+          "elapsed_ns": 5981458,
+          "iterations": 11,
+          "checksum": 704.0000000493001,
+          "ns_per_op": 543768.9090909091
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 33,
+      "median_ns": 661628.7878787878,
+      "min_ns": 602380.0606060605,
+      "max_ns": 703989.8787878788,
+      "mad_ns": 42361.09090909094,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 19878542,
+          "iterations": 33,
+          "checksum": 2112.000000147894,
+          "ns_per_op": 602380.0606060605
+        },
+        {
+          "elapsed_ns": 21833750,
+          "iterations": 33,
+          "checksum": 2112.000000147894,
+          "ns_per_op": 661628.7878787878
+        },
+        {
+          "elapsed_ns": 23231666,
+          "iterations": 33,
+          "checksum": 2112.000000147894,
+          "ns_per_op": 703989.8787878788
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 4827950.0,
+      "min_ns": 4716000.0,
+      "max_ns": 5047050.0,
+      "mad_ns": 111950.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 9432000,
+          "iterations": 2,
+          "checksum": 128.0000000089637,
+          "ns_per_op": 4716000.0
+        },
+        {
+          "elapsed_ns": 9655900,
+          "iterations": 2,
+          "checksum": 128.0000000089637,
+          "ns_per_op": 4827950.0
+        },
+        {
+          "elapsed_ns": 10094100,
+          "iterations": 2,
+          "checksum": 128.0000000089637,
+          "ns_per_op": 5047050.0
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 4135666.6666666665,
+      "min_ns": 3719708.3333333335,
+      "max_ns": 4586153.0,
+      "mad_ns": 415958.333333333,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 12407000,
+          "iterations": 3,
+          "checksum": 192.00000001344537,
+          "ns_per_op": 4135666.6666666665
+        },
+        {
+          "elapsed_ns": 11159125,
+          "iterations": 3,
+          "checksum": 192.00000001344537,
+          "ns_per_op": 3719708.3333333335
+        },
+        {
+          "elapsed_ns": 13758459,
+          "iterations": 3,
+          "checksum": 192.00000001344537,
+          "ns_per_op": 4586153.0
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 26,
+      "median_ns": 935498.4230769231,
+      "min_ns": 795932.6923076923,
+      "max_ns": 1398641.0,
+      "mad_ns": 139565.73076923087,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 36364666,
+          "iterations": 26,
+          "checksum": 1664.000000116523,
+          "ns_per_op": 1398641.0
+        },
+        {
+          "elapsed_ns": 20694250,
+          "iterations": 26,
+          "checksum": 1664.000000116523,
+          "ns_per_op": 795932.6923076923
+        },
+        {
+          "elapsed_ns": 24322959,
+          "iterations": 26,
+          "checksum": 1664.000000116523,
+          "ns_per_op": 935498.4230769231
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 57,
+      "median_ns": 374989.0350877193,
+      "min_ns": 350300.43859649124,
+      "max_ns": 414799.70175438595,
+      "mad_ns": 24688.59649122809,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 19967125,
+          "iterations": 57,
+          "checksum": 3648.0000002554834,
+          "ns_per_op": 350300.43859649124
+        },
+        {
+          "elapsed_ns": 23643583,
+          "iterations": 57,
+          "checksum": 3648.0000002554834,
+          "ns_per_op": 414799.70175438595
+        },
+        {
+          "elapsed_ns": 21374375,
+          "iterations": 57,
+          "checksum": 3648.0000002554834,
+          "ns_per_op": 374989.0350877193
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 54,
+      "median_ns": 372158.962962963,
+      "min_ns": 366563.27777777775,
+      "max_ns": 393013.8888888889,
+      "mad_ns": 5595.685185185226,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 19794417,
+          "iterations": 54,
+          "checksum": 3456.0000002420347,
+          "ns_per_op": 366563.27777777775
+        },
+        {
+          "elapsed_ns": 20096584,
+          "iterations": 54,
+          "checksum": 3456.0000002420347,
+          "ns_per_op": 372158.962962963
+        },
+        {
+          "elapsed_ns": 21222750,
+          "iterations": 54,
+          "checksum": 3456.0000002420347,
+          "ns_per_op": 393013.8888888889
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_restart_20",
+      "size": 8,
+      "status": "passed",
+      "iterations": 9,
+      "median_ns": 3210477.777777778,
+      "min_ns": 2915166.6666666665,
+      "max_ns": 3245511.111111111,
+      "mad_ns": 35033.33333333302,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 74,
+      "restart": 20,
+      "restart_count": 3,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 26236500,
+          "iterations": 9,
+          "checksum": 576.0000000403361,
+          "ns_per_op": 2915166.6666666665
+        },
+        {
+          "elapsed_ns": 29209600,
+          "iterations": 9,
+          "checksum": 576.0000000403361,
+          "ns_per_op": 3245511.111111111
+        },
+        {
+          "elapsed_ns": 28894300,
+          "iterations": 9,
+          "checksum": 576.0000000403361,
+          "ns_per_op": 3210477.777777778
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 25,
+      "median_ns": 723248.0,
+      "min_ns": 702396.0,
+      "max_ns": 737968.0,
+      "mad_ns": 14720.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 18449200,
+          "iterations": 25,
+          "checksum": 1599.9999997031048,
+          "ns_per_op": 737968.0
+        },
+        {
+          "elapsed_ns": 17559900,
+          "iterations": 25,
+          "checksum": 1599.9999997031048,
+          "ns_per_op": 702396.0
+        },
+        {
+          "elapsed_ns": 18081200,
+          "iterations": 25,
+          "checksum": 1599.9999997031048,
+          "ns_per_op": 723248.0
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 67,
+      "median_ns": 223838.2985074627,
+      "min_ns": 222004.35820895524,
+      "max_ns": 225863.80597014926,
+      "mad_ns": 1833.9402985074557,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 14874292,
+          "iterations": 67,
+          "checksum": 4287.999999204336,
+          "ns_per_op": 222004.35820895524
+        },
+        {
+          "elapsed_ns": 14997166,
+          "iterations": 67,
+          "checksum": 4287.999999204336,
+          "ns_per_op": 223838.2985074627
+        },
+        {
+          "elapsed_ns": 15132875,
+          "iterations": 67,
+          "checksum": 4287.999999204336,
+          "ns_per_op": 225863.80597014926
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 8,
+      "median_ns": 2347718.75,
+      "min_ns": 2262203.125,
+      "max_ns": 2371703.125,
+      "mad_ns": 23984.375,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 18097625,
+          "iterations": 8,
+          "checksum": 511.9999999049934,
+          "ns_per_op": 2262203.125
+        },
+        {
+          "elapsed_ns": 18973625,
+          "iterations": 8,
+          "checksum": 511.9999999049934,
+          "ns_per_op": 2371703.125
+        },
+        {
+          "elapsed_ns": 18781750,
+          "iterations": 8,
+          "checksum": 511.9999999049934,
+          "ns_per_op": 2347718.75
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 60,
+      "median_ns": 330746.5333333333,
+      "min_ns": 323161.1,
+      "max_ns": 331583.3333333333,
+      "mad_ns": 836.7999999999884,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 19389666,
+          "iterations": 60,
+          "checksum": 3839.9999992874655,
+          "ns_per_op": 323161.1
+        },
+        {
+          "elapsed_ns": 19895000,
+          "iterations": 60,
+          "checksum": 3839.9999992874655,
+          "ns_per_op": 331583.3333333333
+        },
+        {
+          "elapsed_ns": 19844792,
+          "iterations": 60,
+          "checksum": 3839.9999992874655,
+          "ns_per_op": 330746.5333333333
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 90,
+      "median_ns": 210851.38888888888,
+      "min_ns": 210589.34444444443,
+      "max_ns": 211319.44444444444,
+      "mad_ns": 262.0444444444438,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 18953041,
+          "iterations": 90,
+          "checksum": 5759.999998931184,
+          "ns_per_op": 210589.34444444443
+        },
+        {
+          "elapsed_ns": 18976625,
+          "iterations": 90,
+          "checksum": 5759.999998931184,
+          "ns_per_op": 210851.38888888888
+        },
+        {
+          "elapsed_ns": 19018750,
+          "iterations": 90,
+          "checksum": 5759.999998931184,
+          "ns_per_op": 211319.44444444444
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 14,
+      "median_ns": 1270478.5714285714,
+      "min_ns": 1252364.2857142857,
+      "max_ns": 1270892.857142857,
+      "mad_ns": 414.285714285681,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 17533100,
+          "iterations": 14,
+          "checksum": 895.9999998337396,
+          "ns_per_op": 1252364.2857142857
+        },
+        {
+          "elapsed_ns": 17786700,
+          "iterations": 14,
+          "checksum": 895.9999998337396,
+          "ns_per_op": 1270478.5714285714
+        },
+        {
+          "elapsed_ns": 17792500,
+          "iterations": 14,
+          "checksum": 895.9999998337396,
+          "ns_per_op": 1270892.857142857
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 16516666.5,
+      "min_ns": 16339145.5,
+      "max_ns": 17164604.5,
+      "mad_ns": 177521.0,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 34329209,
+          "iterations": 2,
+          "checksum": 127.99999997624845,
+          "ns_per_op": 17164604.5
+        },
+        {
+          "elapsed_ns": 32678291,
+          "iterations": 2,
+          "checksum": 127.99999997624845,
+          "ns_per_op": 16339145.5
+        },
+        {
+          "elapsed_ns": 33033333,
+          "iterations": 2,
+          "checksum": 127.99999997624845,
+          "ns_per_op": 16516666.5
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 53,
+      "median_ns": 372440.24528301886,
+      "min_ns": 363327.03773584904,
+      "max_ns": 398022.7924528302,
+      "mad_ns": 9113.207547169819,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 21095208,
+          "iterations": 53,
+          "checksum": 3391.9999993705924,
+          "ns_per_op": 398022.7924528302
+        },
+        {
+          "elapsed_ns": 19739333,
+          "iterations": 53,
+          "checksum": 3391.9999993705924,
+          "ns_per_op": 372440.24528301886
+        },
+        {
+          "elapsed_ns": 19256333,
+          "iterations": 53,
+          "checksum": 3391.9999993705924,
+          "ns_per_op": 363327.03773584904
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 86,
+      "median_ns": 226946.7093023256,
+      "min_ns": 225322.67441860464,
+      "max_ns": 228739.33720930232,
+      "mad_ns": 1624.0348837209458,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 19671583,
+          "iterations": 86,
+          "checksum": 5503.999998978688,
+          "ns_per_op": 228739.33720930232
+        },
+        {
+          "elapsed_ns": 19517417,
+          "iterations": 86,
+          "checksum": 5503.999998978688,
+          "ns_per_op": 226946.7093023256
+        },
+        {
+          "elapsed_ns": 19377750,
+          "iterations": 86,
+          "checksum": 5503.999998978688,
+          "ns_per_op": 225322.67441860464
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 41,
+      "median_ns": 456383.1219512195,
+      "min_ns": 450204.26829268294,
+      "max_ns": 458721.56097560975,
+      "mad_ns": 2338.4390243902453,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 18458375,
+          "iterations": 41,
+          "checksum": 2623.9999995130956,
+          "ns_per_op": 450204.26829268294
+        },
+        {
+          "elapsed_ns": 18807584,
+          "iterations": 41,
+          "checksum": 2623.9999995130956,
+          "ns_per_op": 458721.56097560975
+        },
+        {
+          "elapsed_ns": 18711708,
+          "iterations": 41,
+          "checksum": 2623.9999995130956,
+          "ns_per_op": 456383.1219512195
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 8,
+      "status": "passed",
+      "iterations": 36,
+      "median_ns": 395592.6111111111,
+      "min_ns": 394979.1666666667,
+      "max_ns": 398932.8888888889,
+      "mad_ns": 613.444444444438,
+      "nnz": 288,
+      "unknowns": 64,
+      "logical_dense_bytes": 32768,
+      "logical_csr_bytes": 5128,
+      "contrast": 1,
+      "solver_iterations": 46,
+      "restart": 20,
+      "restart_count": 2,
+      "logical_workspace_bytes": 18880,
+      "samples": [
+        {
+          "elapsed_ns": 14241334,
+          "iterations": 36,
+          "checksum": 2303.999999572472,
+          "ns_per_op": 395592.6111111111
+        },
+        {
+          "elapsed_ns": 14361584,
+          "iterations": 36,
+          "checksum": 2303.999999572472,
+          "ns_per_op": 398932.8888888889
+        },
+        {
+          "elapsed_ns": 14219250,
+          "iterations": 36,
+          "checksum": 2303.999999572472,
+          "ns_per_op": 394979.1666666667
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 4331833.4,
+      "min_ns": 4204816.6,
+      "max_ns": 4522108.2,
+      "mad_ns": 127016.80000000075,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 21024083,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4204816.6
+        },
+        {
+          "elapsed_ns": 22610541,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4522108.2
+        },
+        {
+          "elapsed_ns": 21659167,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4331833.4
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 4458300.0,
+      "min_ns": 4457925.0,
+      "max_ns": 4532066.6,
+      "mad_ns": 375.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 22660333,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4532066.6
+        },
+        {
+          "elapsed_ns": 22289625,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4457925.0
+        },
+        {
+          "elapsed_ns": 22291500,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4458300.0
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 30298208.0,
+      "min_ns": 29991958.0,
+      "max_ns": 30396833.0,
+      "mad_ns": 98625.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 30396833,
+          "iterations": 1,
+          "checksum": 255.9999998681715,
+          "ns_per_op": 30396833.0
+        },
+        {
+          "elapsed_ns": 30298208,
+          "iterations": 1,
+          "checksum": 255.9999998681715,
+          "ns_per_op": 30298208.0
+        },
+        {
+          "elapsed_ns": 29991958,
+          "iterations": 1,
+          "checksum": 255.9999998681715,
+          "ns_per_op": 29991958.0
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 4488566.8,
+      "min_ns": 4443375.0,
+      "max_ns": 4516491.6,
+      "mad_ns": 27924.799999999814,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 22216875,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4443375.0
+        },
+        {
+          "elapsed_ns": 22442834,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4488566.8
+        },
+        {
+          "elapsed_ns": 22582458,
+          "iterations": 5,
+          "checksum": 1279.9999993394456,
+          "ns_per_op": 4516491.6
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 7388819.333333333,
+      "min_ns": 7312889.0,
+      "max_ns": 7456778.0,
+      "mad_ns": 67958.66666666698,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 21938667,
+          "iterations": 3,
+          "checksum": 767.9999996049737,
+          "ns_per_op": 7312889.0
+        },
+        {
+          "elapsed_ns": 22166458,
+          "iterations": 3,
+          "checksum": 767.9999996049737,
+          "ns_per_op": 7388819.333333333
+        },
+        {
+          "elapsed_ns": 22370334,
+          "iterations": 3,
+          "checksum": 767.9999996049737,
+          "ns_per_op": 7456778.0
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 5884354.25,
+      "min_ns": 5806937.5,
+      "max_ns": 6265468.75,
+      "mad_ns": 77416.75,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 23537417,
+          "iterations": 4,
+          "checksum": 1023.9999994715557,
+          "ns_per_op": 5884354.25
+        },
+        {
+          "elapsed_ns": 23227750,
+          "iterations": 4,
+          "checksum": 1023.9999994715557,
+          "ns_per_op": 5806937.5
+        },
+        {
+          "elapsed_ns": 25061875,
+          "iterations": 4,
+          "checksum": 1023.9999994715557,
+          "ns_per_op": 6265468.75
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 15387111.0,
+      "min_ns": 9659097.0,
+      "max_ns": 17848194.333333332,
+      "mad_ns": 2461083.333333332,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 46161333,
+          "iterations": 3,
+          "checksum": 767.9999996039554,
+          "ns_per_op": 15387111.0
+        },
+        {
+          "elapsed_ns": 53544583,
+          "iterations": 3,
+          "checksum": 767.9999996039554,
+          "ns_per_op": 17848194.333333332
+        },
+        {
+          "elapsed_ns": 28977291,
+          "iterations": 3,
+          "checksum": 767.9999996039554,
+          "ns_per_op": 9659097.0
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 28798000.0,
+      "min_ns": 28215700.0,
+      "max_ns": 29038200.0,
+      "mad_ns": 240200.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 28215700,
+          "iterations": 1,
+          "checksum": 255.9999998682296,
+          "ns_per_op": 28215700.0
+        },
+        {
+          "elapsed_ns": 28798000,
+          "iterations": 1,
+          "checksum": 255.9999998682296,
+          "ns_per_op": 28798000.0
+        },
+        {
+          "elapsed_ns": 29038200,
+          "iterations": 1,
+          "checksum": 255.9999998682296,
+          "ns_per_op": 29038200.0
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 260406291.0,
+      "min_ns": 258035750.0,
+      "max_ns": 265779083.0,
+      "mad_ns": 2370541.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 258035750,
+          "iterations": 1,
+          "checksum": 255.9999998681715,
+          "ns_per_op": 258035750.0
+        },
+        {
+          "elapsed_ns": 260406291,
+          "iterations": 1,
+          "checksum": 255.9999998681715,
+          "ns_per_op": 260406291.0
+        },
+        {
+          "elapsed_ns": 265779083,
+          "iterations": 1,
+          "checksum": 255.9999998681715,
+          "ns_per_op": 265779083.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 7726764.0,
+      "min_ns": 7443750.0,
+      "max_ns": 8101097.333333333,
+      "mad_ns": 283014.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 23180292,
+          "iterations": 3,
+          "checksum": 767.9999996030344,
+          "ns_per_op": 7726764.0
+        },
+        {
+          "elapsed_ns": 22331250,
+          "iterations": 3,
+          "checksum": 767.9999996030344,
+          "ns_per_op": 7443750.0
+        },
+        {
+          "elapsed_ns": 24303292,
+          "iterations": 3,
+          "checksum": 767.9999996030344,
+          "ns_per_op": 8101097.333333333
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_restart_5",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 14837650.0,
+      "min_ns": 14762100.0,
+      "max_ns": 15143500.0,
+      "mad_ns": 75550.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 304,
+      "restart": 5,
+      "restart_count": 60,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 29524200,
+          "iterations": 2,
+          "checksum": 511.9999997364593,
+          "ns_per_op": 14762100.0
+        },
+        {
+          "elapsed_ns": 29675300,
+          "iterations": 2,
+          "checksum": 511.9999997364593,
+          "ns_per_op": 14837650.0
+        },
+        {
+          "elapsed_ns": 30287000,
+          "iterations": 2,
+          "checksum": 511.9999997364593,
+          "ns_per_op": 15143500.0
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 7,
+      "median_ns": 2981006.0,
+      "min_ns": 2937476.1428571427,
+      "max_ns": 3015988.1428571427,
+      "mad_ns": 34982.142857142724,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 21111917,
+          "iterations": 7,
+          "checksum": 1791.9999992174908,
+          "ns_per_op": 3015988.1428571427
+        },
+        {
+          "elapsed_ns": 20867042,
+          "iterations": 7,
+          "checksum": 1791.9999992174908,
+          "ns_per_op": 2981006.0
+        },
+        {
+          "elapsed_ns": 20562333,
+          "iterations": 7,
+          "checksum": 1791.9999992174908,
+          "ns_per_op": 2937476.1428571427
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 6187500.0,
+      "min_ns": 6186775.0,
+      "max_ns": 6402825.0,
+      "mad_ns": 725.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 24750000,
+          "iterations": 4,
+          "checksum": 1023.9999995528542,
+          "ns_per_op": 6187500.0
+        },
+        {
+          "elapsed_ns": 24747100,
+          "iterations": 4,
+          "checksum": 1023.9999995528542,
+          "ns_per_op": 6186775.0
+        },
+        {
+          "elapsed_ns": 25611300,
+          "iterations": 4,
+          "checksum": 1023.9999995528542,
+          "ns_per_op": 6402825.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 7,
+      "median_ns": 3118113.1428571427,
+      "min_ns": 3059946.4285714286,
+      "max_ns": 3174369.0,
+      "mad_ns": 56255.857142857276,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 22220583,
+          "iterations": 7,
+          "checksum": 1791.9999992174905,
+          "ns_per_op": 3174369.0
+        },
+        {
+          "elapsed_ns": 21826792,
+          "iterations": 7,
+          "checksum": 1791.9999992174905,
+          "ns_per_op": 3118113.1428571427
+        },
+        {
+          "elapsed_ns": 21419625,
+          "iterations": 7,
+          "checksum": 1791.9999992174905,
+          "ns_per_op": 3059946.4285714286
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 106838542.0,
+      "min_ns": 106367958.0,
+      "max_ns": 107121875.0,
+      "mad_ns": 283333.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 106367958,
+          "iterations": 1,
+          "checksum": 255.99999988821335,
+          "ns_per_op": 106367958.0
+        },
+        {
+          "elapsed_ns": 106838542,
+          "iterations": 1,
+          "checksum": 255.99999988821335,
+          "ns_per_op": 106838542.0
+        },
+        {
+          "elapsed_ns": 107121875,
+          "iterations": 1,
+          "checksum": 255.99999988821335,
+          "ns_per_op": 107121875.0
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 12,
+      "median_ns": 1820305.5833333333,
+      "min_ns": 1790500.0,
+      "max_ns": 1942423.5833333333,
+      "mad_ns": 29805.583333333256,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 23309083,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1942423.5833333333
+        },
+        {
+          "elapsed_ns": 21843667,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1820305.5833333333
+        },
+        {
+          "elapsed_ns": 21486000,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1790500.0
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 12,
+      "median_ns": 1701746.5,
+      "min_ns": 1698069.4166666667,
+      "max_ns": 1798763.9166666667,
+      "mad_ns": 3677.0833333332557,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 20376833,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1698069.4166666667
+        },
+        {
+          "elapsed_ns": 20420958,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1701746.5
+        },
+        {
+          "elapsed_ns": 21585167,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1798763.9166666667
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 11886450.0,
+      "min_ns": 11850650.0,
+      "max_ns": 13232350.0,
+      "mad_ns": 35800.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 23701300,
+          "iterations": 2,
+          "checksum": 511.9999997764265,
+          "ns_per_op": 11850650.0
+        },
+        {
+          "elapsed_ns": 23772900,
+          "iterations": 2,
+          "checksum": 511.9999997764265,
+          "ns_per_op": 11886450.0
+        },
+        {
+          "elapsed_ns": 26464700,
+          "iterations": 2,
+          "checksum": 511.9999997764265,
+          "ns_per_op": 13232350.0
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 12,
+      "median_ns": 1785666.6666666667,
+      "min_ns": 1782263.8333333333,
+      "max_ns": 1827795.1666666667,
+      "mad_ns": 3402.8333333334886,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 21428000,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1785666.6666666667
+        },
+        {
+          "elapsed_ns": 21387166,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1782263.8333333333
+        },
+        {
+          "elapsed_ns": 21933542,
+          "iterations": 12,
+          "checksum": 3071.999998658553,
+          "ns_per_op": 1827795.1666666667
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 3905150.0,
+      "min_ns": 3865375.0,
+      "max_ns": 3999266.6,
+      "mad_ns": 39775.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 19525750,
+          "iterations": 5,
+          "checksum": 1279.9999994410668,
+          "ns_per_op": 3905150.0
+        },
+        {
+          "elapsed_ns": 19326875,
+          "iterations": 5,
+          "checksum": 1279.9999994410668,
+          "ns_per_op": 3865375.0
+        },
+        {
+          "elapsed_ns": 19996333,
+          "iterations": 5,
+          "checksum": 1279.9999994410668,
+          "ns_per_op": 3999266.6
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 12088104.0,
+      "min_ns": 11757041.5,
+      "max_ns": 12319583.5,
+      "mad_ns": 231479.5,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 23514083,
+          "iterations": 2,
+          "checksum": 511.99999977642676,
+          "ns_per_op": 11757041.5
+        },
+        {
+          "elapsed_ns": 24639167,
+          "iterations": 2,
+          "checksum": 511.99999977642676,
+          "ns_per_op": 12319583.5
+        },
+        {
+          "elapsed_ns": 24176208,
+          "iterations": 2,
+          "checksum": 511.99999977642676,
+          "ns_per_op": 12088104.0
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_restart_5_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 9,
+      "median_ns": 2355226.777777778,
+      "min_ns": 2321787.0,
+      "max_ns": 2462250.0,
+      "mad_ns": 33439.777777777985,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 122,
+      "restart": 5,
+      "restart_count": 24,
+      "logical_workspace_bytes": 29104,
+      "samples": [
+        {
+          "elapsed_ns": 21197041,
+          "iterations": 9,
+          "checksum": 2303.999998993915,
+          "ns_per_op": 2355226.777777778
+        },
+        {
+          "elapsed_ns": 20896083,
+          "iterations": 9,
+          "checksum": 2303.999998993915,
+          "ns_per_op": 2321787.0
+        },
+        {
+          "elapsed_ns": 22160250,
+          "iterations": 9,
+          "checksum": 2303.999998993915,
+          "ns_per_op": 2462250.0
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 7,
+      "median_ns": 3374095.285714286,
+      "min_ns": 3206666.714285714,
+      "max_ns": 3386244.0,
+      "mad_ns": 12148.714285714086,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 22446667,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 3206666.714285714
+        },
+        {
+          "elapsed_ns": 23703708,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 3386244.0
+        },
+        {
+          "elapsed_ns": 23618667,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 3374095.285714286
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 5514114.5,
+      "min_ns": 5382062.5,
+      "max_ns": 5671895.75,
+      "mad_ns": 132052.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 22056458,
+          "iterations": 4,
+          "checksum": 1024.0000007788594,
+          "ns_per_op": 5514114.5
+        },
+        {
+          "elapsed_ns": 22687583,
+          "iterations": 4,
+          "checksum": 1024.0000007788594,
+          "ns_per_op": 5671895.75
+        },
+        {
+          "elapsed_ns": 21528250,
+          "iterations": 4,
+          "checksum": 1024.0000007788594,
+          "ns_per_op": 5382062.5
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 4713816.6,
+      "min_ns": 4689250.0,
+      "max_ns": 4845591.8,
+      "mad_ns": 24566.599999999627,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 23446250,
+          "iterations": 5,
+          "checksum": 1280.0000009735743,
+          "ns_per_op": 4689250.0
+        },
+        {
+          "elapsed_ns": 24227959,
+          "iterations": 5,
+          "checksum": 1280.0000009735743,
+          "ns_per_op": 4845591.8
+        },
+        {
+          "elapsed_ns": 23569083,
+          "iterations": 5,
+          "checksum": 1280.0000009735743,
+          "ns_per_op": 4713816.6
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 7,
+      "median_ns": 3145494.0,
+      "min_ns": 2979035.714285714,
+      "max_ns": 3197083.285714286,
+      "mad_ns": 51589.285714285914,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 22379583,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 3197083.285714286
+        },
+        {
+          "elapsed_ns": 20853250,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 2979035.714285714
+        },
+        {
+          "elapsed_ns": 22018458,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 3145494.0
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 17093450.0,
+      "min_ns": 16981900.0,
+      "max_ns": 17370050.0,
+      "mad_ns": 111550.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 33963800,
+          "iterations": 2,
+          "checksum": 512.000000389429,
+          "ns_per_op": 16981900.0
+        },
+        {
+          "elapsed_ns": 34186900,
+          "iterations": 2,
+          "checksum": 512.000000389429,
+          "ns_per_op": 17093450.0
+        },
+        {
+          "elapsed_ns": 34740100,
+          "iterations": 2,
+          "checksum": 512.000000389429,
+          "ns_per_op": 17370050.0
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 7,
+      "median_ns": 3354869.0,
+      "min_ns": 3241273.714285714,
+      "max_ns": 3474958.4285714286,
+      "mad_ns": 113595.28571428591,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 22688916,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 3241273.714285714
+        },
+        {
+          "elapsed_ns": 23484083,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 3354869.0
+        },
+        {
+          "elapsed_ns": 24324709,
+          "iterations": 7,
+          "checksum": 1792.0000013630035,
+          "ns_per_op": 3474958.4285714286
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 6930479.0,
+      "min_ns": 6192520.75,
+      "max_ns": 6931239.5,
+      "mad_ns": 760.5,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 27724958,
+          "iterations": 4,
+          "checksum": 1024.0000007788592,
+          "ns_per_op": 6931239.5
+        },
+        {
+          "elapsed_ns": 24770083,
+          "iterations": 4,
+          "checksum": 1024.0000007788592,
+          "ns_per_op": 6192520.75
+        },
+        {
+          "elapsed_ns": 27721916,
+          "iterations": 4,
+          "checksum": 1024.0000007788592,
+          "ns_per_op": 6930479.0
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 33450291.0,
+      "min_ns": 32632375.0,
+      "max_ns": 33622583.0,
+      "mad_ns": 172292.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 32632375,
+          "iterations": 1,
+          "checksum": 256.00000019471474,
+          "ns_per_op": 32632375.0
+        },
+        {
+          "elapsed_ns": 33622583,
+          "iterations": 1,
+          "checksum": 256.00000019471474,
+          "ns_per_op": 33622583.0
+        },
+        {
+          "elapsed_ns": 33450291,
+          "iterations": 1,
+          "checksum": 256.00000019471474,
+          "ns_per_op": 33450291.0
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 252108666.0,
+      "min_ns": 246415083.0,
+      "max_ns": 289847708.0,
+      "mad_ns": 5693583.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 289847708,
+          "iterations": 1,
+          "checksum": 256.00000019471474,
+          "ns_per_op": 289847708.0
+        },
+        {
+          "elapsed_ns": 252108666,
+          "iterations": 1,
+          "checksum": 256.00000019471474,
+          "ns_per_op": 252108666.0
+        },
+        {
+          "elapsed_ns": 246415083,
+          "iterations": 1,
+          "checksum": 256.00000019471474,
+          "ns_per_op": 246415083.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 4,
+      "median_ns": 5520250.0,
+      "min_ns": 5163708.25,
+      "max_ns": 6006396.0,
+      "mad_ns": 356541.75,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 22081000,
+          "iterations": 4,
+          "checksum": 1024.0000007788594,
+          "ns_per_op": 5520250.0
+        },
+        {
+          "elapsed_ns": 24025584,
+          "iterations": 4,
+          "checksum": 1024.0000007788594,
+          "ns_per_op": 6006396.0
+        },
+        {
+          "elapsed_ns": 20654833,
+          "iterations": 4,
+          "checksum": 1024.0000007788594,
+          "ns_per_op": 5163708.25
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_restart_20",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 9947500.0,
+      "min_ns": 9850266.666666666,
+      "max_ns": 10358233.333333334,
+      "mad_ns": 97233.33333333395,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 160,
+      "restart": 20,
+      "restart_count": 7,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 31074700,
+          "iterations": 3,
+          "checksum": 768.000000584144,
+          "ns_per_op": 10358233.333333334
+        },
+        {
+          "elapsed_ns": 29842500,
+          "iterations": 3,
+          "checksum": 768.000000584144,
+          "ns_per_op": 9947500.0
+        },
+        {
+          "elapsed_ns": 29550800,
+          "iterations": 3,
+          "checksum": 768.000000584144,
+          "ns_per_op": 9850266.666666666
+        }
+      ]
+    },
+    {
+      "implementation": "typescript",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 36582458.0,
+      "min_ns": 28553209.0,
+      "max_ns": 81496375.0,
+      "mad_ns": 8029249.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 28553209,
+          "iterations": 1,
+          "checksum": 256.0000000937524,
+          "ns_per_op": 28553209.0
+        },
+        {
+          "elapsed_ns": 36582458,
+          "iterations": 1,
+          "checksum": 256.0000000937524,
+          "ns_per_op": 36582458.0
+        },
+        {
+          "elapsed_ns": 81496375,
+          "iterations": 1,
+          "checksum": 256.0000000937524,
+          "ns_per_op": 81496375.0
+        }
+      ]
+    },
+    {
+      "implementation": "python",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 1,
+      "median_ns": 566756583.0,
+      "min_ns": 311005500.0,
+      "max_ns": 575799917.0,
+      "mad_ns": 9043334.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 575799917,
+          "iterations": 1,
+          "checksum": 256.0000000937524,
+          "ns_per_op": 575799917.0
+        },
+        {
+          "elapsed_ns": 566756583,
+          "iterations": 1,
+          "checksum": 256.0000000937524,
+          "ns_per_op": 566756583.0
+        },
+        {
+          "elapsed_ns": 311005500,
+          "iterations": 1,
+          "checksum": 256.0000000937524,
+          "ns_per_op": 311005500.0
+        }
+      ]
+    },
+    {
+      "implementation": "go",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 6,
+      "median_ns": 4668479.166666667,
+      "min_ns": 4053576.3333333335,
+      "max_ns": 4748465.166666667,
+      "mad_ns": 79986.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 28490791,
+          "iterations": 6,
+          "checksum": 1536.000000562514,
+          "ns_per_op": 4748465.166666667
+        },
+        {
+          "elapsed_ns": 24321458,
+          "iterations": 6,
+          "checksum": 1536.000000562514,
+          "ns_per_op": 4053576.3333333335
+        },
+        {
+          "elapsed_ns": 28010875,
+          "iterations": 6,
+          "checksum": 1536.000000562514,
+          "ns_per_op": 4668479.166666667
+        }
+      ]
+    },
+    {
+      "implementation": "fsharp",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 3,
+      "median_ns": 15293166.666666666,
+      "min_ns": 10632133.333333334,
+      "max_ns": 17867466.666666668,
+      "mad_ns": 2574300.000000002,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 53602400,
+          "iterations": 3,
+          "checksum": 768.0000002812566,
+          "ns_per_op": 17867466.666666668
+        },
+        {
+          "elapsed_ns": 45879500,
+          "iterations": 3,
+          "checksum": 768.0000002812566,
+          "ns_per_op": 15293166.666666666
+        },
+        {
+          "elapsed_ns": 31896400,
+          "iterations": 3,
+          "checksum": 768.0000002812566,
+          "ns_per_op": 10632133.333333334
+        }
+      ]
+    },
+    {
+      "implementation": "c",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 10,
+      "median_ns": 2882241.6,
+      "min_ns": 2448795.8,
+      "max_ns": 6475912.5,
+      "mad_ns": 433445.8000000003,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 64759125,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 6475912.5
+        },
+        {
+          "elapsed_ns": 24487958,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 2448795.8
+        },
+        {
+          "elapsed_ns": 28822416,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 2882241.6
+        }
+      ]
+    },
+    {
+      "implementation": "cpp",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 10,
+      "median_ns": 2581670.9,
+      "min_ns": 2556570.9,
+      "max_ns": 5243025.0,
+      "mad_ns": 25100.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 52430250,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 5243025.0
+        },
+        {
+          "elapsed_ns": 25816709,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 2581670.9
+        },
+        {
+          "elapsed_ns": 25565709,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 2556570.9
+        }
+      ]
+    },
+    {
+      "implementation": "julia",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 5,
+      "median_ns": 5269783.2,
+      "min_ns": 5156491.6,
+      "max_ns": 5471800.0,
+      "mad_ns": 113291.60000000056,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 26348916,
+          "iterations": 5,
+          "checksum": 1280.0000004687613,
+          "ns_per_op": 5269783.2
+        },
+        {
+          "elapsed_ns": 25782458,
+          "iterations": 5,
+          "checksum": 1280.0000004687613,
+          "ns_per_op": 5156491.6
+        },
+        {
+          "elapsed_ns": 27359000,
+          "iterations": 5,
+          "checksum": 1280.0000004687613,
+          "ns_per_op": 5471800.0
+        }
+      ]
+    },
+    {
+      "implementation": "wasm",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 6,
+      "median_ns": 4730132.0,
+      "min_ns": 3625298.6666666665,
+      "max_ns": 4844118.0,
+      "mad_ns": 113986.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 29064708,
+          "iterations": 6,
+          "checksum": 1536.000000562514,
+          "ns_per_op": 4844118.0
+        },
+        {
+          "elapsed_ns": 21751792,
+          "iterations": 6,
+          "checksum": 1536.000000562514,
+          "ns_per_op": 3625298.6666666665
+        },
+        {
+          "elapsed_ns": 28380792,
+          "iterations": 6,
+          "checksum": 1536.000000562514,
+          "ns_per_op": 4730132.0
+        }
+      ]
+    },
+    {
+      "implementation": "rust",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 7,
+      "median_ns": 4769208.285714285,
+      "min_ns": 4681904.857142857,
+      "max_ns": 7281851.142857143,
+      "mad_ns": 87303.42857142817,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 50972958,
+          "iterations": 7,
+          "checksum": 1792.0000006562664,
+          "ns_per_op": 7281851.142857143
+        },
+        {
+          "elapsed_ns": 33384458,
+          "iterations": 7,
+          "checksum": 1792.0000006562664,
+          "ns_per_op": 4769208.285714285
+        },
+        {
+          "elapsed_ns": 32773334,
+          "iterations": 7,
+          "checksum": 1792.0000006562664,
+          "ns_per_op": 4681904.857142857
+        }
+      ]
+    },
+    {
+      "implementation": "csharp",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 2,
+      "median_ns": 16166700.0,
+      "min_ns": 14740450.0,
+      "max_ns": 29414500.0,
+      "mad_ns": 1426250.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 32333400,
+          "iterations": 2,
+          "checksum": 512.0000001875045,
+          "ns_per_op": 16166700.0
+        },
+        {
+          "elapsed_ns": 29480900,
+          "iterations": 2,
+          "checksum": 512.0000001875045,
+          "ns_per_op": 14740450.0
+        },
+        {
+          "elapsed_ns": 58829000,
+          "iterations": 2,
+          "checksum": 512.0000001875045,
+          "ns_per_op": 29414500.0
+        }
+      ]
+    },
+    {
+      "implementation": "assembly",
+      "operation": "gmres_restart_20_jacobi",
+      "size": 16,
+      "status": "passed",
+      "iterations": 10,
+      "median_ns": 2626712.5,
+      "min_ns": 2573837.5,
+      "max_ns": 2874170.9,
+      "mad_ns": 52875.0,
+      "nnz": 1216,
+      "unknowns": 256,
+      "logical_dense_bytes": 524288,
+      "logical_csr_bytes": 21512,
+      "contrast": 1,
+      "solver_iterations": 108,
+      "restart": 20,
+      "restart_count": 5,
+      "logical_workspace_bytes": 63424,
+      "samples": [
+        {
+          "elapsed_ns": 26267125,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 2626712.5
+        },
+        {
+          "elapsed_ns": 28741709,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 2874170.9
+        },
+        {
+          "elapsed_ns": 25738375,
+          "iterations": 10,
+          "checksum": 2560.000000937527,
+          "ns_per_op": 2573837.5
+        }
+      ]
+    }
+  ],
+  "profiles": []
+}

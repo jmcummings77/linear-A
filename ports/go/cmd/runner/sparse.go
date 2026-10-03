@@ -12,7 +12,11 @@ import (
 )
 
 func sparseRun(args []string) error {
-	if len(args) != 11 {
+	expected := 11
+	if len(args) > 1 && args[1] == "gmres" {
+		expected = 12
+	}
+	if len(args) != expected {
 		return errors.New("invalid sparse protocol")
 	}
 	op := args[1]
@@ -33,7 +37,7 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
-	if (op != "spmv" && op != "dense" && op != "cg") || jacobi > 1 || capture > 1 {
+	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres") || jacobi > 1 || capture > 1 {
 		return errors.New("invalid sparse operation/options")
 	}
 	raw, e := io.ReadAll(os.Stdin)
@@ -42,7 +46,7 @@ func sparseRun(args []string) error {
 	}
 	tokens := strings.Fields(string(raw))
 	count := cols
-	if op == "cg" {
+	if op == "cg" || op == "gmres" {
 		count = rows
 	}
 	if len(tokens) != rows+1+2*nnz+count {
@@ -120,6 +124,36 @@ func sparseRun(args []string) error {
 				return nil, e
 			}
 			return r.Values(), nil
+		}
+
+		if op == "gmres" {
+			restart, e := strconv.Atoi(args[11])
+			if e != nil {
+				return nil, e
+			}
+			r, e := a.GMRES(b, matrix.GMRESOptions{Restart: restart, RelativeTolerance: rtol, AbsoluteTolerance: atol, MaxIterations: limit, Jacobi: jacobi != 0, Capture: capture != 0})
+			if e != nil {
+				return nil, e
+			}
+			if iterations > 0 {
+				if !r.Converged {
+					return nil, errors.New("benchmark GMRES did not converge: " + r.Reason)
+				}
+				return r.X, nil
+			}
+			reason := map[string]int{"converged": 0, "iteration_limit": 1, "breakdown": 2, "nonfinite": 3, "stagnation": 4}[r.Reason]
+			out := []float64{float64(reason), float64(r.Iterations), float64(len(r.Residuals))}
+			out = append(out, r.X...)
+			out = append(out, r.Residuals...)
+			out = append(out, r.EstimatedResiduals...)
+			out = append(out, float64(len(r.Restarts)))
+			for _, v := range r.Restarts {
+				out = append(out, float64(v))
+			}
+			for _, f := range r.Iterates {
+				out = append(out, f...)
+			}
+			return out, nil
 		}
 		r, e := a.ConjugateGradient(b, matrix.CGOptions{RelativeTolerance: rtol, AbsoluteTolerance: atol, MaxIterations: limit, Jacobi: jacobi != 0, Capture: capture != 0})
 		if e != nil {

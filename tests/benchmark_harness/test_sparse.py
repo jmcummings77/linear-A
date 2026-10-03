@@ -1,10 +1,12 @@
 import copy
 import importlib.util
 import json
+import re
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'benchmarks'))
 from sparse_reference import fixtures,check_result,diffusion,multiply
@@ -41,3 +43,19 @@ class SparseHarnessTests(unittest.TestCase):
             self.assertNotIn('</script><script>bad()',html)
             self.assertIn('Copyright © 2026 J.M. Cummings.',html)
         self.assertEqual(data,original)
+
+    def test_rerender_preserves_supplied_live_bundle_without_reading_current_build(self):
+        data={'results':[], 'implementations':[{'id':'wasm','name':'WebAssembly','status':'passed'}], 'machine':{}}
+        live={'available':True,'worker_source':'// previously verified worker </script>','wasm_base64':'saved-bytes','sha256':'saved-digest'}
+        original=copy.deepcopy(live)
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'index.html'
+            with patch.object(harness,'sanitize_live_sources',side_effect=AssertionError('must preserve saved bundle')):
+                harness.render(data,path,live_override=live)
+            html=path.read_text()
+            embedded=re.search(r'<script id="live" type="application/json">(.*?)</script>',html,re.S).group(1)
+            self.assertEqual(json.loads(embedded),live)
+            self.assertIn('id="report-design"',html)
+            self.assertIn('linear-a-report-theme',html)
+            self.assertNotIn('linear-a-theme',html)
+        self.assertEqual(live,original)

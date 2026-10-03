@@ -485,3 +485,5 @@ export class Matrix {
     return n ? finite(this.data[0] + this.data[Math.floor(n / 2)] + this.data[n - 1]) : 0;
   }
 }
+
+export type {GMRESOptions,GMRESResult} from "./gmres.js";

@@ -28,6 +28,10 @@ int main(void) {
     matrix vector={0},product={0};double vector_values[]={1,2};
     if(!failed)failed=m_from_array(2,1,vector_values,&vector)||m_csr_matvec(&sparse,&vector,&product);
     if(!failed)failed=product.values[0]!=6||product.values[1]!=7;
+    matrix_gmres_result gm={0};
+    if(!failed)failed=m_csr_gmres(&sparse,rhs,2,2,1e-10,0,1000,true,true,&gm);
+    if(!failed)failed=gm.reason!=0||fabs(gm.x[0]-1)>1e-12||fabs(gm.x[1]-2)>1e-12;
+    m_gmres_free(&gm);
     m_free(&vector);m_free(&product);m_cg_free(&cg);m_csr_free(&sparse);
     if (!failed) puts("solution: 1, 2");
     return failed;

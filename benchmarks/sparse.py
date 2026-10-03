@@ -16,16 +16,24 @@ import time
 import run
 from publication import PublicSanitizer
 from report import json_for_html
-from sparse_reference import fixtures, protocol, check_result, diffusion, multiply
+from report_design import apply_report_design
+from sparse_reference import fixtures as csr_fixtures, protocol, check_result as check_csr, diffusion, multiply
+from gmres_reference import fixtures as gmres_fixtures, check_result as check_gmres
 from wasm_publication import sanitize_live_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
 
 
-def verify(implementation):
+def fixtures():
+    return csr_fixtures()+gmres_fixtures()
+
+def check_result(actual,case):
+    return check_gmres(actual,case) if case["op"]=="gmres" else check_csr(actual,case)
+
+def verify(implementation, cases=None):
     checks = []
-    for case in fixtures():
+    for case in fixtures() if cases is None else cases:
         try:
             args, data = protocol(case)
             result = run.execute(implementation['runner'] + args, stdin=data, env=implementation['env'], timeout=90)
@@ -98,11 +106,11 @@ def benchmark(implementations, sizes, samples):
     return results
 
 
-def render(data, destination):
+def render(data, destination, *, live_override=None):
     sanitizer = PublicSanitizer()
     data = sanitizer.report(data)
-    live = dict(available=False, reason='No verified WebAssembly build is available.')
-    if any(i['id'] == 'wasm' and i['status'] == 'passed' for i in data['implementations']):
+    live = live_override if live_override is not None else dict(available=False, reason='No verified WebAssembly build is available.')
+    if live_override is None and any(i['id'] == 'wasm' and i['status'] == 'passed' for i in data['implementations']):
         sources = {'module_source': (ROOT / '.build/wasm/matrix.mjs').read_text(),
                    'wrapper_source': (ROOT / 'ports/wasm/matrix.mjs').read_text(),
                    'heat_source': (HERE / 'sparse-heat.mjs').read_text(),
@@ -118,10 +126,12 @@ def render(data, destination):
     # One pass: embedded source/data cannot introduce replacement markers.
     import re
     replacements = {'DATA': json_for_html(data), 'LIVE': json_for_html(live), 'SCRIPT': (HERE / 'sparse-report.mjs').read_text()}
+    if data.get('suite') == 'gmres-transport-v1':
+        template = template.replace('<title>Sparse solvers · linear-A</title>', '<title>Restarted GMRES · linear-A</title>').replace('Saved benchmark / Sparse systems', 'Saved benchmark / restarted GMRES').replace('<h1>Sparse systems</h1>', '<h1>Restarted GMRES</h1>').replace('Fewer entries. Less work. Compare sparse matrix operations across languages, then explore how an iterative solver reaches equilibrium.', 'Compare restart lengths, runtime and workspace across eleven implementations. Explore how GMRES solves a nonsymmetric flow and diffusion system.')
     html = re.sub(r'@@(DATA|LIVE|SCRIPT)@@', lambda m: replacements[m[1]], template)
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(html)
+    destination.write_text(apply_report_design(html))
 
 
 def main():

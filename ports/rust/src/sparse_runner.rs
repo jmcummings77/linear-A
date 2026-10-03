@@ -1,9 +1,15 @@
-use linear_a::{CGOptions, CSRMatrix, Matrix};
+use linear_a::{CGOptions, CSRMatrix, GMRESOptions, Matrix};
 use std::io::{self, Read};
 use std::time::Instant;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub fn run(args: &[String]) -> Result<()> {
-    if args.len() != 11 {
+    if args.len()
+        != (if args.get(1).map(|v| v.as_str()) == Some("gmres") {
+            12
+        } else {
+            11
+        })
+    {
         return Err("invalid sparse protocol".into());
     }
     let op = args[1].as_str();
@@ -16,13 +22,17 @@ pub fn run(args: &[String]) -> Result<()> {
     let limit: usize = args[8].parse()?;
     let jacobi: usize = args[9].parse()?;
     let capture: usize = args[10].parse()?;
-    if !["spmv", "dense", "cg"].contains(&op) || jacobi > 1 || capture > 1 {
+    if !["spmv", "dense", "cg", "gmres"].contains(&op) || jacobi > 1 || capture > 1 {
         return Err("invalid sparse options".into());
     }
     let mut raw = String::new();
     io::stdin().read_to_string(&mut raw)?;
     let tokens: Vec<&str> = raw.split_whitespace().collect();
-    let count = if op == "cg" { rows } else { cols };
+    let count = if op == "cg" || op == "gmres" {
+        rows
+    } else {
+        cols
+    };
     if tokens.len()
         != rows
             .checked_add(1)
@@ -66,6 +76,42 @@ pub fn run(args: &[String]) -> Result<()> {
         }
         if let Some((ref d, ref right)) = dense {
             return Ok(d.multiply(right)?.values().to_vec());
+        }
+        if op == "gmres" {
+            let r = a.gmres(
+                &b,
+                GMRESOptions {
+                    restart: args[11].parse()?,
+                    relative_tolerance: rtol,
+                    absolute_tolerance: atol,
+                    max_iterations: limit,
+                    jacobi: jacobi != 0,
+                    capture: capture != 0,
+                },
+            )?;
+            if iterations > 0 {
+                if !r.converged {
+                    return Err("benchmark GMRES did not converge".into());
+                }
+                return Ok(r.x);
+            }
+            let reason = match r.reason {
+                "converged" => 0,
+                "iteration_limit" => 1,
+                "breakdown" => 2,
+                "nonfinite" => 3,
+                _ => 4,
+            };
+            let mut out = vec![reason as f64, r.iterations as f64, r.residuals.len() as f64];
+            out.extend(r.x);
+            out.extend(r.residuals);
+            out.extend(r.estimated_residuals);
+            out.push(r.restarts.len() as f64);
+            out.extend(r.restarts.iter().map(|&v| v as f64));
+            for frame in r.iterates {
+                out.extend(frame);
+            }
+            return Ok(out);
         }
         let r = a.conjugate_gradient(
             &b,

@@ -1,3 +1,4 @@
+import {gmres, type GMRESOptions} from "./gmres.js";
 /** Canonical CSR storage; zero-based, sorted unique column indices in each row. */
 export interface CGResult { x:number[]; converged:boolean; iterations:number; reason:string; residuals:number[]; iterates:number[][]; }
 export interface CGOptions { rtol?:number; atol?:number; maxIterations?:number; jacobi?:boolean; capture?:boolean; }
@@ -52,4 +53,5 @@ export class CSRMatrix {
     }
     return result('iteration_limit');
   }
+  gmres(b:ArrayLike<number>,options:GMRESOptions={}){return gmres(this,b,options);}
 }

@@ -22,3 +22,6 @@ var sparse = new CSRMatrix(2,2,new[]{0,2,4},new[]{0,1,0,1},new[]{4.0,1,1,3});
 var product = sparse.Matvec(new[]{1.0,2});
 var cg = sparse.ConjugateGradient(new[]{6.0,7},jacobi:true,capture:true);
 if(product[0]!=6 || product[1]!=7 || !cg.Converged || Math.Abs(cg.X[0]-1)>1e-12 || Math.Abs(cg.X[1]-2)>1e-12)throw new Exception("incorrect sparse solver");
+
+var gm = sparse.Gmres(new[]{6.0,7}, restart:2, jacobi:true, capture:true);
+if(!gm.Converged || Math.Abs(gm.X[0]-1)>1e-12 || Math.Abs(gm.X[1]-2)>1e-12)throw new Exception("incorrect GMRES");

@@ -8,7 +8,7 @@ namespace linear_A;
 public sealed record CGResult(double[] X, bool Converged, int Iterations, string Reason, double[] Residuals, double[][] Iterates);
 
 /// <summary>Canonical compressed sparse rows; sorted unique zero-based column indices.</summary>
-public sealed class CSRMatrix
+public sealed partial class CSRMatrix
 {
     private readonly int[] offsets, indices;
     private readonly double[] values;

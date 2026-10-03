@@ -9,4 +9,4 @@ description = "A small dependency-free float64 matrix library"
 requires-python = ">=3.9"
 
 [tool.setuptools]
-py-modules = ["matrix", "general_eigen", "solve", "svd", "sparse"]
+py-modules = ["matrix", "general_eigen", "solve", "svd", "sparse", "gmres"]

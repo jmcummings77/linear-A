@@ -4,20 +4,23 @@ import vm from 'node:vm';
 import {test} from 'node:test';
 const base=new URL('../',import.meta.url),read=p=>readFileSync(new URL(p,base),'utf8');
 const report=JSON.parse(read('benchmarks/reports/wasm-profile-check/results.json'));
-function harness(){
+function harness({mobile=false}={}){
  const nodes=new Map(),downloads=[],blobs=new Map();let next=0;
  class Element{
-  constructor(tag='div'){this.tagName=tag;this.children=[];this.value='';this.textContent='';this.style={};this.clientWidth=800;this.width=800;this.height=180;}
+  constructor(tag='div'){this.tagName=tag;this.children=[];this.value='';this.textContent='';this.style={};this.attributes={};this.clientWidth=800;this.width=800;this.height=180;}
   append(...children){this.children.push(...children);if(this.tagName==='select'&&this.value===''&&this.children.length)this.value=String(this.children[0].value);}
   replaceChildren(...children){this.children=[];if(this.tagName==='select')this.value='';this.append(...children);}
   get options(){return this.children;}
+  setAttribute(name,value){this.attributes[name]=value;}
+  focus(){this.focused=true;}
+  scrollIntoView(){this.scrolled=true;}
   click(){if(this.tagName==='a')downloads.push({href:this.href,download:this.download});}
   getContext(){return new Proxy({},{get:()=>()=>{},set:()=>true});}
  }
- const selectIds=['baseline','candidate','implementation','operation','size','visibility','sort','theme'];
+ const selectIds=['baseline','candidate','implementation','operation','size','visibility','sort','report-theme'];
  const get=id=>{if(!nodes.has(id))nodes.set(id,new Element(selectIds.includes(id)?'select':'div'));return nodes.get(id);};
- get('snapshots').textContent=JSON.stringify([{label:'baseline',data:report},{label:'candidate',data:report}]);get('visibility').value='all';get('sort').value='identity';get('theme').value='system';
- const context={document:{getElementById:get,createElement:t=>new Element(t),documentElement:{dataset:{}}},Blob,URL:{createObjectURL:b=>{const u='blob:'+ ++next;blobs.set(u,b);return u;},revokeObjectURL:u=>blobs.delete(u)},localStorage:{getItem:()=>null,setItem(){}},matchMedia:()=>({matches:false,addEventListener(){}}),getComputedStyle:()=>({getPropertyValue:()=> '#888'}),devicePixelRatio:1,addEventListener(){},setTimeout(){}};
+ get('snapshots').textContent=JSON.stringify([{label:'baseline',data:report},{label:'candidate',data:report}]);get('visibility').value='all';get('sort').value='identity';
+ const context={document:{getElementById:get,createElement:t=>new Element(t),documentElement:{dataset:{}}},Blob,URL:{createObjectURL:b=>{const u='blob:'+ ++next;blobs.set(u,b);return u;},revokeObjectURL:u=>blobs.delete(u)},matchMedia:()=>({matches:mobile}),getComputedStyle:()=>({getPropertyValue:()=> '#888'}),devicePixelRatio:1,addEventListener(){},setTimeout(){}};
  vm.runInNewContext(read('benchmarks/comparison/model.mjs').replaceAll('export ','')+'\n'+read('benchmarks/comparison/app.mjs'),context);
  return {get,downloads,blobs};
 }
@@ -38,4 +41,22 @@ test('local file handler enforces size limit and metadata conflicts block ratios
  const changed=structuredClone(report);changed.seed++;
  await h.get('candidate-file').onchange({target:{files:[{name:'changed.json',size:100,text:async()=>JSON.stringify(changed)}],value:'file'}});
  assert.match(h.get('blocked').textContent,/seeds differ/);assert.match(h.get('counts').textContent,/0 comparable/);
+});
+test('sample inspection follows a visible workload after filtering and clears an empty selection',()=>{
+ const h=harness(),rows=h.get('rows').children;
+ assert.equal(rows[0].className,'selected');
+ rows[1].children[0].children[0].onclick();
+ assert.equal(rows[0].className,'');assert.equal(rows[1].className,'selected');
+ assert.equal(rows[1].children[0].children[0].attributes['aria-pressed'],'true');
+ const operation=h.get('operation').options.at(-1).value;h.get('operation').value=operation;h.get('operation').onchange();
+ assert.ok(h.get('sample-title').textContent.includes(operation));
+ assert.equal(h.get('rows').children.filter(row=>row.className==='selected').length,1);
+ h.get('operation').value='no recorded operation';h.get('operation').onchange();
+ assert.equal(h.get('rows').children.length,0);assert.match(h.get('sample-title').textContent,/No workloads match/);assert.equal(h.get('sample-values').textContent,'');
+});
+test('mobile workload activation moves to the inspector and provides a return link',()=>{
+ const h=harness({mobile:true});assert.equal(h.get('sample-panel').scrolled,undefined);
+ const button=h.get('rows').children[1].children[0].children[0];button.onclick();
+ assert.equal(h.get('sample-panel').scrolled,true);assert.equal(h.get('sample-heading').focused,true);
+ assert.equal(h.get('sample-back').href,'#'+button.id);
 });

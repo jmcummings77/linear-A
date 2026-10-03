@@ -1,27 +1,35 @@
-/** Steady-state diffusion, with solver iterates (not physical time steps). */
-export function diffusionGrid(size, contrast=0) {
-  if (!Number.isInteger(size) || size < 2 || size > 32 || !Number.isFinite(contrast) || contrast < 0 || contrast > 3) throw new RangeError('invalid diffusion grid');
+/** Steady advection–diffusion; frames are solver iterates, not physical time. */
+export function diffusionGrid(size, contrast=0, {diffusivity=1,speed=0,angle=0}={}) {
+  if (!Number.isInteger(size) || size < 2 || size > 32 || !Number.isFinite(contrast) || contrast < 0 || contrast > 3 || !Number.isFinite(diffusivity)||diffusivity<.01||diffusivity>2||!Number.isFinite(speed)||speed<0||speed>10||!Number.isFinite(angle)||angle< -180||angle>180) throw new RangeError('invalid transport grid');
   const n=size*size, k=Array.from({length:n},(_,i)=>10**(contrast*(i%size)/(size-1)));
-  const offsets=[0], indices=[], values=[], b=Array(n).fill(0);
+  const offsets=[0], indices=[], values=[], b=Array(n).fill(0),theta=angle*Math.PI/180,vx=speed*Math.cos(theta)/(size+1),vy=speed*Math.sin(theta)/(size+1);
   for(let i=0;i<n;i++) {
-    const y=Math.floor(i/size),x=i%size, entries=[];let diagonal=0;
+    const y=Math.floor(i/size),x=i%size, entries=new Map();let diagonal=0;
     for(const [dy,dx] of [[-1,0],[0,-1],[0,1],[1,0]]) {
       const yy=y+dy,xx=x+dx;let weight;
-      if(yy>=0&&yy<size&&xx>=0&&xx<size) {const j=yy*size+xx;weight=Math.sqrt(k[i]*k[j]);entries.push([j,-weight]);}
-      else {weight=k[i];if(yy<0)b[i]+=100*weight;}
+      if(yy>=0&&yy<size&&xx>=0&&xx<size) {const j=yy*size+xx;weight=diffusivity*Math.sqrt(k[i]*k[j]);entries.set(j,-weight);}
+      else {weight=diffusivity*k[i];if(yy<0)b[i]+=100*weight;}
       diagonal+=weight;
     }
-    entries.push([i,diagonal]);entries.sort((a,b)=>a[0]-b[0]);
-    for(const [j,v] of entries){indices.push(j);values.push(v);}offsets.push(values.length);
+    // First-order upwinding for v·grad(T), after multiplying the PDE by h².
+    for(const [component,dy,dx] of [[vx,0,vx>=0?-1:1],[vy,vy>=0?-1:1,0]]) {
+      const weight=Math.abs(component),yy=y+dy,xx=x+dx;diagonal+=weight;
+      if(yy>=0&&yy<size&&xx>=0&&xx<size){const j=yy*size+xx;entries.set(j,(entries.get(j)||0)-weight);}
+      else if(yy<0)b[i]+=100*weight;
+    }
+    entries.set(i,diagonal);
+    for(const [j,v] of [...entries].sort((a,b)=>a[0]-b[0])){indices.push(j);values.push(v);}offsets.push(values.length);
   }
   return {size,n,offsets,indices,values,b};
 }
-export function solveHeat(api,{size=16,contrast=2,jacobi=true,limit=400}={}) {
-  if(typeof jacobi!=='boolean'||!Number.isInteger(limit)||limit<0||limit>800)throw new RangeError('invalid solver settings');
-  const grid=diffusionGrid(size,contrast);
+export function solveHeat(api,{size=16,contrast=2,jacobi=true,limit=400,solver='cg',restart=20,diffusivity=1,speed=0,angle=30}={}) {
+  if(typeof jacobi!=='boolean'||!Number.isInteger(limit)||limit<0||limit>800||!['cg','gmres'].includes(solver)||!Number.isInteger(restart)||restart<1||restart>100)throw new RangeError('invalid solver settings');
+  if(solver==='cg'&&speed!==0)throw new RangeError('CG requires symmetric diffusion: set flow speed to zero or select GMRES.');
+  const grid=diffusionGrid(size,contrast,{diffusivity,speed,angle});
   const a=new api.CSRMatrix(grid.n,grid.n,grid.offsets,grid.indices,grid.values);
   try {
-    const result=a.conjugateGradient(grid.b,{rtol:1e-8,atol:0,maxIterations:limit,jacobi,capture:true});
-    return {...result,size,nnz:grid.values.length,threshold:1e-8*Math.hypot(...grid.b)};
+    const options={restart,rtol:1e-8,atol:0,maxIterations:limit,jacobi,capture:true};
+    const result=solver==='gmres'?a.gmres(grid.b,options):a.conjugateGradient(grid.b,options);
+    return {...result,estimatedResiduals:result.estimatedResiduals||[],restarts:result.restarts||[],solver,restart,speed,angle,diffusivity,size,nnz:grid.values.length,threshold:1e-8*Math.hypot(...grid.b)};
   } finally {a.dispose?.();}
 }

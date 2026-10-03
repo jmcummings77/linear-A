@@ -20,3 +20,6 @@ matrix_status m_csr_matvec(const sparse_matrix *a,const matrix *x,matrix *out){
     status=sparse_status(la_csr_mv(a,x->values,result.values));if(status)m_free(&result);else *out=result;return status;
 }
 matrix_status m_csr_cg(const sparse_matrix *a,const double *b,size_t count,double rtol,double atol,size_t limit,bool jacobi,bool capture,matrix_cg_result *out){return sparse_status(la_csr_cg(a,b,count,rtol,atol,limit,jacobi,capture,out));}
+
+matrix_status m_csr_gmres(const sparse_matrix *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,bool jacobi,bool capture,matrix_gmres_result *out){return sparse_status(la_csr_gmres(a,b,count,restart,rtol,atol,limit,jacobi,capture,out));}
+void m_gmres_free(matrix_gmres_result *r){la_gmres_free(r);}

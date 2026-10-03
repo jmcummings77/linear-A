@@ -116,6 +116,7 @@
   get('accuracy-preset').addEventListener('change',preset);
   controls.filter(input=>input.id!=='accuracy-preset').forEach(input=>input.addEventListener(input.tagName==='SELECT'?'change':'input',schedule));
   addEventListener('resize',()=>{draw();drawTradeoff();});addEventListener('pagehide',()=>{clearTimeout(timer);stop();});
+  get('accuracy-comparison-details')?.addEventListener('toggle',drawTradeoff);
   new MutationObserver(()=>{draw();drawTradeoff();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   preset();
 })();

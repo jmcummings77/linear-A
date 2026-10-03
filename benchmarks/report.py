@@ -2,6 +2,7 @@
 import argparse
 import base64
 import hashlib
+from html import escape
 import json
 from pathlib import Path
 import re
@@ -16,6 +17,7 @@ from vector_reference import vector_fixtures
 from publication import PublicSanitizer
 from wasm_publication import sanitize_live_sources
 from report_art import load_report_art
+from report_design import apply_report_design
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -90,11 +92,55 @@ def json_for_html(value):
     return json.dumps(value, allow_nan=False).replace("<", "\\u003c").replace("&", "\\u0026")
 
 
-def render(data, destination, wasm_directory=None, include_live=True, trace_directory=None):
+def report_presentation(data, live):
+    """Describe this snapshot without adding presentation fields to its measurements."""
+    recorded_results = data.get("results", [])
+    results = [row for row in recorded_results if row.get("status") == "passed"]
+    operations = {row.get("operation", "") for row in recorded_results}
+    profiles = any(p.get("status") == "available" and p.get("stacks") for p in data.get("profiles", []))
+    wasm_only = {item.get("id") for item in data.get("implementations", [])} == {"wasm"}
+    if wasm_only and not recorded_results:
+        title, scope = "WebAssembly verification", "Saved correctness checks for the WebAssembly implementation. No performance measurements were recorded."
+    elif wasm_only and profiles:
+        title, scope = "WebAssembly profiling check", "Saved timings and profiles for the WebAssembly implementation. Profiling runs are separate from the timing samples."
+    elif wasm_only:
+        title, scope = "WebAssembly performance", "Saved timing measurements for the WebAssembly implementation. Live browser measurements, when available, remain separate."
+    elif not recorded_results:
+        title, scope = "Correctness verification", "Saved checks and toolchains for this verification run. No performance measurements were recorded."
+    elif all(operation.startswith("determinant") for operation in operations):
+        title, scope = "Determinant algorithms", "Compare Auto, LU, Cholesky, and cofactor methods where recorded. Compare ratios within the same workload and size."
+    elif all(operation.startswith("eigen") for operation in operations):
+        title, scope = "Eigenvalues & eigenvectors", "Saved eigensolver measurements, checked against independent spectra and eigenpair residuals."
+    elif operations <= {"cross", "rotation2d", "rotation3d"}:
+        title, scope = "Vectors & rotations", "Compare cross products and rotation-matrix construction across the recorded implementations."
+    else:
+        title, scope = "Matrix performance", "Compare recorded matrix-operation timings, inspect sampled work, and review how each result was measured."
+    capabilities = {"timings": bool(results), "profiles": profiles, "live": bool(live.get("available")),
+                    "accuracy": bool(live.get("available") and live.get("accuracy_worker_source")),
+                    "geometry": bool(live.get("available") and live.get("geometry_worker_source"))}
+    unavailable = []
+    if not results:
+        unavailable.append("No successful timing samples are available; review the correctness and failure details below."
+                           if recorded_results else "This snapshot contains correctness checks only; there are no saved timing samples.")
+    if not profiles:
+        unavailable.append("Stack profiles were not collected or are unavailable for this snapshot.")
+    if not capabilities["live"]:
+        unavailable.append("Live exploration is unavailable in this saved file.")
+    replacements = {"__REPORT_TITLE__": escape(title), "__REPORT_SCOPE__": escape(scope),
+                    "__REPORT_AVAILABILITY__": "".join(f'<p class="availability-note">{escape(note)}</p>' for note in unavailable)}
+    for name, available in capabilities.items():
+        replacements[f"__{name.upper()}_HIDDEN__"] = "" if available else "hidden"
+    return replacements
+
+
+def render(data, destination, wasm_directory=None, include_live=True, trace_directory=None, *, live_override=None):
     sanitizer = PublicSanitizer(root=ROOT)
     data = sanitizer.report(data)
     template = Path(__file__).with_name("report.html").read_text()
-    live = live_bundle(data, wasm_directory, include_live, sanitizer, trace_directory)
+    # Regenerating presentation can retain an already-published executable bundle
+    # byte-for-byte, independently of whatever build happens to be on this host.
+    live = (live_override if live_override is not None and include_live
+            else live_bundle(data, wasm_directory, include_live, sanitizer, trace_directory))
     script = (ROOT / "benchmarks/live-report.mjs").read_text(encoding="utf-8")
     geometry_script = ROOT / "benchmarks/geometry-report.mjs"
     # Replace template markers in one pass so embedded source cannot introduce a
@@ -105,9 +151,10 @@ def render(data, destination, wasm_directory=None, include_live=True, trace_dire
                     "__THEME_SCRIPT__": Path(__file__).with_name("report-theme.js").read_text(encoding="utf-8"),
                     "__LIVE_SCRIPT__": script,
                     "__ACCURACY_SCRIPT__": (ROOT / "benchmarks/accuracy-report.mjs").read_text(encoding="utf-8"),
-                    "__GEOMETRY_SCRIPT__": geometry_script.read_text(encoding="utf-8") if geometry_script.is_file() else ""}
+                    "__GEOMETRY_SCRIPT__": geometry_script.read_text(encoding="utf-8") if geometry_script.is_file() else "",
+                    **report_presentation(data, live)}
     html = re.sub("|".join(replacements), lambda match: replacements[match[0]], template)
-    Path(destination).write_text(html, encoding="utf-8")
+    Path(destination).write_text(apply_report_design(html), encoding="utf-8")
 
 
 def publish(data, destination, source_directory=None, wasm_directory=None, include_live=True, trace_directory=None):

@@ -3,12 +3,14 @@ import test from 'node:test';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../benchmarks/sparse-report.mjs',import.meta.url),'utf8');
-function setup(){
- const elements=new Map(),timers=new Map(),workers=[],animation=[],events={};let tid=0;
- const context=new Proxy({},{get:(o,k)=>o[k]??(()=>{})});
- const element=()=>({value:'',checked:false,disabled:false,textContent:'',children:[],style:{},append(...a){this.children.push(...a);},replaceChildren(){this.children=[];},getBoundingClientRect:()=>({width:500,height:340}),getContext:()=>context});
+function setup(recorded={implementations:[],results:[],machine:{},methodology:{}}){
+ const elements=new Map(),timers=new Map(),workers=[],animation=[],events={},drawing=[];let tid=0;
+ const context=new Proxy({},{get:(o,k)=>o[k]??((...args)=>drawing.push([k,...args]))});
+ const element=()=>({value:'',checked:false,disabled:false,textContent:'',children:[],style:{},setAttribute(name,value){this[name]=value;},append(...a){this.children.push(...a);},replaceChildren(){this.children=[];},getBoundingClientRect:()=>({width:500,height:340}),getContext:()=>context});
  const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
- get('data').textContent=JSON.stringify({implementations:[],results:[],machine:{},methodology:{}});get('live').textContent=JSON.stringify({available:true,worker_source:'worker'});
+ get('data').textContent=JSON.stringify(recorded);get('live').textContent=JSON.stringify({available:true,worker_source:'worker'});
+ get('operation').value='csr_spmv';get('timing-scale').value='linear';
+ get('solver').value='gmres';get('restart').value='20';get('diffusivity').value='.2';get('speed').value='4';get('angle').value='30';
  get('grid').value='16';get('contrast').value='2';get('limit').value='400';get('jacobi').checked=true;
  class Worker{constructor(){workers.push(this);this.sent=[];}postMessage(m){this.sent.push(m);}terminate(){this.terminated=true;}}
  const sandbox={document:{getElementById:get,createElement:element,createTextNode:t=>t,documentElement:{dataset:{}},querySelector:()=>element()},window:{addEventListener:(k,f)=>events[k]=f},Worker,Blob:class{},URL:{createObjectURL:()=> 'blob:test',revokeObjectURL(){}},devicePixelRatio:1,getComputedStyle:()=>({getPropertyValue:()=> '#000'}),ResizeObserver:class{observe(){}},matchMedia:()=>({matches:false}),localStorage:{getItem(){},setItem(){}},requestAnimationFrame:f=>animation.push(f),setTimeout:(f,delay)=>{timers.set(++tid,{f,delay});return tid;},clearTimeout:id=>timers.delete(id)};
@@ -16,7 +18,7 @@ function setup(){
  const flush=delay=>{for(const [id,t] of [...timers])if(t.delay===delay){timers.delete(id);t.f();}};
  const ready=()=>{flush(300);workers.at(-1).onmessage({data:{type:'ready',verified:39}});};
  const result=id=>workers.at(-1).onmessage({data:{type:'result',id,result:{size:2,nnz:12,iterations:2,converged:true,reason:'converged',residuals:[10,1,.00001],threshold:.001,iterates:[[0,0,0,0],[1,2,3,4],[2,3,4,5]]}}});
- return {get,timers,workers,animation,events,flush,ready,result};
+ return {get,timers,workers,animation,events,drawing,flush,ready,result};
 }
 test('debounce coalesces rapid changes and ignores stale worker results',()=>{
  const t=setup();t.get('grid').value='8';t.get('grid').onchange();t.get('grid').value='24';t.get('grid').onchange();
@@ -33,4 +35,62 @@ test('initialization errors and watchdogs terminate workers and allow restart',(
  const t=setup();t.flush(300);t.workers[0].onmessage({data:{type:'error',message:'bad bundle'}});assert.match(t.get('status').textContent,/initialization failed: bad bundle/);assert.ok(t.workers[0].terminated);
  t.get('grid').onchange();t.flush(300);assert.equal(t.workers.length,2);t.flush(30000);assert.ok(t.workers[1].terminated);assert.match(t.get('status').textContent,/timed out/);
  t.get('grid').onchange();t.flush(300);t.events.pagehide();assert.ok(t.workers[2].terminated);assert.equal(t.timers.size,0);
+});
+
+const recorded={
+ implementations:[{id:'csharp',name:'C#',status:'passed'},{id:'python',name:'Python',status:'passed'}],
+ machine:{os:'macOS',architecture:'arm64'},methodology:{timing:'Output allocation included.'},created_at:'2026-08-05T12:00:00Z',revision:'1234567890abcdef',
+ results:[
+  {implementation:'csharp',operation:'csr_spmv',size:8,unknowns:64,nnz:288,logical_dense_bytes:32768,logical_csr_bytes:5128,status:'passed',median_ns:2000000,mad_ns:1000},
+  {implementation:'csharp',operation:'csr_spmv',size:16,unknowns:256,nnz:1216,logical_dense_bytes:524288,logical_csr_bytes:21512,status:'passed',median_ns:4000000,mad_ns:8000},
+  {implementation:'python',operation:'csr_spmv',size:8,unknowns:64,nnz:288,logical_dense_bytes:32768,logical_csr_bytes:5128,status:'passed',median_ns:80000000,mad_ns:2000},
+  {implementation:'python',operation:'csr_spmv',size:16,unknowns:256,nnz:1216,logical_dense_bytes:524288,logical_csr_bytes:21512,status:'failed'}
+ ]
+};
+test('saved timing controls preserve values and expose failed rows while changing chart scale',()=>{
+ const original=JSON.stringify(recorded),t=setup(recorded);
+ const rows=()=>t.get('timing-rows').children.map(row=>row.children.map(cell=>cell.textContent));
+ assert.deepEqual(rows()[0],['C#','8 × 8 / 64','2 ms','1 µs','—','—']);
+ assert.equal(rows()[3][2],'failed');
+ assert.ok(t.drawing.some(([op,text])=>op==='fillText'&&text==='80'));
+ t.drawing.length=0;t.get('timing-scale').value='log';t.get('timing-scale').onchange();
+ assert.match(t.get('timing-note').textContent,/Logarithmic/);
+ assert.deepEqual(rows()[0],['C#','8 × 8 / 64','2 ms','1 µs','—','—']);
+ assert.ok(t.drawing.some(([op,text])=>op==='fillText'&&text==='100'));
+ assert.equal(JSON.stringify(recorded),original);
+});
+test('visible legend and language highlight agree when a hidden series is selected',()=>{
+ const t=setup(recorded),labels=t.get('languages').children;
+ assert.equal(labels.length,2);assert.equal(labels[0].children[2],'C#');
+ const pythonInput=labels[1].children[0];pythonInput.checked=false;pythonInput.onchange();
+ assert.equal(t.get('timing-rows').children.length,2);assert.match(t.get('timing-note').textContent,/1\/2 languages/);
+ t.get('highlight').value='python';t.get('highlight').onchange();
+ assert.equal(pythonInput.checked,true);assert.equal(t.get('timing-rows').children.length,4);
+ assert.equal(t.get('timing-rows').children[2].className,'series-selected');
+ assert.match(t.get('timing-note').textContent,/Highlighting Python/);
+ pythonInput.checked=false;pythonInput.onchange();assert.equal(t.get('highlight').value,'');
+});
+test('logarithmic timing view keeps zero measurements in its table and reports omitted points',()=>{
+ const data=structuredClone(recorded);data.results[0].median_ns=0;
+ const t=setup(data);t.get('timing-scale').value='log';t.get('timing-scale').onchange();
+ assert.equal(t.get('timing-rows').children[0].children[2].textContent,'0 ns');
+ assert.match(t.get('timing-note').textContent,/1 zero timing/);
+ for(const [operation,...args] of t.drawing)if(['moveTo','lineTo','arc','rect'].includes(operation))assert.ok(args.every(Number.isFinite));
+ t.get('languages').children.forEach(label=>{const input=label.children[0];input.checked=false;input.onchange();});
+ assert.ok(t.drawing.some(([op,text])=>op==='fillText'&&text==='No included measurements'));
+ assert.equal(typeof t.events['matrix-theme-change'],'function');
+});
+
+test('CG disables advection and GMRES changes debounce together',()=>{
+ const t=setup();t.get('solver').value='cg';t.get('solver').onchange();
+ assert.equal(t.get('speed').value,'0');assert.equal(t.get('restart').disabled,true);assert.equal(t.get('angle').disabled,true);
+ t.get('solver').value='gmres';t.get('solver').onchange();t.get('restart').value='5';t.get('restart').onchange();
+ t.get('angle').value='90';t.get('angle').oninput();t.ready();
+ const config=t.workers[0].sent.at(-1).config;assert.equal(config.solver,'gmres');assert.equal(config.restart,5);assert.equal(config.angle,90);
+ assert.equal(t.get('restart').disabled,false);
+});
+test('GMRES timing rows include accepted work and logical workspace',()=>{
+ const data=structuredClone(recorded);data.results=data.results.slice(0,1);Object.assign(data.results[0],{solver_iterations:12,logical_workspace_bytes:4096});
+ const t=setup(data),cells=t.get('timing-rows').children[0].children;
+ assert.equal(cells[4].textContent,12);assert.equal(cells[5].textContent,'4 KiB');
 });

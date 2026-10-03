@@ -74,7 +74,7 @@ The shared shape and mathematical conventions are:
 - Linear systems offer reusable pivoted LU and Cholesky factors, plus
   column-pivoted Householder QR least squares. Multiple right-hand-side columns
   share one factorization. See the [solver guide](ports/SOLVING.md).
-- Canonical CSR storage, sparse matrix-vector products, and conjugate gradient with optional Jacobi preconditioning are available in every port. The [sparse systems report](https://jmcummings77.github.io/linear-A/sparse/) includes a live heat-equilibrium solver and runtime/storage scaling comparisons. See the [sparse guide](ports/SPARSE.md).
+- Canonical CSR storage, sparse matrix-vector products, and conjugate gradient with optional Jacobi preconditioning are available in every port. The [sparse systems report](https://jmcummings77.github.io/linear-A/sparse/) includes a live heat-equilibrium solver and runtime/storage scaling comparisons. Restarted GMRES also handles nonsymmetric systems, with right Jacobi preconditioning, true residual checks and captured restart cycles. The [GMRES report](https://jmcummings77.github.io/linear-A/gmres/) compares restart lengths and includes an interactive advection–diffusion solver. See the [sparse guide](ports/SPARSE.md).
 - Economy SVD returns U, descending singular values, and Vᵀ for rectangular
   real matrices using one-sided Jacobi rotations. Pseudoinverses and minimum-norm least squares support wide and rank-deficient systems, with configurable singular-value cutoffs and rank/condition diagnostics. Explore the fit/stability tradeoff in the report’s accuracy playground. See the [SVD guide](ports/SVD.md).
 - Symmetric eigendecomposition uses cyclic Jacobi rotations and returns ascending

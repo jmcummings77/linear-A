@@ -1,4 +1,4 @@
-# CSR matrices and conjugate gradient
+# CSR matrices and iterative solvers
 
 All eleven ports expose the same float64 sparse contract. The C++, ARM64 and
 WebAssembly ports share the C sparse solver; the other implementations use native
@@ -115,3 +115,66 @@ regenerates HTML without changing measurements. The portable HTML embeds a
 sanitized WASM bundle, reruns all shared sparse fixtures in a worker, and solves
 a bounded heat-equilibrium problem. Animation shows solver iterates, not
 physical time. A low iteration limit is displayed as an unconverged estimate.
+
+## Restarted GMRES
+
+GMRES accepts a square real matrix and finite matching right-hand side, including
+nonsymmetric and indefinite systems. The initial guess is zero. Restart length
+(default 30) must be an integer from 1 to 1024; it is capped by matrix dimension
+and the total iteration limit. Tolerances, iteration limits and capture defaults
+match CG. Optional **right Jacobi** preconditioning requires a stored nonzero
+diagonal; negative diagonal entries are allowed. Missing or zero diagonal
+entries are input errors.
+
+The implementation applies two-pass modified Gram–Schmidt to `A * (v / diag)`,
+uses Givens rotations to update the least-squares problem, and computes each
+candidate as `x_base + (V * y) / diag`. It recomputes `norm(b - A*x)` after every
+accepted update. Only that true residual can establish convergence. The
+projected residual estimate is also recorded; it is in the original system's
+norm because preconditioning is on the right. Finite precision can separate
+these two histories.
+
+The result contains `x`, `converged`, `iterations`, `reason`, true `residuals`,
+`estimated_residuals`, optional `iterates`, and `restarts` (with each port's
+normal casing). Histories include the initial residual, and captured iterates
+include the initial zero vector. Restart indices identify the accepted-iteration
+count at the start of each subsequent cycle, excluding the initial cycle. A
+failed cycle can therefore start at the final accepted iteration count.
+
+Stop reasons are `converged`, `iteration_limit`, `breakdown`, `nonfinite`, and
+`stagnation`. A negligible Arnoldi remainder is a happy breakdown only when the
+true residual satisfies the requested tolerance. An unchanged solution after a
+completed restart cycle reports stagnation, including at the iteration limit.
+A nonsingular matrix does not guarantee convergence with a short restart.
+Runtime arithmetic failure returns the last accepted result; an unrepresentable
+initial norm reports `nonfinite` and can leave infinity in the initial history.
+Invalid inputs throw or return an input-error status instead.
+
+| Port | Method | Options / ownership |
+| --- | --- | --- |
+| C / ARM64 | `m_csr_gmres` | `m_gmres_free` releases a zero-initialized result |
+| C++ | `CSRMatrix::gmres` | returned vectors own their storage |
+| C# / F# | `CSRMatrix.Gmres` | named arguments |
+| Go | `CSRMatrix.GMRES` | start with `DefaultGMRESOptions()` |
+| Rust | `CSRMatrix::gmres` | `GMRESOptions::default()` |
+| Python | `CSRMatrix.gmres` | keyword arguments |
+| TypeScript / WASM | `CSRMatrix.gmres` | options object; copied result arrays |
+| Julia | `gmres(a, b)` | keyword arguments |
+
+Restarted GMRES stores a basis of at most `restart + 1` vectors and a small
+Hessenberg matrix. The report's logical workspace model counts float64 basis,
+Hessenberg, rotations, and work-vector entries. It excludes CSR storage, result
+histories, frame capture, objects, allocator overhead, and transient copies; it
+is not measured resident memory. Capture adds one full solution per accepted
+iteration and is disabled in timed benchmarks.
+
+The transport example discretizes diffusion plus advection using a five-point
+stencil and first-order upwinding. Direction is clockwise from right on the
+screen; the top boundary is 100 and the other boundaries are zero. Animation
+shows solver iterates, not physical time. The recorded benchmark instead uses
+zero boundaries and a manufactured `x = ones` solution, with `b = A*x`.
+
+The sparse runner protocol appends `RESTART` after the existing arguments for
+operation `gmres`. Verification output is one packed row:
+`reason, iterations, history_length, x..., true_residuals..., estimated_residuals..., restart_count, restart_indices..., captured_frames...`.
+Reason codes follow the five stop reasons above in order, starting at zero.

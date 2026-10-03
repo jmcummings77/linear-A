@@ -462,3 +462,4 @@ class Matrix:
     __matmul__ = multiply
 
 from sparse import CSRMatrix, CGResult
+from gmres import GMRESResult

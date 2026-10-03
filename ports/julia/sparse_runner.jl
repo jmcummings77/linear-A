@@ -1,8 +1,8 @@
 function sparse_run(args)
-    length(args)==10 || throw(ArgumentError("invalid sparse protocol"))
+    length(args)==(length(args)>0 && args[1]=="gmres" ? 11 : 10) || throw(ArgumentError("invalid sparse protocol"))
     op=args[1];rows,cols,nnz,iterations=parse.(Int,args[2:5]);rtol,atol=parse.(Float64,args[6:7]);limit,jacobi,capture=parse.(Int,args[8:10])
-    op in ("spmv","dense","cg") && min(rows,cols,nnz,iterations)>=0 && jacobi in (0,1) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
-    tokens=split(read(stdin,String));count=op=="cg" ? rows : cols
+    op in ("spmv","dense","cg","gmres") && min(rows,cols,nnz,iterations)>=0 && jacobi in (0,1) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
+    tokens=split(read(stdin,String));count=op in ("cg","gmres") ? rows : cols
     length(tokens)==rows+1+2*nnz+count || throw(ArgumentError("incorrect sparse input count"))
     rp=parse.(Int,tokens[1:rows+1]);ci=parse.(Int,tokens[rows+2:rows+1+nnz]);v=parse.(Float64,tokens[rows+2+nnz:rows+1+2*nnz]);b=parse.(Float64,tokens[rows+2+2*nnz:end])
     a=CSRMatrix(rows,cols,rp,ci,v);dense=nothing;right=nothing
@@ -13,13 +13,13 @@ function sparse_run(args)
     function compute()
         op=="spmv" && return matvec(a,b)
         op=="dense" && return rowmajor(dense*right)
-        r=conjugate_gradient(a,b;rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi!=0,capture=capture!=0)
+        r=op=="gmres" ? gmres(a,b;restart=parse(Int,args[11]),rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi!=0,capture=capture!=0) : conjugate_gradient(a,b;rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi!=0,capture=capture!=0)
         if iterations>0
             r.converged || error("benchmark CG did not converge: "*r.reason)
             return r.x
         end
-        reason=findfirst(==(r.reason),["converged","iteration_limit","breakdown","nonfinite"])-1
-        vcat([Float64(reason),Float64(r.iterations),Float64(length(r.residuals))],r.x,r.residuals,r.iterates...)
+        reason=findfirst(==(r.reason),["converged","iteration_limit","breakdown","nonfinite","stagnation"])-1
+        vcat([Float64(reason),Float64(r.iterations),Float64(length(r.residuals))],r.x,r.residuals,(op=="gmres" ? vcat(r.estimated_residuals,[Float64(length(r.restarts))],Float64.(r.restarts)) : Float64[]),r.iterates...)
     end
     if iterations==0
         values=compute();return Matrix64(1,length(values),values)

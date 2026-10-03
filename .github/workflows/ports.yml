@@ -98,6 +98,8 @@ jobs:
           .build/unit/svd-tests
           clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/test_sparse.c -lm -o .build/unit/sparse-tests
           .build/unit/sparse-tests
+          clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/test_gmres.c -lm -o .build/unit/gmres-tests
+          .build/unit/gmres-tests
           clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/pseudoinverse_tests.c -lm -o .build/unit/pseudoinverse-tests
           .build/unit/pseudoinverse-tests
           clang++ -std=c++17 -O3 -g -ffp-contract=off ports/cpp/tests.cpp -o .build/unit/cpp-tests

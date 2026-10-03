@@ -14,6 +14,14 @@ Separate reports cover [determinants](https://jmcummings77.github.io/linear-A/de
 [eigenvalues](https://jmcummings77.github.io/linear-A/eigen/), and
 [vectors](https://jmcummings77.github.io/linear-A/vectors/).
 
+To refresh the saved HTML after changing report templates or the shared
+`report-ui.css`, run `python3 benchmarks/refresh_reports.py`. This reuses each
+page's recorded data and embedded executable bundle; it does not build libraries
+or run benchmarks. It verifies that measurement JSON files and embedded bundles
+remain unchanged. Add `--preview-dir .build/report-preview` to assemble the same
+directory layout used by GitHub Pages, then serve that directory locally. The
+directory page is generated from `pages/template.html` and the saved run metadata.
+
 The repository also includes the [saved HTML](reports/latest/index.html),
 its [measurement data](reports/latest/results.json), and sanitized raw profiles.
 Download the HTML file to use it offline. The **Publish reports** workflow copies
@@ -530,3 +538,16 @@ requires macOS; unavailable profilers are reported explicitly. HTML, profile
 metadata and raw samples pass through the public-export sanitizers.
 
 The accuracy playground compares ordinary least squares, truncated SVD, and ridge regularization. The noise, cutoff, and λ sliders recompute through WASM after a 300 ms pause. The ridge tradeoff curve shows residual and solution norms; it does not select an optimal λ. These calculations do not alter recorded benchmark measurements.
+
+
+### Restarted GMRES
+
+Run `python3 benchmarks/gmres_bench.py --require-all` for the eleven-port
+advection–diffusion comparison (8×8 and 16×16 grids, restart 5 and 20, with and
+without right Jacobi). `--verify-only` runs 33 shared analytic, dense-LU,
+restart, stagnation and breakdown cases. The ordinary sparse verification also
+includes these cases. Use `--render-only benchmarks/reports/gmres/results.json`
+to rebuild the HTML without changing recorded measurements. The public report
+includes accepted iterations, restart count in JSON, and a logical workspace
+model alongside median runtime and variation. Solver frame capture is enabled
+only in the live browser demonstration and verification, not timed runs.

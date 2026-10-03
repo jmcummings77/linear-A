@@ -278,6 +278,7 @@ benchmarks/reports/*
 !benchmarks/reports/eigen/
 !benchmarks/reports/vectors/
 !benchmarks/reports/sparse/
+!benchmarks/reports/gmres/
 !benchmarks/reports/validation/
 !benchmarks/reports/wasm-profile-check/
 !benchmarks/reports/wasm-verification/

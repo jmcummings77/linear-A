@@ -379,6 +379,20 @@ export async function createMatrixAPI({
         return {x,residuals,iterates,iterations,reason,converged:reason==='converged'};
       }finally{if(handle)runtime._wm_cg_destroy(handle);b?.dispose();}
     }
+    gmres(values,{restart=30,rtol=1e-10,atol=0,maxIterations=1000,jacobi=false,capture=false}={}){
+      if(!Number.isInteger(restart)||restart<1||restart>1024||!Number.isInteger(maxIterations)||maxIterations<0||maxIterations>100000||typeof jacobi!=='boolean'||typeof capture!=='boolean')throw new RangeError('invalid GMRES options');
+      finite(rtol);finite(atol);let b,handle;
+      try{
+        b=new Matrix(values.length,1,values);handle=checkedHandle(runtime._wm_csr_gmres(this.#alive(),matrixPointer(b),restart,rtol,atol,maxIterations,+jacobi,+capture));
+        const iterations=runtime._wm_gmres_iterations(handle),reason=['converged','iteration_limit','breakdown','nonfinite','stagnation'][runtime._wm_gmres_reason(handle)];
+        const copy=(field,count)=>{const offset=runtime._wm_gmres_data(handle,field)>>>3;return Array.from(runtime.HEAPF64.subarray(offset,offset+count));};
+        const x=copy(0,this.rows),residuals=copy(1,iterations+1),estimatedResiduals=copy(2,iterations+1),flat=capture?copy(3,(iterations+1)*this.rows):[];
+        const iterates=capture?Array.from({length:iterations+1},(_,i)=>flat.slice(i*this.rows,(i+1)*this.rows)):[];
+        const offset=runtime._wm_gmres_restarts(handle)>>>2,restarts=Array.from(new Uint32Array(runtime.HEAPF64.buffer,offset*4,runtime._wm_gmres_restart_count(handle)));
+        return {x,residuals,estimatedResiduals,iterates,restarts,iterations,reason,converged:reason==='converged'};
+      }finally{if(handle)runtime._wm_gmres_destroy(handle);b?.dispose();}
+    }
+
   }
 
   if (typeof Symbol.dispose === "symbol") {

@@ -1,0 +1,69 @@
+/* Shared by every report; inlined at publication time for portable offline HTML. */
+:root {
+  color-scheme: light;
+  --paper: #f5f4ed; --bg: #f5f4ed; --card: #fffef9;
+  --ink: #192927; --muted: #53665e; --line: #d3dcd1;
+  --green: #24594b; --accent: #24594b; --orange: #b95122;
+  --track: #e6ece3; --code: #edf0e7; --tint: #e4eee5; --panel: var(--card); --plot: var(--code);
+  --focus: #a14319; --primary: #24594b; --primary-ink: #fffef9;
+  --primary-muted: #dce9dd; --bar: #397a62;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #101a18; --bg: #101a18; --card: #182622;
+  --ink: #e5eee8; --muted: #b0c0b5; --line: #3a5247;
+  --green: #96d3b9; --accent: #96d3b9; --orange: #f1ad75;
+  --track: #2b3e35; --code: #122019; --tint: #263e31; --panel: var(--card); --plot: var(--code);
+  --focus: #f1ad75; --primary: #284f40; --primary-ink: #10241b;
+  --primary-muted: #cadfce; --bar: #96d3b9;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 100px; background: var(--paper); color: var(--ink); }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+main { width: min(1240px, 100%); margin: 0 auto; padding: 32px 32px 48px; }
+main > *, section, .panel, .controls, label { min-width: 0; }
+h1 { color: var(--ink); font-size: clamp(32px, 4.4vw, 54px); line-height: 1.08; letter-spacing: -.045em; }
+h2 { color: var(--ink); font-size: 25px; line-height: 1.25; letter-spacing: -.025em; }
+h3 { font-size: 17px; line-height: 1.4; }
+p { color: var(--muted); }
+a { color: var(--green); text-underline-offset: .2em; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+button, select, input { color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 6px; font: inherit; min-width: 0; max-width: 100%; }
+button, select, .link-button { min-height: 40px; padding: 8px 12px; font-size: 14px; }
+button, summary { cursor: pointer; }
+button:hover, .link-button:hover { border-color: var(--green); }
+input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--green); }
+label { font-size: 13px; line-height: 1.45; color: var(--muted); }
+.small, small, .note, .run-meta { font-size: 13px; line-height: 1.6; }
+.eyebrow { font-size: 11px; letter-spacing: .13em; }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 24px; margin: 24px 0; }
+.report-prose { padding: 24px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+.report-prose p { max-width: 82ch; }
+.report-topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding-bottom: 18px; font-size: 14px; }
+.report-topbar label { display: flex; align-items: center; gap: 8px; }
+.report-nav { display: flex; gap: 6px 18px; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; padding: 12px 0; margin: 18px 0 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); font-size: 14px; }
+.report-nav a { padding: 3px 0; font-weight: 600; white-space: nowrap; }
+.report-context { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: 13px; padding: 12px 0; }
+.report-context p { margin: 0; }
+section[id], details[id], h2[id], header[id] { scroll-margin-top: 12px; }
+.scroll { overflow: auto; max-width: 100%; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { color: var(--muted); font-size: 13px; line-height: 1.45; }
+td, th { padding: 11px 12px; border-bottom: 1px solid var(--line); }
+td { vertical-align: top; }
+pre, code { background: var(--code); color: var(--ink); }
+pre { font-size: 13px; }
+summary { padding: 5px 0; }
+footer { font-size: 13px; color: var(--muted); }
+[hidden] { display: none !important; }
+@media (max-width: 760px) {
+  main { padding: 22px 16px 36px; }
+  .panel { padding: 18px; margin: 20px 0; }
+  .report-prose { padding: 20px 0; }
+  .report-nav { gap: 4px 16px; font-size: 13px; }
+  .report-topbar { align-items: center; }
+  table { font-size: 13px; }
+  td, th { padding: 10px 8px; }
+  .controls { gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

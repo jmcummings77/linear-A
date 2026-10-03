@@ -373,5 +373,7 @@ include("svd.jl")
 export solve_ridge, svd, pseudoinverse, solve_minimum_norm, spectral_diagnostics
 
 include("sparse.jl")
+include("gmres.jl")
+export gmres
 
 end

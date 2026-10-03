@@ -14,6 +14,8 @@ int main() {
     auto ridge=a.solve_ridge(b,1);
     if(std::abs(ridge.values()[0]-140.0/131)>1e-12||std::abs(ridge.values()[1]-230.0/131)>1e-12)return 1;
     linear_a::CSRMatrix sparse(2,2,{0,2,4},{0,1,0,1},{4,1,1,3});
+    auto gm=sparse.gmres({6,7},2,1e-10,0,1000,true,true);
+    if(!gm.converged||std::abs(gm.x[0]-1)>1e-12||std::abs(gm.x[1]-2)>1e-12)return 1;
     auto product=sparse.matvec({1,2});auto cg=sparse.conjugate_gradient({6,7},1e-10,0,1000,true,true);
     if(product[0]!=6||product[1]!=7||!cg.converged||std::abs(cg.x[0]-1)>1e-12||std::abs(cg.x[1]-2)>1e-12)return 1;
     std::cout << "solution: 1, 2\n";
