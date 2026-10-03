@@ -18,38 +18,57 @@ export function diagnostics(a, b, x) {
 
 export function computeAccuracy(Matrix, config) {
   const a=entries(config.a,4,'A'), b=entries(config.b,2,'b');
+  const noise=config.noise??0, lambda=config.lambda??1e-6;
+  if(!Number.isFinite(noise)||Math.abs(noise)>1)throw new RangeError('Noise must be in [−1, 1]');
+  if(!Number.isFinite(lambda)||lambda<0)throw new RangeError('Lambda must be finite and nonnegative');
+  b[1]+=noise;
   const delta=config.delta, target=config.target;
   if (!Number.isFinite(delta) || Math.abs(delta)>1 || !Number.isInteger(target) || target<0 || target>5)
     throw new RangeError('Choose a valid coefficient and perturbation in [−1, 1]');
-  if (!['lu','cholesky','qr','svd'].includes(config.algorithm)) throw new RangeError('Unknown solver');
-  if(config.algorithm==='svd' && (!Number.isFinite(config.cutoff)||config.cutoff<0||config.cutoff>1)) throw new RangeError('Relative cutoff must be in [0, 1]');
+  if (!['lu','cholesky','qr','svd','ridge'].includes(config.algorithm)) throw new RangeError('Unknown solver');
+  if(['svd','ridge'].includes(config.algorithm) && (!Number.isFinite(config.cutoff)||config.cutoff<0||config.cutoff>1)) throw new RangeError('Relative cutoff must be in [0, 1]');
   const perturbedA=a.slice(), perturbedB=b.slice(), selected=target<4?perturbedA:perturbedB, index=target<4?target:target-4;
   const before=selected[index]; selected[index]+=delta;
   const actualDelta=selected[index]-before;
-  function solve(values, rhs) {
+  function solve(values, rhs, algorithm=config.algorithm, strength=lambda) {
     let input, right, factor, output;
     try {
       input=new Matrix(2,2,values); right=new Matrix(2,1,rhs);
-      if(config.algorithm==='svd') {
-        output=input.solveMinimumNorm(right,config.cutoff);
-        const d=input.spectralDiagnostics(config.cutoff), r=input.svd();
+      if(['svd','ridge','ordinary'].includes(algorithm)) {
+        const cutoff=algorithm==='svd'?config.cutoff:undefined;
+        output=algorithm==='ridge'?input.solveRidge(right,strength):input.solveMinimumNorm(right,cutoff);
+        const d=input.spectralDiagnostics(cutoff), r=input.svd();
         let singular_values;
         try {singular_values=Array.from(r.values);} finally {r.u.dispose();r.vt.dispose();}
         const x=Array.from(output.toArray());
         return {x,rank:d.rank,reciprocal_condition:d.reciprocalCondition,retained_reciprocal_condition:d.retainedReciprocalCondition,
           singular_values,condition_norm:'2-norm',solution_norm:Math.hypot(...x),...diagnostics(values,rhs,x)};
       }
-      factor=config.algorithm==='lu'?input.factorLU():config.algorithm==='cholesky'?input.factorCholesky():input.factorQR();
+      factor=algorithm==='lu'?input.factorLU():algorithm==='cholesky'?input.factorCholesky():input.factorQR();
       output=factor.solve(right);
       const x=Array.from(output.toArray());
       return {x, condition_norm:'infinity norm', solution_norm:Math.hypot(...x), reciprocal_condition:factor.reciprocalCondition(), ...diagnostics(values,rhs,x)};
     } finally { output?.dispose(); factor?.dispose(); right?.dispose(); input?.dispose(); }
   }
+  const compare=['ordinary','svd','ridge'].map(algorithm=>{
+    try {
+      const base=solve(a,b,algorithm), changed=solve(perturbedA,perturbedB,algorithm);
+      const norm=infinity(base.x),difference=infinity(changed.x.map((v,i)=>v-base.x[i]));
+      return {algorithm,...base,residual_norm:Math.hypot(...b.map((v,i)=>v-a[i*2]*base.x[0]-a[i*2+1]*base.x[1])),
+        sensitivity:norm?difference/norm:(difference?null:0)};
+    } catch(error) {return {algorithm,error:error.message};}
+  });
+  const curve=[];
+  for(let exponent=-16;exponent<=4;exponent+=.5){
+    const strength=10**exponent, r=solve(a,b,'ridge',strength);
+    curve.push({lambda:strength,solution_norm:r.solution_norm,
+      residual_norm:Math.hypot(...b.map((v,i)=>v-a[i*2]*r.x[0]-a[i*2+1]*r.x[1]))});
+  }
   const base=solve(a,b);
   let perturbed;
-  try {perturbed=solve(perturbedA,perturbedB);} catch(error) {return {a,b,perturbed_a:perturbedA,perturbed_b:perturbedB,base,actual_delta:actualDelta,perturbed_error:error.message};}
+  try {perturbed=solve(perturbedA,perturbedB);} catch(error) {return {a,b,compare,curve,lambda,perturbed_a:perturbedA,perturbed_b:perturbedB,base,actual_delta:actualDelta,perturbed_error:error.message};}
   const norm=infinity(base.x), difference=infinity(perturbed.x.map((v,i)=>v-base.x[i]));
-  return {a,b,perturbed_a:perturbedA,perturbed_b:perturbedB,base,perturbed,actual_delta:actualDelta,
+  return {a,b,compare,curve,lambda,perturbed_a:perturbedA,perturbed_b:perturbedB,base,perturbed,actual_delta:actualDelta,
     relative_solution_change:norm?difference/norm:(difference?null:0)};
 }
 

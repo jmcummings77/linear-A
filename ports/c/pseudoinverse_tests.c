@@ -16,5 +16,20 @@ int main(void){
     assert(m_pseudoinverse(&a,0,&p)==M_SOLVER_RANGE);assert(!p.values&&!p.rows&&!p.cols);
     assert(m_solve_minimum_norm(&a,&b,0,&x)==M_OK);assert(fabs(x.values[0]-1)<1e-14);
     m_free(&a);m_free(&b);m_free(&x);
+    double two[]={2},three[]={3};
+    assert(m_from_array(1,1,two,&a)==M_OK);assert(m_from_array(1,1,three,&b)==M_OK);
+    assert(m_solve_ridge(&a,&b,1,&a)==M_ARGUMENT);
+    assert(m_solve_ridge(&a,&b,1,&b)==M_ARGUMENT);
+    assert(m_solve_ridge(&a,NULL,1,&x)==M_ARGUMENT);
+    assert(m_solve_ridge(&a,&b,NAN,&x)==M_ARGUMENT);
+    assert(m_solve_ridge(&a,&b,INFINITY,&x)==M_ARGUMENT);
+    assert(m_solve_ridge(&a,&b,-1,&x)==M_ARGUMENT);
+    assert(!x.values&&!x.rows&&!x.cols);
+    assert(m_solve_ridge(&a,&b,1,&x)==M_OK);assert(fabs(x.values[0]-1.2)<1e-14);
+    assert(m_solve_ridge(&a,&b,1,&x)==M_ARGUMENT);
+    assert(a.values[0]==2&&b.values[0]==3);
+    m_free(&x);b.values[0]=NAN;
+    assert(m_solve_ridge(&a,&b,1,&x)!=M_OK);assert(!x.values);
+    m_free(&a);m_free(&b);
     return 0;
 }

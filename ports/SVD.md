@@ -155,3 +155,57 @@ cutoff equality/adjacent floating-point boundaries, zeros, empty shapes and
 extreme scales. Truncated cases are checked against the inverse of Aτ. A tiny
 1×1 case verifies that direct solving succeeds when an explicit inverse cannot
 be represented. The live accuracy playground uses these public WASM APIs.
+
+## Ridge regularization
+
+Every port supports minimizing **‖AX − B‖F² + λ‖X‖F²**, independently for each
+right-hand side. A is m×n, B is m×r, and the owned result is n×r. This is ridge
+regression / Tikhonov regularization with the identity penalty. λ is the penalty
+coefficient, **not its square root**. Every variable is penalized, including an
+intercept column if supplied. General penalty matrices and weighted fits are
+not part of this API.
+
+| Port | API |
+| --- | --- |
+| C / ARM64 assembly | `m_solve_ridge(&a, &b, lambda, &out)` |
+| C++ | `a.solve_ridge(b, lambda)` |
+| C# / F# | `a.SolveRidge(b, lambda)` |
+| Go | `a.SolveRidge(b, lambda)` → matrix, error |
+| Rust | `a.solve_ridge(&b, lambda)` → Result |
+| Python | `a.solve_ridge(b, regularization)` |
+| Julia | `solve_ridge(a, b, lambda)` |
+| TypeScript / WebAssembly | `a.solveRidge(b, lambda)` |
+
+For example, A = [2], B = [3], λ = 1 produces X = [1.2]. With λ = 0 it
+produces [1.5]. C outputs must be empty and distinct from inputs. WASM results
+must be disposed. Inputs are not modified. Empty shapes and zero matrices are
+supported; a zero A returns zero X.
+
+λ must be finite and nonnegative. At exactly zero, behavior matches the default
+minimum-norm solver, including its numerical rank cutoff. For positive λ,
+every computed positive singular value participates with filter
+σ / (σ² + λ); zero singular directions contribute zero. Thus the limit as λ
+approaches zero may differ from the λ = 0 result if the default cutoff removes
+a small positive value. There is no implicit truncation for positive λ.
+
+The implementation applies economy SVD factors directly, without forming a
+Gram matrix or explicit inverse. Let d = max(σ, √λ). The denominator is
+represented as d² [(σ/d)² + (√λ/d)²]; binary mantissas and exponents combine the
+projection, σ, right-hand-side scale, and denominator before final rounding.
+This avoids overflow from σ² and avoids rounding a tiny filter to zero before
+multiplying a large right-hand side. The usual float64 underflow rounding still
+applies to final coefficients.
+
+The existing SVD convergence and input-scaling limitations remain. Right-hand
+sides are scaled per column before projection; nonzero entries lost during
+that scaling cause an error when positive singular directions participate.
+An unrepresentable coefficient or accumulated result causes an error, even if
+later cancellation could produce a finite result. No certified error bound or
+automatic choice of λ is provided. Scaling both A and B by c requires scaling
+λ by c² to preserve the objective's minimizer.
+
+The live accuracy report compares ordinary least squares, truncated SVD, and
+ridge on identical noisy inputs. Its tradeoff curve plots residual versus
+solution size over positive λ. Sensitivity uses a separate perturbation Δ;
+these metrics do not claim error against an unknown true solution. Saved
+benchmark timings and profiles remain separate from these browser solves.

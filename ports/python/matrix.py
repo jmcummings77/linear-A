@@ -423,6 +423,12 @@ class Matrix:
         from solve import Factorization
         return Factorization(self, "qr")
 
+    def solve_ridge(self, rhs, regularization):
+        from svd import apply_inverse
+        if not isinstance(rhs, Matrix): raise TypeError('right-hand side must be a Matrix')
+        if not math.isfinite(regularization) or regularization < 0: raise ValueError('regularization must be finite and nonnegative')
+        return apply_inverse(self, rhs, 0 if regularization else None, regularization)
+
     def pseudoinverse(self, relative_cutoff=None):
         from svd import apply_inverse
         return apply_inverse(self, relative_cutoff=relative_cutoff)

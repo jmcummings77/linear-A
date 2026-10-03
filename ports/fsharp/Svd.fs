@@ -104,7 +104,16 @@ module MatrixSvd =
             let x = Math.ScaleB(Math.ScaleB(a,-ae)/Math.ScaleB(b,-be)*Math.ScaleB(c,-ce),ae-be+ce)
             if not (Double.IsFinite x) then raise (ArithmeticException("SVD inverse outside float64 range."))
             x
-    let private applyInverse (a: Matrix) (rhs: Matrix option) relativeCutoff =
+    let private ridgeProduct p s b lambda =
+        if p=0.0 || s=0.0 || b=0.0 then 0.0
+        else
+            let root = sqrt lambda
+            let d = max s root
+            let q,t = s/d,root/d
+            let pe,se,be,de = Math.ILogB(p),Math.ILogB(s),Math.ILogB(b),Math.ILogB(d)
+            let df = Math.ScaleB(d,-de)
+            Math.ScaleB(Math.ScaleB(p,-pe)*Math.ScaleB(s,-se)*Math.ScaleB(b,-be)/(df*df*(q*q+t*t)),pe+se+be-2*de)
+    let private applyInverse (a: Matrix) (rhs: Matrix option) relativeCutoff lambda =
         let cutoff = cutoff a relativeCutoff
         if rhs |> Option.exists (fun b -> b.Rows<>a.Rows) then invalidArg "rhs" "Incompatible right-hand side."
         if rhs |> Option.exists (fun b -> b.ToArray() |> Array.exists (Double.IsFinite >> not)) then invalidArg "rhs" "Expected finite right-hand side."
@@ -126,7 +135,7 @@ module MatrixSvd =
                     | None -> r.U[j,p]
                     | Some b when scaling<>0.0 -> [0..m-1] |> List.sumBy (fun i -> r.U[i,p]*(b[i,j]/scaling))
                     | _ -> 0.0
-                let coefficient = if rhs.IsSome then inverseProduct projection r.Values[p] scaling else 0.0
+                let coefficient = if rhs.IsSome then (if lambda>0.0 then ridgeProduct projection r.Values[p] scaling lambda else inverseProduct projection r.Values[p] scaling) else 0.0
                 for i in 0..n-1 do
                     let term = if rhs.IsSome then r.Vt[p,i]*coefficient else inverseProduct projection r.Values[p] r.Vt[p,i]
                     let value = output[i,j]+term
@@ -139,8 +148,11 @@ module MatrixSvd =
         member this.Svd(?tolerance: double, ?maxSweeps: int) =
             decompose this (defaultArg tolerance 1e-12) (defaultArg maxSweeps 100)
 
-        member this.Pseudoinverse(?relativeCutoff: double) = applyInverse this None relativeCutoff
-        member this.SolveMinimumNorm(rhs: Matrix, ?relativeCutoff: double) = applyInverse this (Some rhs) relativeCutoff
+        member this.Pseudoinverse(?relativeCutoff: double) = applyInverse this None relativeCutoff 0.0
+        member this.SolveMinimumNorm(rhs: Matrix, ?relativeCutoff: double) = applyInverse this (Some rhs) relativeCutoff 0.0
+        member this.SolveRidge(rhs: Matrix, lambda: double) =
+            if not (Double.IsFinite lambda) || lambda<0.0 then invalidArg "lambda" "Expected finite nonnegative lambda."
+            applyInverse this (Some rhs) (if lambda=0.0 then None else Some 0.0) lambda
         member this.SpectralDiagnostics(?relativeCutoff: double) =
             let cutoff = cutoff this relativeCutoff
             let s = (this.Svd()).Values

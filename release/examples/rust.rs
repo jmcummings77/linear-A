@@ -14,5 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let inverse=a.pseudoinverse()?;let minimum=a.solve_minimum_norm(&b)?;
     assert!((inverse.get(0,0)?-0.3).abs()<1e-12 && (minimum.get(1,0)?-2.).abs()<1e-12);
     assert_eq!(a.spectral_diagnostics()?.rank,2);
+    let ridge=a.solve_ridge(&b,1.)?;
+    assert!((ridge.get(0,0)?-140./131.).abs()<1e-12 && (ridge.get(1,0)?-230./131.).abs()<1e-12);
     println!("solution: 1, 2"); Ok(())
 }

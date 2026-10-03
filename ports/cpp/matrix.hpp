@@ -324,6 +324,7 @@ public:
     Factorization factor_qr() const;
     struct SpectralDiagnostics { std::size_t rank; double reciprocal_condition, retained_reciprocal_condition; };
     Matrix pseudoinverse(double cutoff=-1) const;
+    Matrix solve_ridge(const Matrix& rhs,double lambda) const;
     Matrix solve_minimum_norm(const Matrix& rhs,double cutoff=-1) const;
     SpectralDiagnostics spectral_diagnostics(double cutoff=-1) const;
     struct Svd;
@@ -504,14 +505,22 @@ inline double inverse_cutoff(std::size_t m,std::size_t n,double cutoff) {
 }
 inline Matrix Matrix::pseudoinverse(double cutoff) const {
     cutoff=inverse_cutoff(rows_,cols_,cutoff);auto r=svd();Matrix out(cols_,rows_);
-    if(la_apply_inverse(rows_,cols_,r.values.size(),r.u.data(),r.values.data(),r.vt.data(),cutoff,nullptr,rows_,0,out.data()))throw std::overflow_error("SVD inverse outside float64 range");
+    if(la_apply_inverse(rows_,cols_,r.values.size(),r.u.data(),r.values.data(),r.vt.data(),cutoff,nullptr,rows_,0,out.data(),0))throw std::overflow_error("SVD inverse outside float64 range");
     return out;
 }
 inline Matrix Matrix::solve_minimum_norm(const Matrix& rhs,double cutoff) const {
     rhs.validate();
     if(rhs.rows_!=rows_)throw std::invalid_argument("incompatible right-hand side");
     cutoff=inverse_cutoff(rows_,cols_,cutoff);auto r=svd();Matrix out(cols_,rhs.cols_);
-    if(la_apply_inverse(rows_,cols_,r.values.size(),r.u.data(),r.values.data(),r.vt.data(),cutoff,rhs.values_.data(),rhs.cols_,1,out.data()))throw std::overflow_error("SVD solve outside float64 range");
+    if(la_apply_inverse(rows_,cols_,r.values.size(),r.u.data(),r.values.data(),r.vt.data(),cutoff,rhs.values_.data(),rhs.cols_,1,out.data(),0))throw std::overflow_error("SVD solve outside float64 range");
+    return out;
+}
+inline Matrix Matrix::solve_ridge(const Matrix& rhs,double lambda) const {
+    if(!std::isfinite(lambda)||lambda<0)throw std::invalid_argument("lambda must be finite and nonnegative");
+    if(lambda==0)return solve_minimum_norm(rhs);
+    rhs.validate();if(rhs.rows_!=rows_)throw std::invalid_argument("incompatible right-hand side");
+    auto r=svd();Matrix out(cols_,rhs.cols_);
+    if(la_apply_inverse(rows_,cols_,r.values.size(),r.u.data(),r.values.data(),r.vt.data(),0,rhs.values_.data(),rhs.cols_,1,out.data(),lambda))throw std::overflow_error("Ridge solve outside float64 range");
     return out;
 }
 inline Matrix::SpectralDiagnostics Matrix::spectral_diagnostics(double cutoff) const {

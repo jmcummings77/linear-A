@@ -149,6 +149,21 @@ public static class MatrixSvd
         ArgumentNullException.ThrowIfNull(rhs);
         return ApplyInverse(source, rhs, relativeCutoff);
     }
+    /// <summary>Minimizes ||A X-B||² + lambda ||X||². Zero uses the default SVD cutoff.</summary>
+    public static Matrix<double> SolveRidge(this Matrix<double> source, Matrix<double> rhs, double lambda)
+    {
+        ArgumentNullException.ThrowIfNull(rhs);
+        if (!double.IsFinite(lambda) || lambda < 0) throw new ArgumentOutOfRangeException(nameof(lambda));
+        return ApplyInverse(source, rhs, lambda == 0 ? null : 0, lambda);
+    }
+    private static double RidgeProduct(double p, double s, double b, double lambda)
+    {
+        if (p == 0 || s == 0 || b == 0) return 0;
+        var root = Math.Sqrt(lambda); var d = Math.Max(s, root); var q = s / d; var t = root / d;
+        var pe = Math.ILogB(p); var se = Math.ILogB(s); var be = Math.ILogB(b); var de = Math.ILogB(d);
+        var df = Math.ScaleB(d, -de);
+        return Math.ScaleB(Math.ScaleB(p, -pe) * Math.ScaleB(s, -se) * Math.ScaleB(b, -be) / (df * df * (q * q + t * t)), pe + se + be - 2 * de);
+    }
     private static double InverseProduct(double a, double b, double c)
     {
         if (a == 0 || c == 0) return 0;
@@ -157,7 +172,7 @@ public static class MatrixSvd
         if (!double.IsFinite(value)) throw new ArithmeticException("SVD inverse outside float64 range.");
         return value;
     }
-    private static Matrix<double> ApplyInverse(Matrix<double> source, Matrix<double>? rhs, double? relativeCutoff)
+    private static Matrix<double> ApplyInverse(Matrix<double> source, Matrix<double>? rhs, double? relativeCutoff, double lambda = 0)
     {
         ArgumentNullException.ThrowIfNull(source);
         var cutoff = Cutoff(source, relativeCutoff);
@@ -179,7 +194,7 @@ public static class MatrixSvd
             {
                 var projection = rhs is null ? r.U[j, p] : 0;
                 if (rhs is not null && scale != 0) for (var i = 0; i < m; i++) projection += r.U[i, p] * (rhs[i, j] / scale);
-                var coefficient = rhs is null ? 0 : InverseProduct(projection, r.Values[p], scale);
+                var coefficient = rhs is null ? 0 : lambda > 0 ? RidgeProduct(projection, r.Values[p], scale, lambda) : InverseProduct(projection, r.Values[p], scale);
                 for (var i = 0; i < n; i++)
                 {
                     var term = rhs is null ? InverseProduct(projection, r.Values[p], r.Vt[p, i]) : r.Vt[p, i] * coefficient;

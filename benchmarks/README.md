@@ -528,3 +528,5 @@ original timing run. `--no-build` reuses current local binaries. Sampling and
 calibration are not appended to the comparative timing table. Native sampling
 requires macOS; unavailable profilers are reported explicitly. HTML, profile
 metadata and raw samples pass through the public-export sanitizers.
+
+The accuracy playground compares ordinary least squares, truncated SVD, and ridge regularization. The noise, cutoff, and λ sliders recompute through WASM after a 300 ms pause. The ridge tradeoff curve shows residual and solution norms; it does not select an optimal λ. These calculations do not alter recorded benchmark measurements.

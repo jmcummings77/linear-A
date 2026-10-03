@@ -19,7 +19,7 @@ type operation string
 
 func parseOperation(value string) (operation, error) {
 	switch value {
-	case "pseudoinverse", "spectral_diagnostics", "solve_minimum_norm", "svd", "svd_one_sweep", "add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "eigen_symmetric", "eigen_general", "triangular":
+	case "pseudoinverse", "spectral_diagnostics", "solve_ridge", "solve_minimum_norm", "svd", "svd_one_sweep", "add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "eigen_symmetric", "eigen_general", "triangular":
 		return operation(value), nil
 	default:
 		return "", fmt.Errorf("unknown operation: %s", value)
@@ -27,7 +27,7 @@ func parseOperation(value string) (operation, error) {
 }
 
 func (op operation) binary() bool {
-	return op == "add" || op == "subtract" || op == "multiply" || op == "cross" || op == "solve" || op == "solve_cholesky" || op == "least_squares" || op == "solve_minimum_norm"
+	return op == "add" || op == "subtract" || op == "multiply" || op == "cross" || op == "solve" || op == "solve_cholesky" || op == "least_squares" || op == "solve_minimum_norm" || op == "solve_ridge"
 }
 
 type outcome struct {
@@ -55,6 +55,8 @@ func execute(op operation, a, b *matrix.Matrix, scalar float64) (outcome, error)
 		result.matrix, err = a.Multiply(b)
 	case "pseudoinverse":
 		result.matrix, err = a.PseudoinverseWith(scalar)
+	case "solve_ridge":
+		result.matrix, err = a.SolveRidge(b, scalar)
 	case "solve_minimum_norm":
 		result.matrix, err = a.SolveMinimumNorm(b)
 	case "spectral_diagnostics":
@@ -263,6 +265,9 @@ func check(args []string) error {
 	} else if op == "scale" || op == "rotation2d" || op == "rotation3d" || op == "pseudoinverse" || op == "spectral_diagnostics" {
 		expected = 5
 	}
+	if op == "solve_ridge" {
+		expected = 7
+	}
 	if len(args) != expected {
 		return errors.New("wrong number of arguments for check operation")
 	}
@@ -299,6 +304,12 @@ func check(args []string) error {
 	scalar := 1.25
 	if op == "scale" || op == "rotation2d" || op == "rotation3d" || op == "pseudoinverse" || op == "spectral_diagnostics" {
 		scalar, err = number(args[4])
+		if err != nil {
+			return err
+		}
+	}
+	if op == "solve_ridge" {
+		scalar, err = number(args[6])
 		if err != nil {
 			return err
 		}

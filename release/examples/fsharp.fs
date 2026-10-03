@@ -15,3 +15,6 @@ if decomposition.Values.Length <> 2 || decomposition.Values[1] <= 0. then failwi
 let inverse = a.Pseudoinverse()
 let minimum = a.SolveMinimumNorm(b)
 if abs(inverse[0,0]-0.3)>1e-12 || abs(minimum[1,0]-2.)>1e-12 || (a.SpectralDiagnostics()).Rank<>2 then failwith "incorrect SVD inverse"
+
+let ridge = a.SolveRidge(b,1.)
+if abs(ridge[0,0]-140./131.)>1e-12 || abs(ridge[1,0]-230./131.)>1e-12 then failwith "incorrect ridge solution"

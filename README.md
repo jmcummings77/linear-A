@@ -10,7 +10,7 @@ use case.
 [Browse all reports](https://jmcummings77.github.io/linear-A/) ·
 [Shared API and implementation differences](ports/README.md) ·
 [Release kits and installation](release/README.md) ·
-[Versioned API contract](docs/api/0.3.0/README.md)
+[Versioned API contract](docs/api/0.4.0/README.md)
 
 ## Choose an implementation
 

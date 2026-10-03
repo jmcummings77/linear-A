@@ -109,6 +109,7 @@ matrix_status m_svd(const matrix *source, double tolerance, size_t max_sweeps,
  * Empty distinct outputs, unchanged on failure. See ports/SVD.md. */
 typedef struct { size_t rank; double reciprocal_condition, retained_reciprocal_condition; } matrix_spectral_diagnostics;
 matrix_status m_pseudoinverse(const matrix *source,double cutoff,matrix *out);
+matrix_status m_solve_ridge(const matrix *source,const matrix *rhs,double lambda,matrix *out);
 matrix_status m_solve_minimum_norm(const matrix *source,const matrix *rhs,double cutoff,matrix *out);
 matrix_status m_spectral_diagnostics(const matrix *source,double cutoff,matrix_spectral_diagnostics *out);
 

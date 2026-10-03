@@ -81,7 +81,7 @@ function inverse_product(a,b,c)
     fa,ea=frexp(a);fb,eb=frexp(b);fc,ec=frexp(c)
     finite(ldexp((fa/fb)*fc,ea-eb+ec))
 end
-function apply_inverse(a::Matrix64,rhs,cutoff)
+function apply_inverse(a::Matrix64,rhs,cutoff,lambda=0.0)
     cutoff=spectral_cutoff(a,cutoff)
     rhs === nothing || rhs.rows==a.rows || throw(DimensionMismatch("incompatible right-hand side"))
     rhs === nothing || all(isfinite,rhs.data) || throw(ArgumentError("expected finite right-hand side"))
@@ -94,7 +94,7 @@ function apply_inverse(a::Matrix64,rhs,cutoff)
         end
         for p in 1:rank
             projection=rhs === nothing ? r.u[j,p] : scaling==0 ? 0.0 : sum((r.u[i,p]*(rhs[i,j]/scaling) for i in 1:m);init=0.0)
-            coefficient=rhs === nothing ? 0.0 : inverse_product(projection,r.values[p],scaling)
+            coefficient=rhs === nothing ? 0.0 : lambda>0 ? ridge_product(projection,r.values[p],scaling,lambda) : inverse_product(projection,r.values[p],scaling)
             for i in 1:n
                 term=rhs === nothing ? inverse_product(projection,r.values[p],r.vt[p,i]) : r.vt[p,i]*coefficient
                 out[i,j]=finite(out[i,j]+term)
@@ -105,3 +105,15 @@ function apply_inverse(a::Matrix64,rhs,cutoff)
 end
 pseudoinverse(a::Matrix64;relative_cutoff=nothing)=apply_inverse(a,nothing,relative_cutoff)
 solve_minimum_norm(a::Matrix64,b::Matrix64;relative_cutoff=nothing)=apply_inverse(a,b,relative_cutoff)
+
+function ridge_product(p,s,b,lambda)
+    (p==0 || s==0 || b==0) && return 0.0
+    root=sqrt(lambda);d=max(s,root);h=(s/d)^2+(root/d)^2
+    pf,pe=frexp(p);sf,se=frexp(s);bf,be=frexp(b);df,de=frexp(d)
+    finite(ldexp(pf*sf*bf/(df*df*h),pe+se+be-2*de))
+end
+function solve_ridge(a::Matrix64,b::Matrix64,lambda::Real)
+    lambda=Float64(lambda)
+    isfinite(lambda) && lambda>=0 || throw(ArgumentError("lambda must be finite and nonnegative"))
+    apply_inverse(a,b,lambda==0 ? nothing : 0.0,lambda)
+end

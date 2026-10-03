@@ -161,6 +161,10 @@ export async function createMatrixAPI({
     }
 
     /** Truncated SVD inverse; dispose the returned matrix. */
+    solveRidge(rhs,lambda) {
+      if(!Number.isFinite(lambda)||lambda<0)throw new RangeError('lambda must be finite and nonnegative');
+      return Matrix.#fromHandle(runtime._wm_solve_ridge(this.#alive(),this.#other(rhs),lambda));
+    }
     pseudoinverse(cutoff=Math.max(this.rows,this.cols)*Number.EPSILON) {
       this.#checkCutoff(cutoff);
       return Matrix.#fromHandle(runtime._wm_pseudoinverse(this.#alive(),cutoff));

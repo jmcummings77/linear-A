@@ -370,6 +370,6 @@ include("eigen_general.jl")
 include("solve.jl")
 
 include("svd.jl")
-export svd, pseudoinverse, solve_minimum_norm, spectral_diagnostics
+export solve_ridge, svd, pseudoinverse, solve_minimum_norm, spectral_diagnostics
 
 end

@@ -17,6 +17,10 @@ int main(void) {
     if(!failed)failed=fabs(inverse.values[0]-.3)>1e-12||fabs(minimum.values[1]-2)>1e-12||diagnostics.rank!=2;
     m_free(&inverse);m_free(&minimum);
     m_free(&u);m_free(&s);m_free(&vt);
+    matrix ridge={0};
+    if(!failed)failed=m_solve_ridge(&a,&b,1,&ridge);
+    if(!failed)failed=fabs(ridge.values[0]-140.0/131)>1e-12||fabs(ridge.values[1]-230.0/131)>1e-12;
+    m_free(&ridge);
     m_free(&reconstructed);m_free(&x);m_free(&b);m_free(&a);
     if (!failed) puts("solution: 1, 2");
     return failed;

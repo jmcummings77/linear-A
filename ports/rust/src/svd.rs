@@ -218,7 +218,7 @@ impl Matrix {
         self.pseudoinverse_with(self.rows.max(self.cols) as f64 * f64::EPSILON)
     }
     pub fn pseudoinverse_with(&self, cutoff: f64) -> Result<Matrix, MatrixError> {
-        self.apply_inverse(None, cutoff)
+        self.apply_inverse(None, cutoff, 0.)
     }
     pub fn solve_minimum_norm(&self, rhs: &Matrix) -> Result<Matrix, MatrixError> {
         self.solve_minimum_norm_with(rhs, self.rows.max(self.cols) as f64 * f64::EPSILON)
@@ -228,9 +228,25 @@ impl Matrix {
         rhs: &Matrix,
         cutoff: f64,
     ) -> Result<Matrix, MatrixError> {
-        self.apply_inverse(Some(rhs), cutoff)
+        self.apply_inverse(Some(rhs), cutoff, 0.)
     }
-    fn apply_inverse(&self, rhs: Option<&Matrix>, cutoff: f64) -> Result<Matrix, MatrixError> {
+    pub fn solve_ridge(&self, rhs: &Matrix, lambda: f64) -> Result<Matrix, MatrixError> {
+        if !lambda.is_finite() || lambda < 0. {
+            return Err(MatrixError::new("lambda must be finite and nonnegative"));
+        }
+        let cutoff = if lambda == 0. {
+            self.rows.max(self.cols) as f64 * f64::EPSILON
+        } else {
+            0.
+        };
+        self.apply_inverse(Some(rhs), cutoff, lambda)
+    }
+    fn apply_inverse(
+        &self,
+        rhs: Option<&Matrix>,
+        cutoff: f64,
+        lambda: f64,
+    ) -> Result<Matrix, MatrixError> {
         use crate::determinant::quotient_product;
         check_cutoff(cutoff)?;
         if rhs.map_or(false, |b| b.rows != self.rows) {
@@ -269,7 +285,11 @@ impl Matrix {
                         }
                     });
                 let coefficient = if rhs.is_some() {
-                    crate::finite(quotient_product(projection, r.values[p], scale))?
+                    crate::finite(if lambda > 0. {
+                        crate::determinant::ridge_product(projection, r.values[p], scale, lambda)
+                    } else {
+                        quotient_product(projection, r.values[p], scale)
+                    })?
                 } else {
                     0.
                 };

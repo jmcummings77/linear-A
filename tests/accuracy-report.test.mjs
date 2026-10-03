@@ -15,8 +15,8 @@ function harness(available=true){
   getContext(){return new Proxy({}, {get:()=>()=>{},set:()=>true});}
  }
  const nodes=new Map(),get=id=>{if(!nodes.has(id))nodes.set(id,new Element(id));return nodes.get(id);};
- for(const [id,tag,value] of [['preset','SELECT','stable'],['algorithm','SELECT','lu'],['target','SELECT','5'],['delta','INPUT','0.0000001'],['cutoff','INPUT','-12']])Object.assign(get('accuracy-'+id),{tagName:tag,value});
- get('accuracy-panel').querySelectorAll=selector=>selector==='.accuracy-spectral'?[]:['preset','algorithm','target','delta','cutoff'].map(id=>get('accuracy-'+id));
+ for(const [id,tag,value] of [['preset','SELECT','stable'],['algorithm','SELECT','lu'],['target','SELECT','5'],['delta','INPUT','0.0000001'],['cutoff','INPUT','-12'],['lambda','INPUT','-6'],['noise','INPUT','0']])Object.assign(get('accuracy-'+id),{tagName:tag,value});
+ get('accuracy-panel').querySelectorAll=selector=>selector==='.accuracy-spectral'?[]:['preset','algorithm','target','delta','cutoff','lambda','noise'].map(id=>get('accuracy-'+id));
  get('live-data').textContent=JSON.stringify({available,accuracy_worker_source:'export {};'});
  const timers=new Map(),workers=[],revoked=[];let clock=0,next=0;
  class Worker {constructor(){this.sent=[];workers.push(this);}postMessage(message){this.sent.push(message);}terminate(){this.terminated=true;}}
@@ -52,6 +52,15 @@ test('SVD controls show the cutoff, debounce edits, and restore LU visibility',(
  h.advance(299);assert.equal(h.workers.length,0);h.advance(1);
  assert.equal(h.workers[0].sent[0].config.cutoff,1e-5);
  h.get('accuracy-algorithm').value='lu';h.get('accuracy-algorithm').dispatch('change');
- assert.equal(h.get('accuracy-cutoff-control').hidden,true);
- assert.equal(h.get('accuracy-cutoff').disabled,true);
+ assert.equal(h.get('accuracy-cutoff-control').hidden,false);
+ assert.equal(h.get('accuracy-cutoff').disabled,false);
+});
+
+test('ridge and noise changes share the debounce and clear stale comparisons',()=>{
+ const h=harness();h.advance(300);const worker=h.workers[0];
+ h.get('accuracy-lambda').value='-4';h.get('accuracy-lambda').dispatch('input');h.advance(200);
+ h.get('accuracy-noise').value='0.0001';h.get('accuracy-noise').dispatch('input');h.advance(299);
+ assert.equal(worker.sent.length,1);h.advance(1);assert.equal(worker.sent.length,2);
+ assert.equal(worker.sent[1].config.lambda,1e-4);assert.equal(worker.sent[1].config.noise,1e-4);
+ assert.equal(h.get('accuracy-comparison').textContent,'');
 });

@@ -5,8 +5,8 @@ import { pathToFileURL } from "node:url";
 import { createMatrixAPI } from "./matrix.mjs";
 
 const determinants = new Set(["determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"]);
-const operations = new Set(["pseudoinverse", "spectral_diagnostics", "solve_minimum_norm", "svd", "svd_one_sweep","add", "subtract", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "scale", "transpose", "trace", ...determinants, "triangular", "eigen_symmetric", "eigen_general"]);
-const binary = new Set(["add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares", "solve_minimum_norm"]);
+const operations = new Set(["pseudoinverse", "spectral_diagnostics", "solve_ridge", "solve_minimum_norm", "svd", "svd_one_sweep","add", "subtract", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "scale", "transpose", "trace", ...determinants, "triangular", "eigen_symmetric", "eigen_general"]);
+const binary = new Set(["add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares", "solve_minimum_norm", "solve_ridge"]);
 const rotations = new Set(["rotation2d", "rotation3d"]);
 
 function integer(text, minimum = 0, maximum = Number.MAX_SAFE_INTEGER) {
@@ -37,6 +37,7 @@ function execute(op, a, b, scalar = 1.25) {
     case "subtract": return a.subtract(b);
     case "multiply": return a.multiply(b);
     case "pseudoinverse": return a.pseudoinverse(scalar);
+    case "solve_ridge": return a.solveRidge(b,scalar);
     case "solve_minimum_norm": return a.solveMinimumNorm(b);
     case "spectral_diagnostics": {
       const d=a.spectralDiagnostics(scalar);
@@ -78,11 +79,11 @@ function execute(op, a, b, scalar = 1.25) {
 function check(args, Matrix) {
   const op = args[0];
   if (!operations.has(op)) throw new RangeError("unknown operation");
-  if (args.length !== (binary.has(op) ? 5 : op === "scale" || rotations.has(op) || op === "pseudoinverse" || op === "spectral_diagnostics" ? 4 : 3)) throw new RangeError("incorrect argument count for operation");
+  if (args.length !== (op === "solve_ridge" ? 6 : binary.has(op) ? 5 : op === "scale" || rotations.has(op) || op === "pseudoinverse" || op === "spectral_diagnostics" ? 4 : 3)) throw new RangeError("incorrect argument count for operation");
   const rows = integer(args[1]), cols = integer(args[2]);
   const brows = binary.has(op) ? integer(args[3]) : 0;
   const bcols = binary.has(op) ? integer(args[4]) : 0;
-  const scalar = op === "scale" || rotations.has(op) || op === "pseudoinverse" || op === "spectral_diagnostics" ? number(args[3]) : 1.25;
+  const scalar = op === "solve_ridge" ? number(args[5]) : op === "scale" || rotations.has(op) || op === "pseudoinverse" || op === "spectral_diagnostics" ? number(args[3]) : 1.25;
   const firstCount = count(rows, cols), secondCount = count(brows, bcols);
   const input = readFileSync(0, "utf8").trim();
   const values = input ? input.split(/\s+/).map(number) : [];

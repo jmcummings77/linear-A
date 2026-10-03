@@ -4,13 +4,15 @@
   if(!panel)return;
   const bundle=JSON.parse(get('live-data').textContent), canvas=get('accuracy-canvas'), ctx=canvas.getContext('2d');
   const controls=Array.from(panel.querySelectorAll('input,select')), fields=[];
-  const presets={stable:[4,1,1,3,6,7],sensitive:[1,1,1,1.000001,2,2.000001],singular:[1,1,2,2,2,4],noisy:[1,1,1,1.000001,2,2.000101]};
+  const presets={stable:[4,1,1,3,6,7],sensitive:[1,1,1,1.000001,2,2.000001],singular:[1,1,2,2,2,4],noisy:[1,1,1,1.000001,2,2.000001]};
   let timer, worker, workerURL, watchdog, request=0, result=null;
   const status=(text)=>{get('accuracy-status').textContent=text;};
   const format=value=>value===null?'undefined (zero baseline)':!Number.isFinite(value)?'outside float64 range':value===0?'0':Math.abs(value)<.001||Math.abs(value)>1e4?value.toExponential(3):value.toPrecision(6);
   const vector=values=>`[${values.map(format).join(', ')}]`;
   function clearResult(){
     result=null;
+    get("accuracy-comparison").textContent="";
+    drawTradeoff();
     for(const id of ['solution','change','condition','residual','backward','norm','rank','retained','spectrum'])get(`accuracy-${id}`).textContent='—';
     draw();
   }
@@ -38,6 +40,22 @@
     for(let row=0;row<2;row++){equation(result.a,result.b,row,colors[row],false);if(result.perturbed)equation(result.perturbed_a,result.perturbed_b,row,colors[row],true);}
     solutions.forEach((x,index)=>{const p=point(x);if(!p.every(Number.isFinite)||Math.abs(p[0])>width*2||Math.abs(p[1])>height*2)return;ctx.fillStyle=index?'#e25492':'#528dec';ctx.beginPath();ctx.arc(...p,index?5:7,0,Math.PI*2);ctx.fill();ctx.fillText(index?'perturbed':'baseline',p[0]+10,p[1]+(index?16:-12));});
   }
+  function drawTradeoff(){
+    const plot=get('accuracy-tradeoff'),c=plot.getContext('2d'),w=Math.max(280,plot.clientWidth||640),h=240,dpr=Math.min(2,devicePixelRatio||1);
+    plot.width=w*dpr;plot.height=h*dpr;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+    if(!result?.curve?.length)return;
+    const points=result.curve.map(p=>[Math.log10(Math.max(1e-18,p.residual_norm)),Math.log10(Math.max(1e-18,p.solution_norm))]);
+    const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),lo=[Math.min(...xs),Math.min(...ys)],hi=[Math.max(...xs),Math.max(...ys)];
+    const xy=p=>[65+(p[0]-lo[0])/(hi[0]-lo[0]||1)*(w-90),h-40-(p[1]-lo[1])/(hi[1]-lo[1]||1)*(h-70)];
+    const ink=getComputedStyle(panel).getPropertyValue('--muted').trim()||'#75868b';
+    c.strokeStyle=ink;c.lineWidth=1;c.beginPath();c.moveTo(65,20);c.lineTo(65,h-40);c.lineTo(w-25,h-40);c.stroke();
+    c.fillStyle=ink;c.font='11px ui-monospace,monospace';
+    c.fillText('‖x‖₂',5,18);c.fillText(`10^${lo[1].toFixed(1)}`,5,h-38);c.fillText(`10^${hi[1].toFixed(1)}`,5,36);
+    c.fillText(`10^${lo[0].toFixed(1)}`,65,h-18);c.fillText(`10^${hi[0].toFixed(1)} · ‖r‖₂`,Math.max(120,w-170),h-18);
+    c.strokeStyle='#2a9d8f';c.lineWidth=2;c.beginPath();points.forEach((p,i)=>i?c.lineTo(...xy(p)):c.moveTo(...xy(p)));c.stroke();
+    const selected=result.compare?.find(r=>r.algorithm==='ridge'&&!r.error);
+    if(selected){c.fillStyle='#e58b47';c.beginPath();c.arc(...xy([Math.log10(Math.max(1e-18,selected.residual_norm)),Math.log10(Math.max(1e-18,selected.solution_norm))]),5,0,Math.PI*2);c.fill();}
+  }
   function show(data){
     result=data.result;const r=result,b=r.base,p=r.perturbed;
     get('accuracy-condition-label').textContent=`Reciprocal condition · ${b.condition_norm||'infinity norm'}`;
@@ -53,7 +71,14 @@
     get('accuracy-residual').textContent=`${format(b.residual_infinity)}${p?' → '+format(p.residual_infinity):''}`;
     get('accuracy-backward').textContent=`${format(b.backward_error)}${p?' → '+format(p.backward_error):''}`;
     status(`${data.checks.passed}/${data.checks.total} shared checks passed. Applied Δ = ${format(r.actual_delta)}.${r.perturbed_error?' Perturbed system: '+r.perturbed_error:''}${r.actual_delta===0&&Number(get('accuracy-delta').value)!==0?' The requested change rounded away in float64.':''}`);
-    draw();
+    const table=get('accuracy-comparison');table.textContent='';
+    for(const row of r.compare||[]){
+      const tr=document.createElement('tr');
+      const label={ordinary:'Ordinary least squares',svd:'Truncated SVD',ridge:'Ridge'}[row.algorithm];
+      for(const value of [label,row.error||vector(row.x),row.error?'—':format(row.residual_norm),row.error?'—':format(row.solution_norm),row.error?'—':format(row.sensitivity)]){const td=document.createElement('td');td.textContent=value;tr.append(td);}
+      table.append(tr);
+    }
+    draw();drawTradeoff();
   }
   function compute(){
     clearTimeout(timer);const id=++request;clearResult();
@@ -71,13 +96,15 @@
       }
       panel.setAttribute('aria-busy','true');status('Solving in WebAssembly…');
       clearTimeout(watchdog);watchdog=setTimeout(()=>{++request;stop();clearResult();status('Accuracy calculation timed out. Change an input to retry.');},20000);
-      worker.postMessage({type:'accuracy',id,bundle,config:{a:values.slice(0,4),b:values.slice(4),delta,target:Number(get('accuracy-target').value),algorithm:get('accuracy-algorithm').value,cutoff:10**Number(get('accuracy-cutoff').value)}});
+      worker.postMessage({type:'accuracy',id,bundle,config:{a:values.slice(0,4),b:values.slice(4),delta,target:Number(get('accuracy-target').value),algorithm:get('accuracy-algorithm').value,cutoff:10**Number(get('accuracy-cutoff').value),lambda:10**Number(get('accuracy-lambda').value),noise:Number(get('accuracy-noise').value)}});
     }catch(error){stop();status(error.message);}
   }
   function cutoffControls(){
-    const enabled=get('accuracy-algorithm').value==='svd';
-    get('accuracy-cutoff-control').hidden=!enabled;
-    get('accuracy-cutoff').disabled=!enabled;
+    const enabled=['svd','ridge'].includes(get('accuracy-algorithm').value);
+    get('accuracy-cutoff-control').hidden=false;
+    get('accuracy-cutoff').disabled=false;
+    get('accuracy-lambda-value').textContent=format(10**Number(get('accuracy-lambda').value));
+    get('accuracy-noise-value').textContent=format(Number(get('accuracy-noise').value));
     get('accuracy-cutoff-value').textContent=format(10**Number(get('accuracy-cutoff').value));
     panel.querySelectorAll('.accuracy-spectral').forEach(node=>node.hidden=!enabled);
   }
@@ -85,10 +112,10 @@
   for(let i=0;i<6;i++){
     const input=document.createElement('input');input.type='number';input.step='any';input.min='-1000000';input.max='1000000';input.setAttribute('aria-label',i<4?`A row ${Math.floor(i/2)+1} column ${i%2+1}`:`b row ${i-3}`);input.addEventListener('input',()=>{get('accuracy-preset').value='custom';schedule();});fields.push(input);get(i<4?'accuracy-a':'accuracy-b').append(input);
   }
-  function preset(){const values=presets[get('accuracy-preset').value];if(!values)return;fields.forEach((input,i)=>input.value=values[i]);if(get('accuracy-preset').value==='noisy')get('accuracy-algorithm').value='svd';schedule();}
+  function preset(){const values=presets[get('accuracy-preset').value];if(!values)return;fields.forEach((input,i)=>input.value=values[i]);get('accuracy-noise').value=get('accuracy-preset').value==='noisy'?.0001:0;if(get('accuracy-preset').value==='noisy'){get('accuracy-algorithm').value='ridge';get('accuracy-cutoff').value='-5';}schedule();}
   get('accuracy-preset').addEventListener('change',preset);
   controls.filter(input=>input.id!=='accuracy-preset').forEach(input=>input.addEventListener(input.tagName==='SELECT'?'change':'input',schedule));
-  addEventListener('resize',draw);addEventListener('pagehide',()=>{clearTimeout(timer);stop();});
-  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  addEventListener('resize',()=>{draw();drawTradeoff();});addEventListener('pagehide',()=>{clearTimeout(timer);stop();});
+  new MutationObserver(()=>{draw();drawTradeoff();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   preset();
 })();

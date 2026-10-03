@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 import { Matrix, finite, type GeneralEigenDecomposition, type SymmetricEigenDecomposition } from "./matrix.js";
 
 const determinants = new Set(["determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"]);
-const operations = new Set(["pseudoinverse", "spectral_diagnostics", "solve_minimum_norm", "svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
+const operations = new Set(["pseudoinverse", "spectral_diagnostics", "solve_ridge", "solve_minimum_norm", "svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
   "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", ...determinants]);
 
 function integer(text: string, minimum = 0, maximum = Number.MAX_SAFE_INTEGER): number {
@@ -24,6 +24,7 @@ export function operation(name: string, a: Matrix, b?: Matrix, scalar = 1.25): M
     case "subtract": return a.subtract(b!);
     case "multiply": return a.multiply(b!);
     case "pseudoinverse": return a.pseudoinverse(scalar);
+    case "solve_ridge": return a.solveRidge(b!,scalar);
     case "solve_minimum_norm": return a.solveMinimumNorm(b!);
     case "spectral_diagnostics": {
       const d=a.spectralDiagnostics(scalar);
@@ -66,11 +67,11 @@ function check(args: string[]): object {
   if (args.length < 3 || !operations.has(args[0])) throw new RangeError("usage: check OP ROWS COLS [BROWS BCOLS | SCALAR]");
   const [name] = args;
   const rows = integer(args[1]), cols = integer(args[2]);
-  const binary = ["add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares", "solve_minimum_norm"].includes(name);
+  const binary = ["add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares", "solve_minimum_norm", "solve_ridge"].includes(name);
   const scalarOperation = ["scale", "rotation2d", "rotation3d", "pseudoinverse", "spectral_diagnostics"].includes(name);
-  if (args.length !== (binary ? 5 : scalarOperation ? 4 : 3)) throw new RangeError("incorrect number of operation arguments");
+  if (args.length !== (name === "solve_ridge" ? 6 : binary ? 5 : scalarOperation ? 4 : 3)) throw new RangeError("incorrect number of operation arguments");
   const brows = binary ? integer(args[3]) : 0, bcols = binary ? integer(args[4]) : 0;
-  const scalar = scalarOperation ? number(args[3]) : 1.25;
+  const scalar = name === "solve_ridge" ? number(args[5]) : scalarOperation ? number(args[3]) : 1.25;
   const input = readFileSync(0, "utf8").trim();
   const values = input ? input.split(/\s+/).map(number) : [];
   const count = rows * cols;

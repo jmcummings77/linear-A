@@ -82,7 +82,7 @@ class LiveReportTests(unittest.TestCase):
         self.assertEqual(base64.b64decode(bundle["wasm_base64"], validate=True), self.binary.read_bytes())
         self.assertEqual(bundle["byte_length"], len(self.binary.read_bytes()))
         self.assertRegex(bundle["sha256"], r"^[0-9a-f]{64}$")
-        self.assertEqual(len(bundle["fixtures"]), 39 + len(report.eigen_fixtures()) + len(report.general_eigen_fixtures()) + len(report.vector_fixtures()) + len(report.solve_fixtures()) + len(report.pseudoinverse_fixtures()))
+        self.assertEqual(len(bundle["fixtures"]), 39 + len(report.eigen_fixtures()) + len(report.general_eigen_fixtures()) + len(report.vector_fixtures()) + len(report.solve_fixtures()) + len(report.pseudoinverse_fixtures()) + len(report.ridge_fixtures()))
         self.assertTrue(any(case["op"] == "eigen_symmetric" for case in bundle["fixtures"]))
         # The independent oracle returns Fraction values for multiplication.
         # Packaging must normalize them while retaining JSON booleans as bools.

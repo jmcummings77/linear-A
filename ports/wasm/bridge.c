@@ -233,3 +233,7 @@ matrix *wm_spectral_diagnostics(const matrix *source,double cutoff){
     double values[3]={(double)d.rank,d.reciprocal_condition,d.retained_reciprocal_condition};
     return complete(out,m_from_array(1,3,values,out));
 }
+
+matrix *wm_solve_ridge(const matrix *a,const matrix *b,double lambda){
+    matrix *out=allocate_handle();return out?complete(out,m_solve_ridge(a,b,lambda,out)):NULL;
+}

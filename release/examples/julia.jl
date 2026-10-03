@@ -10,3 +10,6 @@ r=svd(a)
 
 p=pseudoinverse(a); minimum=solve_minimum_norm(a,b); d=spectral_diagnostics(a)
 @assert abs(p[1,1]-.3)<1e-12 && abs(minimum[2,1]-2)<1e-12 && d.rank==2
+
+ridge=solve_ridge(a,b,1)
+@assert abs(ridge[1,1]-140/131)<1e-12 && abs(ridge[2,1]-230/131)<1e-12

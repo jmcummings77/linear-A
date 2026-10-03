@@ -212,3 +212,19 @@ impl Matrix {
         product.result()
     }
 }
+
+pub(crate) fn ridge_product(p: f64, s: f64, b: f64, lambda: f64) -> f64 {
+    if p == 0. || s == 0. || b == 0. {
+        return 0.;
+    }
+    let root = lambda.sqrt();
+    let d = s.max(root);
+    let q = s / d;
+    let t = root / d;
+    let (pf, pe) = parts(p);
+    let (sf, se) = parts(s);
+    let (bf, be) = parts(b);
+    let (df, de) = parts(d);
+    let (f, e) = parts(pf * sf * bf / (df * df * (q * q + t * t)));
+    scale_normalized(f, i64::from(pe + se + be - 2 * de + e))
+}

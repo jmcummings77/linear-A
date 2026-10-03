@@ -100,7 +100,7 @@ class GeometryReportTests(unittest.TestCase):
         self.assertEqual(bundle["geometry_source"], self.manifest)
         self.assertEqual(bundle["geometry_source"]["start_line"] + 2, 175)
         self.assertIn("m_trace_record", bundle["geometry_source"]["lines"][2])
-        self.assertEqual(len(bundle["fixtures"]), 39 + len(report.eigen_fixtures()) + len(report.general_eigen_fixtures()) + len(report.vector_fixtures()) + len(report.solve_fixtures()) + len(report.pseudoinverse_fixtures()))
+        self.assertEqual(len(bundle["fixtures"]), 39 + len(report.eigen_fixtures()) + len(report.general_eigen_fixtures()) + len(report.vector_fixtures()) + len(report.solve_fixtures()) + len(report.pseudoinverse_fixtures()) + len(report.ridge_fixtures()))
         self.assertEqual(self.data, before)
 
     def test_hash_tracks_worker_trace_module_binary_and_build_source_manifest(self):

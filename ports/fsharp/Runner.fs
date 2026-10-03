@@ -50,6 +50,7 @@ let operation op (a: Matrix) (b: Matrix) scalar =
     | "subtract" -> MatrixResult(a.Subtract(b))
     | "multiply" -> MatrixResult(a.Multiply(b))
     | "pseudoinverse" -> MatrixResult(a.Pseudoinverse(scalar))
+    | "solve_ridge" -> MatrixResult(a.SolveRidge(b,scalar))
     | "solve_minimum_norm" -> MatrixResult(a.SolveMinimumNorm(b))
     | "spectral_diagnostics" ->
         let d = a.SpectralDiagnostics(scalar)
@@ -114,9 +115,9 @@ let main args =
         match args[0] with
         | "check" ->
             let rows, cols = number false args[2], number false args[3]
-            let binary = op = "add" || op = "subtract" || op = "multiply" || op = "cross" || op = "solve" || op = "solve_cholesky" || op = "least_squares" || op = "solve_minimum_norm"
+            let binary = op = "add" || op = "subtract" || op = "multiply" || op = "cross" || op = "solve" || op = "solve_cholesky" || op = "least_squares" || op = "solve_minimum_norm" || op = "solve_ridge"
             let hasScalar = op = "scale" || op = "rotation2d" || op = "rotation3d" || op = "pseudoinverse" || op = "spectral_diagnostics"
-            if args.Length <> (if binary then 6 elif hasScalar then 5 else 4) then
+            if args.Length <> (if op = "solve_ridge" then 7 elif binary then 6 elif hasScalar then 5 else 4) then
                 invalidArg "args" "Wrong argument count."
             let br, bc = if binary then number false args[4], number false args[5] else 0, 0
             let values = Console.In.ReadToEnd().Split(([||]: char array), StringSplitOptions.RemoveEmptyEntries)
@@ -125,7 +126,7 @@ let main args =
                 invalidArg "values" "Expected exactly the stated number of finite entries."
             let a = Matrix.FromArray(rows, cols, Array.take (rows * cols) values)
             let b = Matrix.FromArray(br, bc, Array.skip (rows * cols) values)
-            let scalar = if hasScalar then Double.Parse(args[4], CultureInfo.InvariantCulture) else 1.25
+            let scalar = if op = "solve_ridge" then Double.Parse(args[6], CultureInfo.InvariantCulture) elif hasScalar then Double.Parse(args[4], CultureInfo.InvariantCulture) else 1.25
             if not (Double.IsFinite(scalar)) then invalidArg "scalar" "Scalar must be finite."
             operation op a b scalar |> write
         | "bench" when args.Length = 5 && op <> "triangular" ->

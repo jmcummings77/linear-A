@@ -66,6 +66,13 @@ function shiftExponent(value: number, shift: number): number {
   return compose(mantissa, exponent + shift);
 }
 
+function ridgeProduct(p:number,s:number,b:number,lambda:number):number {
+  if(p===0||s===0||b===0)return 0;
+  const root=Math.sqrt(lambda),d=Math.max(s,root),h=(s/d)**2+(root/d)**2;
+  const [pf,pe]=frexp(p),[sf,se]=frexp(s),[bf,be]=frexp(b),[df,de]=frexp(d);
+  const [f,e]=frexp(pf*sf*bf/(df*df*h));
+  return compose(f,pe+se+be-2*de+e);
+}
 function quotientProduct(numerator: number, denominator: number, value: number): number {
   const [left, leftExponent] = frexp(numerator), [right, rightExponent] = frexp(denominator);
   const [item, itemExponent] = frexp(value), [mantissa, carry] = frexp((left / right) * item);
@@ -446,7 +453,12 @@ export class Matrix {
     if(!(rhs instanceof Matrix))throw new TypeError("right-hand side must be a Matrix");
     return this.applyInverse(rhs,cutoff);
   }
-  private applyInverse(rhs: Matrix|undefined,cutoff: number): Matrix {
+  solveRidge(rhs: Matrix,lambda: number): Matrix {
+    if(!(rhs instanceof Matrix))throw new TypeError("right-hand side must be a Matrix");
+    if(!Number.isFinite(lambda)||lambda<0)throw new RangeError("lambda must be finite and nonnegative");
+    return this.applyInverse(rhs,lambda===0?Math.max(this.rows,this.cols)*Number.EPSILON:0,lambda);
+  }
+  private applyInverse(rhs: Matrix|undefined,cutoff: number,lambda=0): Matrix {
     checkCutoff(cutoff);
     if(rhs && rhs.rows!==this.rows)throw new RangeError("incompatible right-hand side");
     const r=this.svd(),m=this.rows,n=this.cols,rank=spectralRank(r.values,cutoff),cols=rhs?rhs.cols:m,out=new Matrix(n,cols);
@@ -457,7 +469,7 @@ export class Matrix {
       for(let p=0;p<rank;p++) {
         let projection=rhs?0:r.u.get(j,p);
         if(rhs && scale)for(let i=0;i<m;i++)projection+=r.u.get(i,p)*(rhs.get(i,j)/scale);
-        const coefficient=rhs?finite(quotientProduct(projection,r.values[p],scale)):0;
+        const coefficient=rhs?finite(lambda>0?ridgeProduct(projection,r.values[p],scale,lambda):quotientProduct(projection,r.values[p],scale)):0;
         for(let i=0;i<n;i++)out.set(i,j,finite(out.get(i,j)+(rhs?r.vt.get(p,i)*coefficient:quotientProduct(projection,r.values[p],r.vt.get(p,i)))));
       }
     }

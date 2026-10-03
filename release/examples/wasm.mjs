@@ -14,5 +14,7 @@ try {
   const inverse=a.pseudoinverse(), minimum=a.solveMinimumNorm(b);
   try {if(Math.abs(inverse.get(0,0)-.3)>1e-12 || Math.abs(minimum.get(1,0)-2)>1e-12 || a.spectralDiagnostics().rank!==2) throw Error("incorrect SVD inverse");}
   finally {inverse.dispose();minimum.dispose();}
+  const ridge=a.solveRidge(b,1);
+  try {if(Math.abs(ridge.get(0,0)-140/131)>1e-12 || Math.abs(ridge.get(1,0)-230/131)>1e-12)throw Error("incorrect ridge solution");}finally{ridge.dispose();}
   console.log("solution: 1, 2");
 } finally { reconstructed.dispose(); x.dispose(); b.dispose(); a.dispose(); }

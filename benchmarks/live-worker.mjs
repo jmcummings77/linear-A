@@ -22,6 +22,7 @@ function operation(name, a, b, scalar = 1.25) {
     case "subtract": return a.subtract(b);
     case "multiply": return a.multiply(b);
     case "pseudoinverse": return a.pseudoinverse(scalar);
+    case "solve_ridge": return a.solveRidge(b,scalar);
     case "solve_minimum_norm": return a.solveMinimumNorm(b);
     case "spectral_diagnostics": {
       const d=a.spectralDiagnostics(scalar);
@@ -221,7 +222,7 @@ export async function runChecks(Matrix, fixtures, onProgress = () => {}) {
     const check = { name: String(fixture.name), passed: false };
     let a, b, result;
     try {
-      if (!OPERATIONS.has(fixture.op) && !["triangular", "solve", "solve_cholesky", "least_squares", "rcond", "pseudoinverse", "solve_minimum_norm", "spectral_diagnostics"].includes(fixture.op)) throw new Error("fixture has an unsupported operation");
+      if (!OPERATIONS.has(fixture.op) && !["triangular", "solve", "solve_cholesky", "least_squares", "rcond", "pseudoinverse", "solve_ridge", "solve_minimum_norm", "spectral_diagnostics"].includes(fixture.op)) throw new Error("fixture has an unsupported operation");
       if (typeof fixture.invalid !== "boolean") throw new Error("fixture invalid flag must be boolean");
       a = new Matrix(fixture.a.rows, fixture.a.cols, fixture.a.values);
       if (fixture.b !== null && fixture.b !== undefined) b = new Matrix(fixture.b.rows, fixture.b.cols, fixture.b.values);
@@ -240,6 +241,9 @@ export async function runChecks(Matrix, fixtures, onProgress = () => {}) {
             ? { rows: result.rows, cols: result.cols, values: Array.from(result.toArray()) }
             : typeof result === "object" && result !== null ? result : { value: result };
           assertResult(actual, fixture.expected);
+          if(fixture.op === "solve_ridge")fixture.expected.values.forEach((wanted,i)=>{
+            if(wanted!==0 && !(Math.abs(actual.values[i]/wanted-1)<2e-9))throw new Error("incorrect ridge analytic solution");
+          });
         }
       }
       check.passed = true;

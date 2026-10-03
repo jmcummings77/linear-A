@@ -11,5 +11,7 @@ int main() {
     if(decomposition.values.size()!=2 || decomposition.values[1]<=0) return 1;
     auto inverse=a.pseudoinverse(),minimum=a.solve_minimum_norm(b);
     if(std::abs(inverse.values()[0]-.3)>1e-12 || std::abs(minimum.values()[1]-2)>1e-12 || a.spectral_diagnostics().rank!=2)return 1;
+    auto ridge=a.solve_ridge(b,1);
+    if(std::abs(ridge.values()[0]-140.0/131)>1e-12||std::abs(ridge.values()[1]-230.0/131)>1e-12)return 1;
     std::cout << "solution: 1, 2\n";
 }

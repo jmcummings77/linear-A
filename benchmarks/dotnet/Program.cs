@@ -148,8 +148,14 @@ internal static class Program
             "subtract" => () => new(a - b!),
             "multiply" => () => new(a * b!),
             "pseudoinverse" => () => new(a.Pseudoinverse(scalar)),
+            "solve_ridge" => () => new(a.SolveRidge(b!, scalar)),
             "solve_minimum_norm" => () => new(a.SolveMinimumNorm(b!)),
-            "spectral_diagnostics" => () => {var d=a.SpectralDiagnostics(scalar);return new(new Matrix<double>(new double[,]{{d.Rank,d.ReciprocalCondition,d.RetainedReciprocalCondition}}));},
+            "spectral_diagnostics" => () =>
+            {
+                var d = a.SpectralDiagnostics(scalar);
+                return new(new Matrix<double>(new double[,] { { d.Rank, d.ReciprocalCondition, d.RetainedReciprocalCondition } }));
+            }
+            ,
             "svd" or "svd_one_sweep" => () =>
             {
                 var r = a.Svd(maxSweeps: op == "svd" ? 100 : 1);
@@ -186,9 +192,9 @@ internal static class Program
             {
                 var rows = Number(args[2]);
                 var cols = Number(args[3]);
-                var binary = op is "add" or "subtract" or "multiply" or "cross" or "solve" or "solve_cholesky" or "least_squares" or "solve_minimum_norm";
+                var binary = op is "add" or "subtract" or "multiply" or "cross" or "solve" or "solve_cholesky" or "least_squares" or "solve_minimum_norm" or "solve_ridge";
                 var hasScalar = op is "scale" or "rotation2d" or "rotation3d" or "pseudoinverse" or "spectral_diagnostics";
-                if (args.Length != (binary ? 6 : hasScalar ? 5 : 4)) throw new ArgumentException("Wrong argument count.");
+                if (args.Length != (op == "solve_ridge" ? 7 : binary ? 6 : hasScalar ? 5 : 4)) throw new ArgumentException("Wrong argument count.");
                 var br = binary ? Number(args[4]) : 0;
                 var bc = binary ? Number(args[5]) : 0;
                 var values = Console.In.ReadToEnd().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
@@ -198,7 +204,7 @@ internal static class Program
                 var offset = 0;
                 var a = Read(rows, cols, values, ref offset);
                 var b = binary ? Read(br, bc, values, ref offset) : null;
-                var scalar = hasScalar ? double.Parse(args[4], CultureInfo.InvariantCulture) : 1.25;
+                var scalar = op == "solve_ridge" ? double.Parse(args[6], CultureInfo.InvariantCulture) : hasScalar ? double.Parse(args[4], CultureInfo.InvariantCulture) : 1.25;
                 if (!double.IsFinite(scalar)) throw new ArgumentException("Scalar must be finite.");
                 Operation(op, a, b, scalar)().Write();
             }

@@ -14,3 +14,6 @@ if (decomposition.Values.Length != 2 || decomposition.Values[1] <= 0) throw new 
 
 var inverse = a.Pseudoinverse(); var minimum = a.SolveMinimumNorm(b); var diagnostics = a.SpectralDiagnostics();
 if (Math.Abs(inverse[0,0]-.3)>1e-12 || Math.Abs(minimum[1,0]-2)>1e-12 || diagnostics.Rank!=2) throw new Exception("incorrect SVD inverse");
+
+var ridge = a.SolveRidge(b, 1);
+if (Math.Abs(ridge[0,0]-140.0/131)>1e-12 || Math.Abs(ridge[1,0]-230.0/131)>1e-12) throw new Exception("incorrect ridge solution");

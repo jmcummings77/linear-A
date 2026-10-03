@@ -1,7 +1,7 @@
 include(joinpath(@__DIR__, "src", "LinearAMatrices.jl"))
 using .LinearAMatrices
 
-const OPERATIONS = Set(["pseudoinverse", "spectral_diagnostics", "solve_minimum_norm", "svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "eigen_symmetric", "eigen_general", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "triangular"])
+const OPERATIONS = Set(["pseudoinverse", "spectral_diagnostics", "solve_ridge", "solve_minimum_norm", "svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "eigen_symmetric", "eigen_general", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "triangular"])
 
 function integer(text, minimum=0, maximum=typemax(Int))
     value = parse(Int, text)
@@ -14,6 +14,7 @@ function operation(name, a, b=nothing, scalar=1.25)
     name == "subtract" && return a - b
     name == "multiply" && return a * b
     name == "pseudoinverse" && return pseudoinverse(a;relative_cutoff=scalar)
+    name == "solve_ridge" && return solve_ridge(a,b,scalar)
     name == "solve_minimum_norm" && return solve_minimum_norm(a,b)
     if name == "spectral_diagnostics"
         d=spectral_diagnostics(a;relative_cutoff=scalar)
@@ -48,11 +49,11 @@ end
 function check(args)
     (length(args) >= 3 && args[1] in OPERATIONS) || throw(ArgumentError("usage: check OP ROWS COLS [BROWS BCOLS | SCALAR]"))
     name, rows, cols = args[1], integer(args[2]), integer(args[3])
-    binary = name in ("add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares", "solve_minimum_norm")
+    binary = name in ("add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares", "solve_minimum_norm", "solve_ridge")
     has_scalar = name in ("scale", "rotation2d", "rotation3d", "pseudoinverse", "spectral_diagnostics")
-    length(args) == (binary ? 5 : has_scalar ? 4 : 3) || throw(ArgumentError("incorrect number of operation arguments"))
+    length(args) == (name == "solve_ridge" ? 6 : binary ? 5 : has_scalar ? 4 : 3) || throw(ArgumentError("incorrect number of operation arguments"))
     brows, bcols = binary ? (integer(args[4]), integer(args[5])) : (0, 0)
-    scalar = has_scalar ? finite(parse(Float64, args[4])) : 1.25
+    scalar = name == "solve_ridge" ? finite(parse(Float64,args[6])) : has_scalar ? finite(parse(Float64, args[4])) : 1.25
     values = Float64[finite(parse(Float64, token)) for token in split(read(stdin, String))]
     count = Base.Checked.checked_mul(rows, cols)
     expected = Base.Checked.checked_add(count, Base.Checked.checked_mul(brows, bcols))

@@ -220,7 +220,7 @@ func (a *Matrix) SpectralDiagnosticsWith(cutoff float64) (*SpectralDiagnostics, 
 }
 func (a *Matrix) Pseudoinverse() (*Matrix, error) { return a.PseudoinverseWith(a.defaultCutoff()) }
 func (a *Matrix) PseudoinverseWith(cutoff float64) (*Matrix, error) {
-	return a.applyInverse(nil, cutoff)
+	return a.applyInverse(nil, cutoff, 0)
 }
 func (a *Matrix) SolveMinimumNorm(rhs *Matrix) (*Matrix, error) {
 	return a.SolveMinimumNormWith(rhs, a.defaultCutoff())
@@ -229,9 +229,9 @@ func (a *Matrix) SolveMinimumNormWith(rhs *Matrix, cutoff float64) (*Matrix, err
 	if rhs == nil {
 		return nil, errors.New("missing right-hand side")
 	}
-	return a.applyInverse(rhs, cutoff)
+	return a.applyInverse(rhs, cutoff, 0)
 }
-func (a *Matrix) applyInverse(rhs *Matrix, cutoff float64) (*Matrix, error) {
+func (a *Matrix) applyInverse(rhs *Matrix, cutoff float64, lambda float64) (*Matrix, error) {
 	if !isFinite(cutoff) || cutoff < 0 || cutoff > 1 {
 		return nil, errors.New("invalid relative cutoff")
 	}
@@ -279,6 +279,9 @@ func (a *Matrix) applyInverse(rhs *Matrix, cutoff float64) (*Matrix, error) {
 			coefficient := 0.
 			if rhs != nil {
 				coefficient = quotientProduct(projection, r.Values[p], scale)
+				if lambda > 0 {
+					coefficient = ridgeProduct(projection, r.Values[p], scale, lambda)
+				}
 				if !isFinite(coefficient) {
 					return nil, errors.New("SVD solve outside float64 range")
 				}
@@ -296,4 +299,29 @@ func (a *Matrix) applyInverse(rhs *Matrix, cutoff float64) (*Matrix, error) {
 		}
 	}
 	return out, nil
+}
+
+// SolveRidge minimizes ||A X-B||² + lambda ||X||². Zero uses the default SVD cutoff.
+func (a *Matrix) SolveRidge(rhs *Matrix, lambda float64) (*Matrix, error) {
+	if rhs == nil || !isFinite(lambda) || lambda < 0 {
+		return nil, errors.New("expected RHS and finite nonnegative lambda")
+	}
+	cutoff := 0.
+	if lambda == 0 {
+		cutoff = a.defaultCutoff()
+	}
+	return a.applyInverse(rhs, cutoff, lambda)
+}
+func ridgeProduct(p, s, b, lambda float64) float64 {
+	if p == 0 || s == 0 || b == 0 {
+		return 0
+	}
+	root := math.Sqrt(lambda)
+	d := math.Max(s, root)
+	q, t := s/d, root/d
+	pf, pe := math.Frexp(p)
+	sf, se := math.Frexp(s)
+	bf, be := math.Frexp(b)
+	df, de := math.Frexp(d)
+	return math.Ldexp(pf*sf*bf/(df*df*(q*q+t*t)), pe+se+be-2*de)
 }

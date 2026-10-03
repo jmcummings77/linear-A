@@ -111,7 +111,16 @@ def spectral_diagnostics(source, relative_cutoff=None):
                                s[rank-1]/s[0] if rank else 0)
 
 
-def apply_inverse(source, rhs=None, relative_cutoff=None):
+def ridge_product(projection, s, scale, regularization):
+    if not projection or not s or not scale: return 0.0
+    root = math.sqrt(regularization); d = max(s, root)
+    h = (s/d)**2 + (root/d)**2
+    pf, pe = math.frexp(projection); sf, se = math.frexp(s)
+    bf, be = math.frexp(scale); df, de = math.frexp(d)
+    return math.ldexp(pf*sf*bf/(df*df*h), pe+se+be-2*de)
+
+
+def apply_inverse(source, rhs=None, relative_cutoff=None, regularization=0):
     from matrix import Matrix, _quotient_product
     rtol = cutoff(source, relative_cutoff)
     if rhs is not None and rhs.rows != source.rows:
@@ -128,7 +137,7 @@ def apply_inverse(source, rhs=None, relative_cutoff=None):
         for p in range(rank):
             projection = sum(r.u[i,p] * (rhs[i,j]/scale) for i in range(m)) if rhs is not None and scale else 0.0
             if rhs is None: projection = r.u[j,p]
-            coefficient = _quotient_product(projection, r.values[p], scale) if rhs is not None else None
+            coefficient = (ridge_product(projection, r.values[p], scale, regularization) if regularization else _quotient_product(projection, r.values[p], scale)) if rhs is not None else None
             for i in range(n):
                 term = r.vt[p,i]*coefficient if rhs is not None else _quotient_product(projection, r.values[p], r.vt[p,i])
                 out[i*cols+j] += term

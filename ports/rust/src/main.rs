@@ -17,6 +17,7 @@ enum Operation {
     Multiply,
     Pseudoinverse,
     MinimumNorm,
+    Ridge,
     SpectralDiagnostics,
     Svd,
     SvdOneSweep,
@@ -46,6 +47,7 @@ impl Operation {
             "transpose" => Ok(Self::Transpose),
             "multiply" => Ok(Self::Multiply),
             "pseudoinverse" => Ok(Self::Pseudoinverse),
+            "solve_ridge" => Ok(Self::Ridge),
             "solve_minimum_norm" => Ok(Self::MinimumNorm),
             "spectral_diagnostics" => Ok(Self::SpectralDiagnostics),
             "svd" => Ok(Self::Svd),
@@ -80,6 +82,7 @@ impl Operation {
                 | Self::SolveCholesky
                 | Self::LeastSquares
                 | Self::MinimumNorm
+                | Self::Ridge
         )
     }
 }
@@ -176,6 +179,7 @@ fn execute(
         Operation::Transpose => Outcome::Matrix(a.transpose()?),
         Operation::Multiply => Outcome::Matrix(a.multiply(second()?)?),
         Operation::Pseudoinverse => Outcome::Matrix(a.pseudoinverse_with(scalar)?),
+        Operation::Ridge => Outcome::Matrix(a.solve_ridge(second()?, scalar)?),
         Operation::MinimumNorm => Outcome::Matrix(a.solve_minimum_norm(second()?)?),
         Operation::SpectralDiagnostics => {
             let d = a.spectral_diagnostics_with(scalar)?;
@@ -266,7 +270,9 @@ fn check(args: &[String]) -> RunnerResult<()> {
         return Err("usage: check OP ROWS COLS [BROWS BCOLS | SCALAR]".into());
     }
     let operation = Operation::parse(&args[1])?;
-    let expected = if operation.binary() {
+    let expected = if matches!(operation, Operation::Ridge) {
+        7
+    } else if operation.binary() {
         6
     } else if matches!(
         operation,
@@ -297,7 +303,9 @@ fn check(args: &[String]) -> RunnerResult<()> {
     let total = a_length
         .checked_add(length(b_rows, b_cols)?)
         .ok_or("input count overflow")?;
-    let scalar = if matches!(
+    let scalar = if matches!(operation, Operation::Ridge) {
+        number(&args[6])?
+    } else if matches!(
         operation,
         Operation::Scale
             | Operation::Rotation2D

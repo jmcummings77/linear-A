@@ -218,3 +218,5 @@ All eleven ports provide an economy SVD for finite rectangular real matrices,
 plus pseudoinverses, minimum-norm solving and cutoff-based spectral diagnostics.
 See [SVD APIs and numerical limits](SVD.md) for shapes, ownership, convergence,
 and shared-kernel boundaries. The image playground uses the WebAssembly API.
+
+All eleven implementations also provide [ridge regularization](SVD.md#ridge-regularization), with a shared SVD filter and finite nonnegative penalty coefficient.

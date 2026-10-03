@@ -15,5 +15,7 @@ func main() {
  minimum,err:=a.SolveMinimumNorm(b);if err!=nil{panic(err)}
  diagnostics,err:=a.SpectralDiagnostics();if err!=nil{panic(err)}
  if math.Abs(inverse.Values()[0]-.3)>1e-12 || math.Abs(minimum.Values()[1]-2)>1e-12 || diagnostics.Rank!=2{panic("incorrect SVD inverse")}
+ ridge,err:=a.SolveRidge(b,1);if err!=nil{panic(err)}
+ if math.Abs(ridge.Values()[0]-140.0/131)>1e-12 || math.Abs(ridge.Values()[1]-230.0/131)>1e-12{panic("incorrect ridge solution")}
  fmt.Println("solution: 1, 2")
 }
