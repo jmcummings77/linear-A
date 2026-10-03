@@ -146,5 +146,9 @@ checks, allocation accounting, and native stack profiles.
 all eleven ports with reproducible inputs, independent references, and bounded
 counterexample reduction.
 
+Explore the [numerical playground](https://jmcummings77.github.io/linear-A/applications/):
+draggable PCA, QR curve fitting, and a low-rank image explorer.
+[Source and numerical limits](applications/README.md).
+
 Contributions to any implementation, the shared math checks, reports, and docs
 are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.

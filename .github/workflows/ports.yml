@@ -81,6 +81,7 @@ jobs:
           python3 ports/wasm/build.py --output .build/wasm
           python3 ports/wasm/build.py --trace --output .build/wasm-trace
           node --test ports/wasm/*.test.mjs
+          python3 applications/build.py
       - name: Test benchmark harness and profile parsers
         run: |
           python3 -m unittest discover -s tests/benchmark_harness -v
