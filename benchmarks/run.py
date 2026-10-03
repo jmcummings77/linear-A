@@ -327,6 +327,8 @@ def main():
             "machine":{"os":platform.system(),"release":platform.release(),"architecture":platform.machine(),"logical_cpus":os.cpu_count()},
             "revision":git,"dirty":dirty,"source_sha256":fingerprint(),"suite":options.suite,"seed":options.seed,
             "total_seconds":time.perf_counter()-started,"methodology":{
+                "workload_version":"matrix-protocol-v1",
+                "sample_unit":"fresh_process_per_batch",
                 "numeric_type":"IEEE 754 binary64 (double precision)","matrix_layout":"Row-major protocol; implementation storage documented separately",
                 "timing":"In-process monotonic timer; allocation and checksum included; startup, input creation, compilation and JSON excluded",
                 "warmup":"max(5, min(iterations, 100)) operations before each timing sample; two calibration batches excluded",

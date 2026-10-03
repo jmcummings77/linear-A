@@ -150,5 +150,9 @@ Explore the [numerical playground](https://jmcummings77.github.io/linear-A/appli
 draggable PCA, QR curve fitting, and a low-rank image explorer.
 [Source and numerical limits](applications/README.md).
 
+Compare saved runs in the [snapshot comparison](https://jmcummings77.github.io/linear-A/compare/),
+with matched workloads, sample variation, and provenance caveats.
+[File and Git-ref workflows](benchmarks/comparison/README.md).
+
 Contributions to any implementation, the shared math checks, reports, and docs
 are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.

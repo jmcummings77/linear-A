@@ -85,7 +85,7 @@ jobs:
       - name: Test benchmark harness and profile parsers
         run: |
           python3 -m unittest discover -s tests/benchmark_harness -v
-          node --test tests/report-theme.test.mjs tests/timing-report.test.mjs tests/geometry-report.test.mjs tests/accuracy-report.test.mjs
+          node --test tests/report-theme.test.mjs tests/timing-report.test.mjs tests/geometry-report.test.mjs tests/accuracy-report.test.mjs tests/comparison.test.mjs tests/comparison-ui.test.mjs
       - name: Test Julia library and runner
         run: julia --startup-file=no --threads=1 --project=ports/julia ports/julia/test/runtests.jl
       - name: Test C, C++, and ARM64 libraries

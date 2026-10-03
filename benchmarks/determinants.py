@@ -96,6 +96,8 @@ def main():
         "revision":require(["git","rev-parse","HEAD"]).strip(), "dirty":bool(require(["git","status","--porcelain"]).strip()),
         "source_sha256":fingerprint(), "suite":options.suite, "seed":options.seed, "total_seconds":time.perf_counter()-started,
         "methodology":{
+            "workload_version":"determinant-study-v1",
+            "sample_unit":"fresh_process_per_batch",
             "numeric_type":"IEEE 754 binary64; exact rational determinant references",
             "matrix_layout":"Identical row-major inputs within each workload; determinant_spd is symmetric positive definite; determinant_small compares the C# cofactor baseline",
             "timing":"In-process monotonic timer; allocation, factorization, checksum, and disposal included; setup, startup and JSON excluded",

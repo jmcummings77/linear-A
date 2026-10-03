@@ -10,6 +10,7 @@ on:
       - 'experiments/machine-code-dot/results/**'
       - 'experiments/matmul-locality/results/**'
       - 'applications/index.html'
+      - 'benchmarks/comparison/index.html'
   workflow_dispatch:
 
 permissions:
@@ -43,6 +44,8 @@ jobs:
           cp -R experiments/matmul-locality/results .build/pages/matmul-locality
           mkdir -p .build/pages/applications
           cp applications/index.html .build/pages/applications/index.html
+          mkdir -p .build/pages/compare
+          cp benchmarks/comparison/index.html .build/pages/compare/index.html
           rm -f .build/pages/.gitkeep .build/pages/machine-code-dot/.gitkeep
       - uses: actions/upload-pages-artifact@v5
         with:
