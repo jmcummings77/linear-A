@@ -1,0 +1,8 @@
+{
+  "generator_version": 1,
+  "seed": null,
+  "family": "contract regression: zero inner dimension retains output shape",
+  "op": "multiply",
+  "a": {"rows": 2, "cols": 0, "values": []},
+  "b": {"rows": 0, "cols": 3, "values": []}
+}

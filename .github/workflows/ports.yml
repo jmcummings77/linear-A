@@ -100,6 +100,16 @@ jobs:
         run: python3 experiments/matmul-locality/run.py --verify-only --sanitize
       - name: Build and verify all eleven runners
         run: python3 benchmarks/run.py --verify-only --require-all --output benchmarks/reports/verification
+      - name: Check generated numerical properties across all eleven ports
+        run: python3 benchmarks/bugfinding.py --no-build --seeds 2
+      - name: Upload generated-case diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated-cases-${{ runner.arch }}
+          path: .build/bugfinding/*.json
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Verify determinant algorithms on general and SPD inputs
         run: python3 benchmarks/determinants.py --no-build --verify-only --require-all --output benchmarks/reports/determinant-verification
       - name: Check C# benchmark adapter formatting
@@ -114,4 +124,31 @@ jobs:
           name: matrix-ports-${{ runner.arch }}
           path: benchmarks/reports/
           if-no-files-found: warn
+          retention-days: 14
+
+  native-fuzz:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 10
+    env:
+      CC: clang
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Clang with libFuzzer
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang libclang-rt-dev
+      - name: Fuzz native C and ARM64 interfaces with sanitizers
+        run: |
+          python3 tests/fuzz/run.py --runs 10000
+          python3 tests/fuzz/run.py --assembly --runs 10000
+      - name: Preserve generated crash inputs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-fuzz-inputs
+          path: |
+            .build/fuzz/crash-*
+            .build/fuzz/timeout-*
+            .build/fuzz/oom-*
+          if-no-files-found: ignore
           retention-days: 14

@@ -142,5 +142,9 @@ is a separate comparison of a small scalar kernel. The
 loop order, cache blocking, and explicit ARM64 SIMD with independent correctness
 checks, allocation accounting, and native stack profiles.
 
+[Generated numerical checks and native fuzzing](tests/bugfinding/README.md) exercise
+all eleven ports with reproducible inputs, independent references, and bounded
+counterexample reduction.
+
 Contributions to any implementation, the shared math checks, reports, and docs
 are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
