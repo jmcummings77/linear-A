@@ -113,6 +113,7 @@ let main args =
         if args.Length < 4 then invalidArg "args" "Expected check or bench arguments."
         let op = args[1]
         match args[0] with
+        | "sparse" -> LinearA.SparseRunner.run args
         | "check" ->
             let rows, cols = number false args[2], number false args[3]
             let binary = op = "add" || op = "subtract" || op = "multiply" || op = "cross" || op = "solve" || op = "solve_cholesky" || op = "least_squares" || op = "solve_minimum_norm" || op = "solve_ridge"

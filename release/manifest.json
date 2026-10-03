@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "capabilities": [
     "arithmetic",
     "determinants",
@@ -9,7 +9,9 @@
     "least-squares",
     "svd",
     "svd-inverse",
-    "ridge"
+    "ridge",
+    "sparse",
+    "conjugate-gradient"
   ],
   "ports": {
     "assembly": {
@@ -28,7 +30,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "c": {
@@ -46,7 +50,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "cpp": {
@@ -65,7 +71,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "csharp": {
@@ -83,7 +91,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "fsharp": {
@@ -101,7 +111,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "go": {
@@ -119,7 +131,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "julia": {
@@ -137,7 +151,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "python": {
@@ -155,7 +171,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "rust": {
@@ -173,7 +191,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "typescript": {
@@ -191,7 +211,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     },
     "wasm": {
@@ -210,7 +232,9 @@
         "least-squares",
         "svd",
         "svd-inverse",
-        "ridge"
+        "ridge",
+        "sparse",
+        "conjugate-gradient"
       ]
     }
   }

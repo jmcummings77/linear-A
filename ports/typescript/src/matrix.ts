@@ -1,3 +1,4 @@
+export {CSRMatrix, type CGResult, type CGOptions} from "./sparse.js";
 import { decompose, type SingularValueDecomposition } from "./svd.js";
 export type { SingularValueDecomposition } from "./svd.js";
 import { Factorization } from "./solve.js";

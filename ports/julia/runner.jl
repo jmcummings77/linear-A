@@ -180,9 +180,10 @@ function writejson(io, result::NamedTuple)
     print(io, '}')
 end
 
+include("sparse_runner.jl")
 function main(args=ARGS)
-    (!isempty(args) && args[1] in ("check", "bench")) || throw(ArgumentError("usage: runner.jl check|bench ..."))
-    result = args[1] == "check" ? check(args[2:end]) : benchmark(args[2:end])
+    (!isempty(args) && args[1] in ("check", "bench", "sparse")) || throw(ArgumentError("usage: runner.jl check|bench ..."))
+    result = args[1] == "sparse" ? sparse_run(args[2:end]) : args[1] == "check" ? check(args[2:end]) : benchmark(args[2:end])
     writejson(stdout, result)
     println()
 end

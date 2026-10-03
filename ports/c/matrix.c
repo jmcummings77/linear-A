@@ -773,3 +773,5 @@ matrix_status m_solve_ridge(const matrix *a,const matrix *b,double lambda,matrix
     if(!b)return M_ARGUMENT;
     return inverse_apply(a,b,lambda==0?-1:0,lambda,out);
 }
+
+#include "sparse_impl.h"

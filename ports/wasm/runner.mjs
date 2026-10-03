@@ -1,3 +1,4 @@
+import {sparseRun} from "./sparse-runner.mjs";
 /** Node check/benchmark runner for the browser-compatible WebAssembly Matrix API. */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -188,12 +189,12 @@ function bench(args, Matrix) {
 
 async function main() {
   const [command, ...args] = process.argv.slice(2);
-  if (command !== "check" && command !== "bench") throw new RangeError("expected check or bench command");
+  if (command !== "check" && command !== "bench" && command !== "sparse") throw new RangeError("expected check or bench command");
   const options = process.env.LINEAR_A_WASM_MODULE
     ? { moduleUrl: pathToFileURL(resolve(process.env.LINEAR_A_WASM_MODULE)) }
     : {};
-  const { Matrix } = await createMatrixAPI(options);
-  const result = command === "check" ? check(args, Matrix) : bench(args, Matrix);
+  const { Matrix, CSRMatrix } = await createMatrixAPI(options);
+  const result = command === "sparse" ? sparseRun(args,CSRMatrix,Matrix) : command === "check" ? check(args, Matrix) : bench(args, Matrix);
   process.stdout.write(JSON.stringify(result) + "\n");
 }
 

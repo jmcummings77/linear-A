@@ -253,7 +253,7 @@ class PublicSanitizer:
         for item in data.get("results", []):
             if not isinstance(item, dict):
                 continue
-            cleaned = self._leaves(item, ("implementation", "operation", "size", "status", "iterations", "median_ns", "min_ns", "max_ns", "mad_ns", "error"))
+            cleaned = self._leaves(item, ("implementation", "operation", "size", "status", "iterations", "median_ns", "min_ns", "max_ns", "mad_ns", "error", "nnz", "unknowns", "logical_dense_bytes", "logical_csr_bytes", "cg_iterations", "contrast"))
             if isinstance(item.get("samples"), list):
                 cleaned["samples"] = [self._leaves(sample, ("elapsed_ns", "iterations", "checksum", "ns_per_op")) for sample in item["samples"] if isinstance(sample, dict)]
             result["results"].append(cleaned)

@@ -555,6 +555,8 @@ func run(args []string) error {
 		return errors.New("usage: runner {check|bench} OP ...")
 	}
 	switch args[0] {
+	case "sparse":
+		return sparseRun(args)
 	case "check":
 		return check(args)
 	case "bench":

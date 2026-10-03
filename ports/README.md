@@ -220,3 +220,7 @@ See [SVD APIs and numerical limits](SVD.md) for shapes, ownership, convergence,
 and shared-kernel boundaries. The image playground uses the WebAssembly API.
 
 All eleven implementations also provide [ridge regularization](SVD.md#ridge-regularization), with a shared SVD filter and finite nonnegative penalty coefficient.
+
+## Sparse matrices and iterative solvers
+
+All eleven ports provide canonical CSR construction, sparse matrix-vector multiplication, and conjugate gradient with optional Jacobi preconditioning. Results include the accepted solution, stop reason, iteration count, true residual history, and optional iteration snapshots. See [the sparse contract](SPARSE.md).

@@ -86,7 +86,7 @@ jobs:
       - name: Test benchmark harness and profile parsers
         run: |
           python3 -m unittest discover -s tests/benchmark_harness -v
-          node --test tests/report-theme.test.mjs tests/timing-report.test.mjs tests/geometry-report.test.mjs tests/accuracy-report.test.mjs tests/comparison.test.mjs tests/comparison-ui.test.mjs
+          node --test tests/sparse-report.test.mjs tests/report-theme.test.mjs tests/timing-report.test.mjs tests/geometry-report.test.mjs tests/accuracy-report.test.mjs tests/comparison.test.mjs tests/comparison-ui.test.mjs
       - name: Test Julia library and runner
         run: julia --startup-file=no --threads=1 --project=ports/julia ports/julia/test/runtests.jl
       - name: Test C, C++, and ARM64 libraries
@@ -96,6 +96,8 @@ jobs:
           .build/unit/c-tests
           clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/svd_tests.c -lm -o .build/unit/svd-tests
           .build/unit/svd-tests
+          clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/test_sparse.c -lm -o .build/unit/sparse-tests
+          .build/unit/sparse-tests
           clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/pseudoinverse_tests.c -lm -o .build/unit/pseudoinverse-tests
           .build/unit/pseudoinverse-tests
           clang++ -std=c++17 -O3 -g -ffp-contract=off ports/cpp/tests.cpp -o .build/unit/cpp-tests
@@ -106,6 +108,8 @@ jobs:
         run: python3 experiments/matmul-locality/run.py --verify-only --sanitize
       - name: Build and verify all eleven runners
         run: python3 benchmarks/run.py --verify-only --require-all --output benchmarks/reports/verification
+      - name: Verify CSR and conjugate gradient across all eleven ports
+        run: python3 benchmarks/sparse.py --no-build --verify-only --require-all
       - name: Check generated numerical properties across all eleven ports
         run: python3 benchmarks/bugfinding.py --no-build --seeds 2
       - name: Upload generated-case diagnostics

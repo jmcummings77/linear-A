@@ -1,5 +1,5 @@
 import { createMatrixAPI } from "linear-a-wasm";
-const { Matrix } = await createMatrixAPI();
+const { Matrix, CSRMatrix } = await createMatrixAPI();
 const a = new Matrix(2, 2, [4, 1, 2, 3]);
 const b = new Matrix(2, 1, [6, 8]);
 const x = a.solve(b);
@@ -18,3 +18,7 @@ try {
   try {if(Math.abs(ridge.get(0,0)-140/131)>1e-12 || Math.abs(ridge.get(1,0)-230/131)>1e-12)throw Error("incorrect ridge solution");}finally{ridge.dispose();}
   console.log("solution: 1, 2");
 } finally { reconstructed.dispose(); x.dispose(); b.dispose(); a.dispose(); }
+
+const sparse=new CSRMatrix(2,2,[0,2,4],[0,1,0,1],[4,1,1,3]);
+try{const product=sparse.matvec([1,2]),cg=sparse.conjugateGradient([6,7],{jacobi:true,capture:true});
+if(product[0]!==6||product[1]!==7||!cg.converged||Math.abs(cg.x[0]-1)>1e-12||Math.abs(cg.x[1]-2)>1e-12)throw Error("incorrect sparse solver");}finally{sparse.dispose();}

@@ -17,5 +17,10 @@ func main() {
  if math.Abs(inverse.Values()[0]-.3)>1e-12 || math.Abs(minimum.Values()[1]-2)>1e-12 || diagnostics.Rank!=2{panic("incorrect SVD inverse")}
  ridge,err:=a.SolveRidge(b,1);if err!=nil{panic(err)}
  if math.Abs(ridge.Values()[0]-140.0/131)>1e-12 || math.Abs(ridge.Values()[1]-230.0/131)>1e-12{panic("incorrect ridge solution")}
+ sparse,err:=matrix.NewCSR(2,2,[]int{0,2,4},[]int{0,1,0,1},[]float64{4,1,1,3});if err!=nil{panic(err)}
+ product,err:=sparse.Matvec([]float64{1,2});if err!=nil{panic(err)}
+ options:=matrix.DefaultCGOptions();options.Jacobi=true;options.Capture=true
+ cg,err:=sparse.ConjugateGradient([]float64{6,7},options);if err!=nil{panic(err)}
+ if product[0]!=6||product[1]!=7||!cg.Converged||math.Abs(cg.X[0]-1)>1e-12||math.Abs(cg.X[1]-2)>1e-12{panic("incorrect sparse solver")}
  fmt.Println("solution: 1, 2")
 }

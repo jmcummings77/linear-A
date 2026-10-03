@@ -44,10 +44,11 @@ export async function createMatrixAPI({
     return pointer >>> 0;
   }
 
-  let solveFactor;
+  let solveFactor, matrixPointer;
   const ownedFactor = Symbol("owned factor handle");
 
   class Matrix {
+    static { matrixPointer = value => value.#alive(); }
     #pointer = 0;
     #rows = 0;
     #cols = 0;
@@ -339,9 +340,50 @@ export async function createMatrixAPI({
     dispose(){if(this.#pointer)runtime._wm_factor_destroy(this.#pointer);this.#pointer=0;}
   }
 
+  class CSRMatrix {
+    #pointer=0; #rows; #cols; #offsets; #indices; #values;
+    constructor(rows,cols,offsets,indices,values){
+      this.#rows=dimension(rows);this.#cols=dimension(cols);
+      this.#offsets=Array.from(offsets);this.#indices=Array.from(indices);this.#values=Array.from(values);
+      let rp,ci,v;
+      try{
+        rp=new Matrix(this.#offsets.length,1,this.#offsets);ci=new Matrix(this.#indices.length,1,this.#indices);v=new Matrix(this.#values.length,1,this.#values);
+        this.#pointer=checkedHandle(runtime._wm_csr_create(rows,cols,matrixPointer(rp),matrixPointer(ci),matrixPointer(v)));
+      }finally{rp?.dispose();ci?.dispose();v?.dispose();}
+    }
+    get rows(){return this.#rows;}get cols(){return this.#cols;}get nnz(){return this.#values.length;}
+    get rowOffsets(){return this.#offsets.slice();}get columnIndices(){return this.#indices.slice();}get values(){return this.#values.slice();}
+    #alive(){if(!this.#pointer)throw new Error('CSR matrix has been disposed');return this.#pointer;}
+    dispose(){if(this.#pointer){runtime._wm_csr_destroy(this.#pointer);this.#pointer=0;}}
+    static fromDense(a){
+      const rp=[0],ci=[],v=[];
+      for(let i=0;i<a.rows;i++){for(let j=0;j<a.cols;j++){const value=a.get(i,j);if(value!==0){ci.push(j);v.push(value);}}rp.push(v.length);}
+      return new CSRMatrix(a.rows,a.cols,rp,ci,v);
+    }
+    matvec(values){
+      let x,out;
+      try{x=new Matrix(values.length,1,values);out=new Matrix(runtime._wm_csr_matvec(this.#alive(),matrixPointer(x)),0,undefined,ownedHandle);return out.toArray();}
+      finally{x?.dispose();out?.dispose();}
+    }
+    conjugateGradient(values,{rtol=1e-10,atol=0,maxIterations=1000,jacobi=false,capture=false}={}){
+      if(!Number.isInteger(maxIterations)||maxIterations<0||maxIterations>100000||typeof jacobi!=='boolean'||typeof capture!=='boolean')throw new RangeError('invalid CG options');
+      finite(rtol);finite(atol);
+      let b,handle;
+      try{
+        b=new Matrix(values.length,1,values);
+        handle=checkedHandle(runtime._wm_csr_cg(this.#alive(),matrixPointer(b),rtol,atol,maxIterations,+jacobi,+capture));
+        const iterations=runtime._wm_cg_iterations(handle),reason=['converged','iteration_limit','breakdown','nonfinite'][runtime._wm_cg_reason(handle)];
+        const copy=(field,count)=>{const offset=runtime._wm_cg_data(handle,field)>>>3;return Array.from(runtime.HEAPF64.subarray(offset,offset+count));};
+        const x=copy(0,this.rows),residuals=copy(1,iterations+1),flat=capture?copy(2,(iterations+1)*this.rows):[];
+        const iterates=capture?Array.from({length:iterations+1},(_,i)=>flat.slice(i*this.rows,(i+1)*this.rows)):[];
+        return {x,residuals,iterates,iterations,reason,converged:reason==='converged'};
+      }finally{if(handle)runtime._wm_cg_destroy(handle);b?.dispose();}
+    }
+  }
+
   if (typeof Symbol.dispose === "symbol") {
     Object.defineProperty(Matrix.prototype, Symbol.dispose, { value: Matrix.prototype.dispose });
     Object.defineProperty(Factorization.prototype, Symbol.dispose, { value: Factorization.prototype.dispose });
   }
-  return { Matrix, Factorization };
+  return { Matrix, Factorization, CSRMatrix };
 }

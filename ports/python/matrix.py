@@ -460,3 +460,5 @@ class Matrix:
     __add__ = add
     __sub__ = subtract
     __matmul__ = multiply
+
+from sparse import CSRMatrix, CGResult

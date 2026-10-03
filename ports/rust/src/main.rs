@@ -1,3 +1,4 @@
+mod sparse_runner;
 use linear_a::{
     DeterminantAlgorithm, GeneralEigenDecomposition, Matrix, SymmetricEigenDecomposition,
 };
@@ -464,6 +465,7 @@ fn bench(args: &[String]) -> RunnerResult<()> {
 fn run() -> RunnerResult<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
+        Some("sparse") => sparse_runner::run(&args),
         Some("check") => check(&args),
         Some("bench") => bench(&args),
         _ => Err("usage: linear-a-rust {check|bench} OP ...".into()),

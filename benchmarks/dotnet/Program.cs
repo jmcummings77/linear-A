@@ -186,6 +186,7 @@ internal static class Program
     {
         try
         {
+            if (args.Length > 0 && args[0] == "sparse") { SparseRunner.Run(args); return 0; }
             if (args.Length < 4) throw new ArgumentException("Expected check or bench arguments; see benchmarks/PROTOCOL.md.");
             var op = args[1];
             if (args[0] == "check")

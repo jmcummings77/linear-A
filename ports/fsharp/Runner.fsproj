@@ -6,6 +6,6 @@
     <IsPackable>false</IsPackable>
     <NuGetLockFilePath>runner.packages.lock.json</NuGetLockFilePath>
   </PropertyGroup>
-  <ItemGroup><Compile Include="Runner.fs" /></ItemGroup>
+  <ItemGroup><Compile Include="SparseRunner.fs" /><Compile Include="Runner.fs" /></ItemGroup>
   <ItemGroup><ProjectReference Include="LinearA.FSharp.fsproj" /></ItemGroup>
 </Project>

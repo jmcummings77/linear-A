@@ -3,6 +3,8 @@
 use std::error::Error;
 use std::fmt;
 
+mod sparse;
+pub use sparse::{CGOptions, CGResult, CSRMatrix};
 mod determinant;
 pub use determinant::DeterminantAlgorithm;
 mod eigen_general;

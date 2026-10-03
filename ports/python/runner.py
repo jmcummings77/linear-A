@@ -159,6 +159,9 @@ def benchmark(args):
 
 def main(args=None):
     args = sys.argv[1:] if args is None else args
+    if args and args[0]=='sparse':
+        from sparse_runner import run
+        print(json.dumps(run(args[1:]),allow_nan=False));return
     if not args or args[0] not in {"check", "bench"}:
         raise ValueError("usage: runner.py check|bench ...")
     result = check(args[1:]) if args[0] == "check" else benchmark(args[1:])

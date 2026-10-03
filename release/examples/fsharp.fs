@@ -18,3 +18,8 @@ if abs(inverse[0,0]-0.3)>1e-12 || abs(minimum[1,0]-2.)>1e-12 || (a.SpectralDiagn
 
 let ridge = a.SolveRidge(b,1.)
 if abs(ridge[0,0]-140./131.)>1e-12 || abs(ridge[1,0]-230./131.)>1e-12 then failwith "incorrect ridge solution"
+
+let sparse = CSRMatrix(2,2,[|0;2;4|],[|0;1;0;1|],[|4.;1.;1.;3.|])
+if sparse.Matvec([|1.;2.|]) <> [|6.;7.|] then failwith "incorrect sparse product"
+let cg = sparse.ConjugateGradient([|6.;7.|],jacobi=true,capture=true)
+if not cg.Converged || abs(cg.X[0]-1.)>1e-12 || abs(cg.X[1]-2.)>1e-12 then failwith "incorrect CG"

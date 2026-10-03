@@ -236,10 +236,18 @@ static int bench(int argc, char **argv) {
     m_free(&a); m_free(&b);
     return 0;
 }
+#include "sparse_runner.h"
 int main(int argc, char **argv) {
+#ifdef __cplusplus
+    try {
+#endif
+    if(argc>1&&!strcmp(argv[1],"sparse"))return sparse_cli(argc,argv);
     if (argc < 2) fail("expected check or bench command");
     if (!strcmp(argv[1], "check")) return check(argc, argv);
     if (!strcmp(argv[1], "bench")) return bench(argc, argv);
     fail("expected check or bench command");
     return 1;
+#ifdef __cplusplus
+    }catch(const std::exception& e){fail(e.what());return 1;}
+#endif
 }

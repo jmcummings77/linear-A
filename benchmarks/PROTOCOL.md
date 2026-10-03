@@ -221,3 +221,34 @@ SVD inverse checks use `check pseudoinverse ROWS COLS CUTOFF` and
 retained_reciprocal_condition]`. `check solve_minimum_norm ROWS COLS BROWS BCOLS`
 uses the library's default cutoff and accepts any compatible rectangular shapes.
 These conformance operations are not part of saved timing suites.
+
+## Sparse protocol
+
+Every runner also accepts:
+
+```text
+sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE
+```
+
+`OP` is `spmv`, `dense`, or `cg`; the two flags are 0 or 1. Standard input is
+whitespace-separated row offsets (ROWS+1 integers), column indices (NNZ
+integers), values (NNZ float64), then the RHS vector (COLS entries for products,
+ROWS for CG). Offsets and indices are zero-based canonical CSR. No extra tokens
+are accepted. See [the sparse contract](../ports/SPARSE.md) for validation.
+
+With ITERATIONS=0, output is `{rows:1, cols:N, values:[...]}`. Products return
+their vector. CG packs `[reason, iterations, history_length, ...x, ...residuals,
+...frames]`, with frames flattened in iteration order when capture is enabled.
+Reason codes are 0 converged, 1 iteration limit, 2 breakdown, 3 nonfinite.
+The shared oracle independently reconstructs each frame's true residual.
+
+Positive ITERATIONS selects an in-process measured batch with three warmup
+calls and `{elapsed_ns, iterations, checksum}` output. Construction, parsing and
+dense conversion precede timing. The checksum sums each returned vector.
+CG must converge; failed solver runs cannot produce a successful timing row.
+Julia warms the same checksum loop to exclude its initial compilation.
+Capture is disabled for recorded comparison measurements.
+
+`benchmarks/sparse.py` calibrates batches, validates complete results before
+timing, and publishes the independent `sparse/` report. Its storage figures
+are calculated coefficient bytes, not process-memory measurements.

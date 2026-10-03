@@ -237,3 +237,28 @@ matrix *wm_spectral_diagnostics(const matrix *source,double cutoff){
 matrix *wm_solve_ridge(const matrix *a,const matrix *b,double lambda){
     matrix *out=allocate_handle();return out?complete(out,m_solve_ridge(a,b,lambda,out)):NULL;
 }
+
+sparse_matrix *wm_csr_create(size_t rows,size_t cols,const matrix *rp,const matrix *ci,const matrix *v){
+    last_status=M_ARGUMENT;
+    if(!rp||!ci||!v||rows==SIZE_MAX||rp->rows!=rows+1||rp->cols!=1||ci->cols!=1||v->cols!=1||ci->rows!=v->rows)return NULL;
+    size_t *offsets=calloc(rows+1,sizeof(size_t)),*indices=calloc(ci->rows?ci->rows:1,sizeof(size_t));
+    sparse_matrix *out=calloc(1,sizeof(sparse_matrix));
+    if(!offsets||!indices||!out){free(offsets);free(indices);free(out);last_status=M_MEMORY;return NULL;}
+    for(size_t i=0;i<=rows;i++){double x=rp->values[i];if(!isfinite(x)||x<0||x>SIZE_MAX||floor(x)!=x)goto invalid;offsets[i]=(size_t)x;}
+    for(size_t i=0;i<ci->rows;i++){double x=ci->values[i];if(!isfinite(x)||x<0||x>SIZE_MAX||floor(x)!=x)goto invalid;indices[i]=(size_t)x;}
+    last_status=m_csr_create(rows,cols,v->rows,offsets,indices,v->values,out);free(offsets);free(indices);
+    if(last_status){free(out);return NULL;}return out;
+invalid:free(offsets);free(indices);free(out);return NULL;
+}
+void wm_csr_destroy(sparse_matrix *a){if(a){m_csr_free(a);free(a);}}
+matrix *wm_csr_matvec(const sparse_matrix *a,const matrix *x){matrix *out=allocate_handle();return out?complete(out,m_csr_matvec(a,x,out)):NULL;}
+matrix_cg_result *wm_csr_cg(const sparse_matrix *a,const matrix *b,double rtol,double atol,size_t limit,int jacobi,int capture){
+    if(!b||b->cols!=1){last_status=M_ARGUMENT;return NULL;}
+    matrix_cg_result *out=calloc(1,sizeof(matrix_cg_result));if(!out){last_status=M_MEMORY;return NULL;}
+    last_status=m_csr_cg(a,b->values,b->rows,rtol,atol,limit,jacobi!=0,capture!=0,out);
+    if(last_status){free(out);return NULL;}return out;
+}
+void wm_cg_destroy(matrix_cg_result *r){if(r){m_cg_free(r);free(r);}}
+size_t wm_cg_iterations(const matrix_cg_result *r){return r->iterations;}
+int wm_cg_reason(const matrix_cg_result *r){return r->reason;}
+double *wm_cg_data(matrix_cg_result *r,int field){return field==0?r->x:field==1?r->residuals:r->iterates;}

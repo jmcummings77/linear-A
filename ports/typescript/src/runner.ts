@@ -1,3 +1,4 @@
+import {sparseRun} from "./sparse-runner.js";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { Matrix, finite, type GeneralEigenDecomposition, type SymmetricEigenDecomposition } from "./matrix.js";
@@ -139,6 +140,7 @@ export function benchmark(args: string[]): object {
 }
 
 export function main(args = process.argv.slice(2)): void {
+  if(args[0]==="sparse"){console.log(JSON.stringify(sparseRun(args.slice(1))));return;}
   if (args[0] !== "check" && args[0] !== "bench") throw new RangeError("usage: runner check|bench ...");
   console.log(JSON.stringify(args[0] === "check" ? check(args.slice(1)) : benchmark(args.slice(1))));
 }

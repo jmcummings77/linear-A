@@ -13,3 +13,8 @@ p=pseudoinverse(a); minimum=solve_minimum_norm(a,b); d=spectral_diagnostics(a)
 
 ridge=solve_ridge(a,b,1)
 @assert abs(ridge[1,1]-140/131)<1e-12 && abs(ridge[2,1]-230/131)<1e-12
+
+sparse=CSRMatrix(2,2,[0,2,4],[0,1,0,1],[4.,1.,1.,3.])
+@assert matvec(sparse,[1.,2.])==[6.,7.]
+cg=conjugate_gradient(sparse,[6.,7.];jacobi=true,capture=true)
+@assert cg.converged && maximum(abs.(cg.x .- [1.,2.]))<1e-12

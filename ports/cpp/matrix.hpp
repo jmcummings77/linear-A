@@ -528,4 +528,5 @@ inline Matrix::SpectralDiagnostics Matrix::spectral_diagnostics(double cutoff) c
     return {rank,k&&r.values[0]?r.values[k-1]/r.values[0]:0,rank?r.values[rank-1]/r.values[0]:0};
 }
 }
+#include "sparse.hpp"
 #endif

@@ -16,5 +16,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(a.spectral_diagnostics()?.rank,2);
     let ridge=a.solve_ridge(&b,1.)?;
     assert!((ridge.get(0,0)?-140./131.).abs()<1e-12 && (ridge.get(1,0)?-230./131.).abs()<1e-12);
+    let sparse=linear_a::CSRMatrix::new(2,2,&[0,2,4],&[0,1,0,1],&[4.,1.,1.,3.])?;
+    assert_eq!(sparse.matvec(&[1.,2.])?,vec![6.,7.]);
+    let cg=sparse.conjugate_gradient(&[6.,7.],linear_a::CGOptions{jacobi:true,capture:true,..Default::default()})?;
+    assert!(cg.converged&&(cg.x[0]-1.).abs()<1e-12&&(cg.x[1]-2.).abs()<1e-12);
     println!("solution: 1, 2"); Ok(())
 }
