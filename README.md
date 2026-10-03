@@ -10,7 +10,7 @@ use case.
 [Browse all reports](https://jmcummings77.github.io/linear-A/) ·
 [Shared API and implementation differences](ports/README.md) ·
 [Release kits and installation](release/README.md) ·
-[Versioned API contract](docs/api/0.1.0/README.md)
+[Versioned API contract](docs/api/0.2.0/README.md)
 
 ## Choose an implementation
 
@@ -40,7 +40,8 @@ compatibility APIs are described in the relevant language guide.
 
 Some numerical kernels are shared. ARM64 assembly uses C for allocation,
 validation, and selected algorithms; WebAssembly compiles the C implementation;
-C++ shares the general eigensolver and linear-system factorization kernels with C. These boundaries are included
+C++ shares the general eigensolver, linear-system factorization, and SVD kernels
+with C. These boundaries are included
 in the documentation and benchmark notes. No implementation calls BLAS, NumPy,
 or another numerical library.
 
@@ -49,7 +50,8 @@ or another numerical library.
 The implementations provide construction and identity matrices, indexed access,
 independent copies, row/column extraction, addition, subtraction, scaling,
 transpose, matrix multiplication, trace, determinants, triangular classification,
-eigenvalues and eigenvectors, linear-system solving, least squares, 3D vector
+eigenvalues and eigenvectors, singular value decomposition, linear-system
+solving, least squares, 3D vector
 cross products, and rotation matrices.
 Rectangular matrices are supported wherever the operation permits them.
 
@@ -72,6 +74,8 @@ The shared shape and mathematical conventions are:
 - Linear systems offer reusable pivoted LU and Cholesky factors, plus
   column-pivoted Householder QR least squares. Multiple right-hand-side columns
   share one factorization. See the [solver guide](ports/SOLVING.md).
+- Economy SVD returns U, descending singular values, and Vᵀ for rectangular
+  real matrices using one-sided Jacobi rotations. See the [SVD guide](ports/SVD.md).
 - Symmetric eigendecomposition uses cyclic Jacobi rotations and returns ascending
   real eigenvalues with orthonormal eigenvector columns. General real square
   matrices use balanced Hessenberg reduction and double-shift QR and can return

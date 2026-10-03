@@ -8,3 +8,6 @@ for i in 0..1 do
     if not (Double.IsFinite x[i,0]) || abs(x[i,0]-float(i+1))>1e-12 || not (Double.IsFinite r[i,0]) || abs(r[i,0]-b[i,0])>1e-12 then
         failwith "incorrect solution"
 printfn "solution: 1, 2"
+
+let decomposition = a.Svd()
+if decomposition.Values.Length <> 2 || decomposition.Values[1] <= 0. then failwith "incorrect SVD"

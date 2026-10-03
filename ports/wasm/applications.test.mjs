@@ -34,3 +34,11 @@ test('bounded inputs fail explicitly and repeated computations remain usable',()
  assert.throws(()=>compress(Matrix,[1],1,1));assert.throws(()=>compress(Matrix,Array(16).fill(2),4,2));
  for(let i=0;i<50;i++){pca(Matrix,[[0,0],[1,2],[2,3]]);fit(Matrix,[[0,0],[1,1],[2,2]],1);compress(Matrix,Array(16).fill(.25),4,2);}
 });
+
+test('24-square low-rank presets remain stable with direct SVD',()=>{
+ for(const preset of ['shapes','waves','checker','blank']){
+  const pixels=Array.from({length:576},(_,i)=>{const x=i%24,y=Math.floor(i/24);return preset==='blank'?0:preset==='waves'?.5+.25*Math.sin(x/3)+.25*Math.cos(y/4):preset==='checker'?((Math.floor(x/3)+Math.floor(y/3))%2):Math.hypot(x-8,y-9)<6?.9:x>12&&y>12?.65:.08;});
+  let previous=Infinity;
+  for(const rank of [0,1,6,24]){const r=compress(Matrix,pixels,24,rank);assert.ok(r.relativeError<=previous+1e-10,preset);previous=r.relativeError;if(rank===24)near(r.relativeError,0);}
+ }
+});

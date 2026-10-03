@@ -21,7 +21,7 @@ python3 -m unittest discover -s tests/release -v
 ```
 
 The output directory must be empty to prevent mixing artifacts from different
-revisions. `--port` is repeatable. The default output is `.build/releases/0.1.0`.
+revisions. `--port` is repeatable. The default output is `.build/releases/0.2.0`.
 `CC` and `CXX` select native compilers; other tools (`dotnet`, `cargo`, `npm`,
 `julia`, `go`, `emcc`) are found on PATH. Emscripten needs its environment enabled.
 The ARM64 kit requires an ARM64 host; other kits can be built separately.
@@ -40,14 +40,14 @@ package uses the same executable-aware sanitization as the public reports.
 | ARM64 assembly | Source `.tar.gz` | Compile `example/c.c`, `ports/c/matrix.c`, `ports/assembly/kernels.S`, `-I ports/c -DMATRIX_USE_ASM -std=c11 -lm` |
 | C | Source `.tar.gz` | Compile `example/c.c` and `ports/c/matrix.c`, `-I ports/c -std=c11 -lm` |
 | C++ | Source `.tar.gz` | Compile `example/cpp.cpp`, `-I ports/cpp -std=c++17`; retain sibling `ports/c` headers |
-| C# | `LinearA.CSharp.0.1.0.nupkg` + source | Add a local NuGet source, reference `LinearA.CSharp` version `0.1.0` in a .NET 10 project |
-| F# | `LinearA.FSharp.0.1.0.nupkg` + source | Same, using `LinearA.FSharp`; FSharp.Core is resolved by NuGet |
+| C# | `LinearA.CSharp.0.2.0.nupkg` + source | Add a local NuGet source, reference `LinearA.CSharp` version `0.2.0` in a .NET 10 project |
+| F# | `LinearA.FSharp.0.2.0.nupkg` + source | Same, using `LinearA.FSharp`; FSharp.Core is resolved by NuGet |
 | Go | Source `.tar.gz` | Use a module `replace github.com/jmcummings77/linear-A/ports/go => /path/to/extracted/ports/go` |
 | Julia | Source `.tar.gz` | In a fresh project, `using Pkg; Pkg.develop(path="/path/to/extracted/ports/julia")` |
-| Python | `linear_a_python-0.1.0-*.whl` + source | `python3 -m venv .venv`; `.venv/bin/pip install /path/to/package.whl` |
-| Rust | `linear-a-rust-0.1.0.crate` + source | Extract crate, use `linear-a-rust = { path = "/path/to/extracted/crate" }`; imported library is `linear_a` |
-| TypeScript | `linear-a-typescript-0.1.0.tgz` + source | `npm install /path/to/package.tgz`; import `Matrix` from `linear-a-typescript` |
-| WebAssembly | `linear-a-wasm-0.1.0.tgz` + source | `npm install /path/to/package.tgz`; import `createMatrixAPI` from `linear-a-wasm` |
+| Python | `linear_a_python-0.2.0-*.whl` + source | `python3 -m venv .venv`; `.venv/bin/pip install /path/to/package.whl` |
+| Rust | `linear-a-rust-0.2.0.crate` + source | Extract crate, use `linear-a-rust = { path = "/path/to/extracted/crate" }`; imported library is `linear_a` |
+| TypeScript | `linear-a-typescript-0.2.0.tgz` + source | `npm install /path/to/package.tgz`; import `Matrix` from `linear-a-typescript` |
+| WebAssembly | `linear-a-wasm-0.2.0.tgz` + source | `npm install /path/to/package.tgz`; import `createMatrixAPI` from `linear-a-wasm` |
 
 Use `-ffp-contract=off` for native compilation to match the shared arithmetic
 policy. Examples under `release/examples/` are the exact programs run by the
@@ -62,8 +62,8 @@ Dispose native allocations explicitly. TypeScript also requires a build step;
 the npm archive contains compiled JavaScript and declarations.
 
 These names and versions describe local artifacts; no package-registry
-publication is implied. A root `v0.1.0` Git tag does not publish the Go submodule:
-Go registry resolution needs a separate `ports/go/v0.1.0` tag. Julia is currently
+publication is implied. A root `v0.2.0` Git tag does not publish the Go submodule:
+Go registry resolution needs a separate `ports/go/v0.2.0` tag. Julia is currently
 consumed by path or repository subdirectory, not through General.
 
 ## Release maintenance

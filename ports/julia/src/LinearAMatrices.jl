@@ -369,4 +369,7 @@ end
 include("eigen_general.jl")
 include("solve.jl")
 
+include("svd.jl")
+export svd
+
 end

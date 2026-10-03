@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 import { Matrix, finite, type GeneralEigenDecomposition, type SymmetricEigenDecomposition } from "./matrix.js";
 
 const determinants = new Set(["determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"]);
-const operations = new Set(["add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
+const operations = new Set(["svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
   "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", ...determinants]);
 
 function integer(text: string, minimum = 0, maximum = Number.MAX_SAFE_INTEGER): number {
@@ -23,6 +23,16 @@ export function operation(name: string, a: Matrix, b?: Matrix, scalar = 1.25): M
     case "add": return a.add(b!);
     case "subtract": return a.subtract(b!);
     case "multiply": return a.multiply(b!);
+    case "svd": case "svd_one_sweep": {
+      const r=a.svd(1e-12,name==="svd"?100:1);
+      const k=Math.min(a.rows,a.cols),values=new Float64Array((a.rows+1+a.cols)*k);
+      {
+        values.set(r.u.values); values.set(r.values,a.rows*k);
+        const vt=r.vt.values;
+        for(let i=0;i<a.cols;i++)for(let j=0;j<k;j++)values[(a.rows+1+i)*k+j]=vt[j*a.cols+i];
+        return new Matrix(a.rows+1+a.cols,k,values);
+      }
+    }
     case "solve": return a.solve(b!);
     case "least_squares": return a.leastSquares(b!);
     case "solve_cholesky": { return a.factorCholesky().solve(b!); }

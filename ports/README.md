@@ -5,7 +5,7 @@ construction, identity matrices, dimensions, indexed access, independent copying
 row/column extraction, addition, subtraction, scaling, transpose, multiplication,
 trace, determinant, symmetric and general real eigendecomposition, 3D vector
 cross products, rotation factories, linear-system solves, reusable factors,
-QR least squares, and triangular classification. Each has its
+QR least squares, economy SVD, and triangular classification. Each has its
 own public API, tests, and runner for the [shared protocol](../benchmarks/PROTOCOL.md).
 
 The comparison contract uses IEEE 754 double precision. Language-specific APIs
@@ -30,9 +30,9 @@ code is deliberately shared:
 
 - ARM64 uses assembly arithmetic kernels with C allocation, validation, ownership,
   indexing, row/column extraction, triangular checks, and determinant pivot
-  control. Both eigensolvers, linear-system solvers, and rotation factories execute in C; cross products
+  control. Both eigensolvers, SVD, linear-system solvers, and rotation factories execute in C; cross products
   use an ARM64 component kernel. Timings include this support work.
-- C and C++ share the general Hessenberg/QR eigensolver and system-factorization kernels.
+- C and C++ share the general Hessenberg/QR eigensolver, SVD, and system-factorization kernels.
   Their public APIs and storage management remain language-specific.
 - WebAssembly compiles the C implementation with Emscripten. Its asynchronous
   JavaScript factory supports Node.js and browsers, with explicit `dispose()`
@@ -211,3 +211,9 @@ reports, timing, and profiling. Toolchain minimums are compatibility floors;
 actual compiler/runtime versions are recorded in each report. Comparing an older
 runtime with a newer one measures that version difference as well as the
 implementation.
+
+## Singular value decomposition
+
+All eleven ports provide an economy SVD for finite rectangular real matrices.
+See [SVD APIs and numerical limits](SVD.md) for shapes, ownership, convergence,
+and shared-kernel boundaries. The image playground uses the WebAssembly API.

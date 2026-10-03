@@ -7,7 +7,7 @@ from matrix import Matrix, SymmetricEigenDecomposition, GeneralEigenDecompositio
 
 
 DETERMINANTS = {"determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"}
-OPERATIONS = {"add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
+OPERATIONS = {"svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "trace", "triangular", "eigen_symmetric", "eigen_general",
               "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d"} | DETERMINANTS
 
 
@@ -25,6 +25,9 @@ def operation(name, a, b=None, scalar=1.25):
         return a.subtract(b)
     if name == "multiply":
         return a.multiply(b)
+    if name in ("svd", "svd_one_sweep"):
+        r=a.svd(max_sweeps=100 if name=="svd" else 1)
+        return Matrix(a.rows+1+a.cols,min(a.rows,a.cols),r.u.values+r.values+r.vt.transpose().values)
     if name == "solve":
         return a.solve(b)
     if name == "solve_cholesky":
@@ -161,6 +164,6 @@ def main(args=None):
 if __name__ == "__main__":
     try:
         main()
-    except (ValueError, TypeError, IndexError, OverflowError, MemoryError) as error:
+    except (ValueError, TypeError, IndexError, ArithmeticError, MemoryError) as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)

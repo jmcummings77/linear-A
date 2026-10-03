@@ -19,7 +19,7 @@ type operation string
 
 func parseOperation(value string) (operation, error) {
 	switch value {
-	case "add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "eigen_symmetric", "eigen_general", "triangular":
+	case "svd", "svd_one_sweep", "add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "eigen_symmetric", "eigen_general", "triangular":
 		return operation(value), nil
 	default:
 		return "", fmt.Errorf("unknown operation: %s", value)
@@ -53,6 +53,18 @@ func execute(op operation, a, b *matrix.Matrix, scalar float64) (outcome, error)
 		result.matrix = a.Transpose()
 	case "multiply":
 		result.matrix, err = a.Multiply(b)
+	case "svd", "svd_one_sweep":
+		sweeps := 100
+		if op == "svd_one_sweep" {
+			sweeps = 1
+		}
+		var r *matrix.SingularValueDecomposition
+		r, err = a.SVDWith(1e-12, sweeps)
+		if err == nil {
+			values := append(r.U.Values(), r.Values...)
+			values = append(values, r.Vt.Transpose().Values()...)
+			result.matrix, err = matrix.New(a.Rows()+1+a.Cols(), len(r.Values), values)
+		}
 	case "solve":
 		result.matrix, err = a.Solve(b)
 	case "least_squares":

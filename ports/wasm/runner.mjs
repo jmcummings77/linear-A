@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import { createMatrixAPI } from "./matrix.mjs";
 
 const determinants = new Set(["determinant", "determinant_lu", "determinant_cholesky", "determinant_spd_lu"]);
-const operations = new Set(["add", "subtract", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "scale", "transpose", "trace", ...determinants, "triangular", "eigen_symmetric", "eigen_general"]);
+const operations = new Set(["svd", "svd_one_sweep","add", "subtract", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "scale", "transpose", "trace", ...determinants, "triangular", "eigen_symmetric", "eigen_general"]);
 const binary = new Set(["add", "subtract", "multiply", "cross", "solve", "solve_cholesky", "least_squares"]);
 const rotations = new Set(["rotation2d", "rotation3d"]);
 
@@ -36,6 +36,16 @@ function execute(op, a, b, scalar = 1.25) {
     case "add": return a.add(b);
     case "subtract": return a.subtract(b);
     case "multiply": return a.multiply(b);
+    case "svd": case "svd_one_sweep": {
+      const r=a.svd(1e-12,op==="svd"?100:1);
+      const k=Math.min(a.rows,a.cols),values=new Float64Array((a.rows+1+a.cols)*k);
+      try {
+        values.set(r.u.toArray()); values.set(r.values,a.rows*k);
+        const vt=r.vt.toArray();
+        for(let i=0;i<a.cols;i++)for(let j=0;j<k;j++)values[(a.rows+1+i)*k+j]=vt[j*a.cols+i];
+        return new a.constructor(a.rows+1+a.cols,k,values);
+      } finally { r.u.dispose(); r.vt.dispose(); }
+    }
     case "solve": return a.solve(b);
     case "least_squares": return a.leastSquares(b);
     case "solve_cholesky": { const f = a.factorCholesky(); try { return f.solve(b); } finally { f.dispose(); } }

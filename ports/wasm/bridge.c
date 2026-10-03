@@ -214,3 +214,8 @@ matrix *wm_factor_solve(const matrix_factor *factor,const matrix *rhs){
     matrix *result=allocate_handle();return result?complete(result,m_factor_solve(factor,rhs,result)):NULL;
 }
 double wm_factor_rcond(const matrix_factor *factor){double result=0;last_status=m_factor_rcond(factor,&result);return result;}
+
+int wm_svd(const matrix *source,double tolerance,size_t max_sweeps,matrix *u,matrix *values,matrix *vt){
+    last_status=m_svd(source,tolerance,max_sweeps,u,values,vt);
+    return (int)last_status;
+}

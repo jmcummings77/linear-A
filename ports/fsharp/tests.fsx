@@ -1,6 +1,7 @@
 #load "GeneralEigen.fs"
 #load "Matrix.fs"
 #load "Solve.fs"
+#load "Svd.fs"
 open System.Numerics
 open System
 open LinearA
@@ -196,3 +197,11 @@ for algorithm in [Lu;Cholesky;Qr] do
     equal (b.ToArray()) [|6.;5.;7.;4.|]
     rejects (fun () -> factor.Solve(Matrix(1,1)) |> ignore)
 printfn "F# reusable solver checks passed"
+
+let svdSource = Matrix.FromArray(2,3,[|3.;0.;0.;0.;4.;0.|])
+let svdResult = svdSource.Svd()
+equal svdResult.Values [|4.;3.|]
+svdResult.U[0,0] <- 99.
+equal svdSource[0,0] 3.
+rejects (fun () -> svdSource.Svd(tolerance=Double.NaN) |> ignore)
+rejects (fun () -> svdSource.Svd(maxSweeps=0) |> ignore)

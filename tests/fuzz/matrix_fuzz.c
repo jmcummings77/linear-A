@@ -28,6 +28,26 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t length) {
         for(size_t p=0;p<k;p++) exact+=av[i*k+p]*bv[p*n+j];
         assert(out.values[i*n+j]==exact); /* bounded dyadics are exact in binary64 */
     }
+    matrix u={0},singular={0},vt={0};
+    check(m_svd(&a,1e-12,100,&u,&singular,&vt));
+    size_t rank=m<k?m:k;
+    assert(u.rows==m&&u.cols==rank&&vt.rows==rank&&vt.cols==k&&singular.rows==rank);
+    for(size_t p=0;p<rank;p++) {
+        assert(singular.values[p]>=0 && isfinite(singular.values[p]));
+        if(p)assert(singular.values[p-1]>=singular.values[p]);
+        for(size_t q=0;q<rank;q++) {
+            double left=0,right=0;
+            for(size_t i=0;i<m;i++)left+=u.values[i*rank+p]*u.values[i*rank+q];
+            for(size_t j=0;j<k;j++)right+=vt.values[p*k+j]*vt.values[q*k+j];
+            assert(fabs(left-(p==q))<1e-9&&fabs(right-(p==q))<1e-9);
+        }
+    }
+    for(size_t i=0;i<m;i++)for(size_t j=0;j<k;j++) {
+        double reconstructed=0;
+        for(size_t p=0;p<rank;p++)reconstructed+=u.values[i*rank+p]*singular.values[p]*vt.values[p*k+j];
+        assert(fabs(reconstructed-a.values[i*k+j])<1e-9);
+    }
+    m_free(&u);m_free(&singular);m_free(&vt);
     same(&a,&snapshot);
     check(m_transpose(&a,&t));check(m_transpose(&t,&roundtrip));same(&a,&roundtrip);
     m_free(&t);m_free(&roundtrip);m_free(&out);

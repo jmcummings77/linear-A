@@ -49,6 +49,9 @@ let operation op (a: Matrix) (b: Matrix) scalar =
     | "add" -> MatrixResult(a.Add(b))
     | "subtract" -> MatrixResult(a.Subtract(b))
     | "multiply" -> MatrixResult(a.Multiply(b))
+    | "svd" | "svd_one_sweep" ->
+        let r = a.Svd(maxSweeps=(if op="svd" then 100 else 1))
+        MatrixResult(Matrix.FromArray(a.Rows+1+a.Cols,min a.Rows a.Cols,Array.concat [r.U.ToArray();r.Values;r.Vt.Transpose().ToArray()]))
     | "solve" -> MatrixResult(a.Solve(b))
     | "solve_cholesky" -> MatrixResult(a.FactorCholesky().Solve(b))
     | "least_squares" -> MatrixResult(a.LeastSquares(b))

@@ -423,6 +423,10 @@ class Matrix:
         from solve import Factorization
         return Factorization(self, "qr")
 
+    def svd(self, tolerance=1e-12, max_sweeps=100):
+        from svd import decompose
+        return decompose(self, tolerance, max_sweeps)
+
     def solve(self, rhs):
         return self.factor_lu().solve(rhs)
 

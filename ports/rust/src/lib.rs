@@ -10,6 +10,8 @@ pub use eigen_general::GeneralEigenDecomposition;
 mod eigen;
 pub use eigen::SymmetricEigenDecomposition;
 mod geometry;
+mod svd;
+pub use svd::SingularValueDecomposition;
 mod solve;
 pub use solve::{FactorAlgorithm, Factorization};
 

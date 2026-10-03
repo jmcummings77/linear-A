@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <memory>
 #include "../c/solve_core.h"
+#include "../c/svd_core.h"
 #include "../c/general_eigen.h"
 #include <cmath>
 #include <cstddef>
@@ -320,6 +321,8 @@ public:
     Factorization factor_lu() const;
     Factorization factor_cholesky() const;
     Factorization factor_qr() const;
+    struct Svd;
+    Svd svd(double tolerance=1e-12, std::size_t max_sweeps=100) const;
     Matrix solve(const Matrix& rhs) const;
     Matrix least_squares(const Matrix& rhs) const;
     GeneralEigenResult eigen_general(std::size_t max_iterations = 1000) const;
@@ -478,5 +481,16 @@ inline Factorization Matrix::factor_qr() const{return Factorization(*this,LA_QR)
 inline Matrix Matrix::solve(const Matrix& rhs) const{return factor_lu().solve(rhs);}
 inline Matrix Matrix::least_squares(const Matrix& rhs) const{return factor_qr().solve(rhs);}
 
+struct Matrix::Svd { Matrix u; std::vector<double> values; Matrix vt; };
+inline Matrix::Svd Matrix::svd(double tolerance,std::size_t max_sweeps) const {
+    auto k=std::min(rows_,cols_);
+    Svd result{Matrix(rows_,k),std::vector<double>(k),Matrix(k,cols_)};
+    int status=la_svd(rows_,cols_,values_.data(),tolerance,max_sweeps,result.u.data(),result.values.data(),result.vt.data());
+    if(status==1)throw std::invalid_argument("invalid SVD options");
+    if(status==2)throw std::bad_alloc();
+    if(status==3)throw std::overflow_error("SVD outside float64 range");
+    if(status==4)throw EigenConvergenceError();
+    return result;
+}
 }
 #endif

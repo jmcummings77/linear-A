@@ -147,6 +147,17 @@ internal static class Program
             "add" => () => new(a + b!),
             "subtract" => () => new(a - b!),
             "multiply" => () => new(a * b!),
+            "svd" or "svd_one_sweep" => () =>
+            {
+                var r = a.Svd(maxSweeps: op == "svd" ? 100 : 1);
+                var k = r.Values.Length;
+                var packed = new Matrix<double>(a.RowCount + 1 + a.ColumnCount, k);
+                for (var i = 0; i < a.RowCount; i++) for (var j = 0; j < k; j++) packed[i, j] = r.U[i, j];
+                for (var j = 0; j < k; j++) packed[a.RowCount, j] = r.Values[j];
+                for (var i = 0; i < a.ColumnCount; i++) for (var j = 0; j < k; j++) packed[a.RowCount + 1 + i, j] = r.Vt[j, i];
+                return new(packed);
+            }
+            ,
             "solve" => () => new(a.Solve(b!)),
             "solve_cholesky" => () => new(a.FactorCholesky().Solve(b!)),
             "least_squares" => () => new(a.LeastSquares(b!)),

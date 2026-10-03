@@ -76,7 +76,7 @@ def table(manifest):
     lines += ['', 'C# entries apply to `Matrix<double>` on .NET 10. The netstandard2.1',
               'target contains the older compatibility classes and does not promise this',
               'complete contract. ARM64 and WebAssembly use the C API/kernels; C++ shares',
-              'the C general-eigenvalue and factorization kernels.', '']
+              'the C general-eigenvalue, SVD and factorization kernels.', '']
     return '\n'.join(lines)
 
 
@@ -101,7 +101,7 @@ def check_manifest(manifest):
 
 def kit_files(name, port, version, provenance=None):
     files = tracked_sources(ROOT, port['source_roots'])
-    for path in ['LICENSE', 'Directory.Build.props', 'global.json', 'ports/README.md', 'ports/SOLVING.md']:
+    for path in ['LICENSE', 'Directory.Build.props', 'global.json', 'ports/README.md', 'ports/SOLVING.md', 'ports/SVD.md']:
         files[path] = (ROOT / path).read_bytes()
     for path in (ROOT / 'docs/api' / version).glob('*.md'):
         files['docs/api/' + version + '/' + path.name] = path.read_bytes()

@@ -710,3 +710,20 @@ static matrix_status solve_with(const matrix *source,const matrix *rhs,matrix *o
 }
 matrix_status m_solve(const matrix *source,const matrix *rhs,matrix *out){return solve_with(source,rhs,out,M_LU);}
 matrix_status m_least_squares(const matrix *source,const matrix *rhs,matrix *out){return solve_with(source,rhs,out,M_QR);}
+
+#include "svd_core.h"
+matrix_status m_svd(const matrix *source,double tolerance,size_t max_sweeps,matrix *u,matrix *values,matrix *vt){
+    if(!source||!empty_output(u)||!empty_output(values)||!empty_output(vt)||u==values||u==vt||values==vt||source==u||source==values||source==vt)return M_ARGUMENT;
+    matrix_status checked=validate(source);if(checked!=M_OK)return checked;
+    size_t k=source->rows<source->cols?source->rows:source->cols;
+    matrix a={0},s={0},b={0};
+    matrix_status status=m_create(source->rows,k,&a);
+    if(status==M_OK)status=m_create(k,1,&s);
+    if(status==M_OK)status=m_create(k,source->cols,&b);
+    if(status==M_OK){
+        int code=la_svd(source->rows,source->cols,source->values,tolerance,max_sweeps,a.values,s.values,b.values);
+        status=code==1?M_ARGUMENT:code==2?M_MEMORY:code==3?M_NONFINITE:code==4?M_NO_CONVERGENCE:M_OK;
+    }
+    if(status==M_OK){*u=a;*values=s;*vt=b;}else{m_free(&a);m_free(&s);m_free(&b);}
+    return status;
+}

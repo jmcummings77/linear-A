@@ -142,6 +142,24 @@ export async function createMatrixAPI({
     /** Cross two 3D row/column vectors; the result retains this matrix's shape. */
     cross(other) { return Matrix.#fromHandle(runtime._wm_cross(this.#alive(), this.#other(other))); }
 
+    /** Economy SVD; values are copied, and u/vt must each be disposed. */
+    svd(tolerance = 1e-12, maxSweeps = 100) {
+      this.#alive();
+      if (!Number.isFinite(tolerance) || tolerance <= 0 || tolerance >= 1 || !Number.isInteger(maxSweeps) || maxSweeps < 1 || maxSweeps > 10000) throw new RangeError("invalid SVD options");
+      let u, values, vt;
+      try {
+        u = new Matrix(); values = new Matrix(); vt = new Matrix();
+        runtime._wm_svd(this.#pointer,tolerance,maxSweeps,u.#pointer,values.#pointer,vt.#pointer);
+        checkedStatus();
+        for (const item of [u,values,vt]) {
+          item.#rows=runtime._wm_rows(item.#pointer)>>>0; item.#cols=runtime._wm_cols(item.#pointer)>>>0;
+        }
+        const copied=values.toArray();
+        return {u,values:copied,vt};
+      } catch(error) { u?.dispose(); vt?.dispose(); throw error; }
+      finally { values?.dispose(); }
+    }
+
     factorLU() { return new Factorization(runtime._wm_factorize(this.#alive(),1),ownedFactor); }
     factorCholesky() { return new Factorization(runtime._wm_factorize(this.#alive(),2),ownedFactor); }
     factorQR() { return new Factorization(runtime._wm_factorize(this.#alive(),3),ownedFactor); }

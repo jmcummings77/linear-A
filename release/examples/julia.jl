@@ -4,3 +4,6 @@ x=solve(a,b)
 @assert maximum(abs.(rowmajor(x) .- [1.,2.])) < 1e-12
 @assert maximum(abs.(rowmajor(a*x) .- rowmajor(b))) < 1e-12
 println("solution: 1, 2")
+
+r=svd(a)
+@assert length(r.values)==2 && r.values[2]>0

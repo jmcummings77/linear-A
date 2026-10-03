@@ -1,7 +1,7 @@
 include(joinpath(@__DIR__, "src", "LinearAMatrices.jl"))
 using .LinearAMatrices
 
-const OPERATIONS = Set(["add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "eigen_symmetric", "eigen_general", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "triangular"])
+const OPERATIONS = Set(["svd", "svd_one_sweep","add", "subtract", "scale", "transpose", "multiply", "solve", "solve_cholesky", "least_squares", "rcond", "cross", "rotation2d", "rotation3d", "trace", "eigen_symmetric", "eigen_general", "determinant", "determinant_lu", "determinant_spd_lu", "determinant_cholesky", "triangular"])
 
 function integer(text, minimum=0, maximum=typemax(Int))
     value = parse(Int, text)
@@ -13,6 +13,10 @@ function operation(name, a, b=nothing, scalar=1.25)
     name == "add" && return a + b
     name == "subtract" && return a - b
     name == "multiply" && return a * b
+    if name in ("svd","svd_one_sweep")
+        r=svd(a;max_sweeps=name=="svd" ? 100 : 1)
+        return Matrix64(a.rows+1+a.cols,min(a.rows,a.cols),vcat(rowmajor(r.u),r.values,rowmajor(transpose(r.vt))))
+    end
     name == "solve" && return solve(a,b)
     name == "solve_cholesky" && return solve(factor_cholesky(a),b)
     name == "least_squares" && return least_squares(a,b)

@@ -8,5 +8,8 @@ try {
   for (const [actual, expected] of [[x.toArray(), [1, 2]], [reconstructed.toArray(), b.toArray()]]) {
     if (actual.some((v, i) => Math.abs(v - expected[i]) > 1e-12 || !Number.isFinite(v))) throw Error("incorrect solution");
   }
+  const decomposition=a.svd();
+  try { if (decomposition.values.length!==2 || decomposition.values[1]<=0) throw Error("incorrect SVD"); }
+  finally { decomposition.u.dispose(); decomposition.vt.dispose(); }
   console.log("solution: 1, 2");
 } finally { reconstructed.dispose(); x.dispose(); b.dispose(); a.dispose(); }

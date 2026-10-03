@@ -1,3 +1,5 @@
+import { decompose, type SingularValueDecomposition } from "./svd.js";
+export type { SingularValueDecomposition } from "./svd.js";
 import { Factorization } from "./solve.js";
 export { Factorization } from "./solve.js";
 import { generalEigen } from "./general-eigen.js";
@@ -421,6 +423,7 @@ export class Matrix {
   factorLU():Factorization { return new Factorization(this,"lu"); }
   factorCholesky():Factorization { return new Factorization(this,"cholesky"); }
   factorQR():Factorization { return new Factorization(this,"qr"); }
+  svd(tolerance=1e-12,maxSweeps=100): SingularValueDecomposition { return decompose(this,tolerance,maxSweeps); }
   solve(rhs:Matrix):Matrix { return this.factorLU().solve(rhs); }
   leastSquares(rhs:Matrix):Matrix { return this.factorQR().solve(rhs); }
 

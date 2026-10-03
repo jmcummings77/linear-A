@@ -207,3 +207,10 @@ exit nonzero. Empty factors and zero-column right-hand sides are supported.
 These operations are added to shared correctness checking, not the selectable
 benchmark suites. The [solver guide](../ports/SOLVING.md) defines pivoting,
 QR rank thresholds, scaling failures, and the computed condition diagnostic.
+
+## SVD conformance
+
+`check svd ROWS COLS` returns packed economy factors `[U; sᵀ; V]` using the
+matrix result envelope. `svd_one_sweep` uses a one-sweep limit to test explicit
+nonconvergence. See [the SVD contract](../ports/SVD.md). These operations are
+not added to the existing timed workloads or historical measurements.

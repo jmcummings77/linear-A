@@ -26,17 +26,14 @@ export function fit(Matrix,input,degree){
 }
 export function compress(Matrix,pixels,size,rank){
   if(!Number.isInteger(size)||size<2||size>32||!Array.isArray(pixels)||pixels.length!==size*size||pixels.some(v=>!Number.isFinite(v)||v<0||v>1)||!Number.isInteger(rank)||rank<0||rank>size)throw new RangeError('Use a 2–32 square grayscale image and a valid rank.');
-  let a,at,gram,e;try{
-    a=new Matrix(size,size,pixels);at=a.transpose();gram=a.multiply(at);e=gram.eigenSymmetric({tolerance:1e-13,maxSweeps:100});
-    const vectors=Array.from(e.vectors.toArray()),values=Array.from(e.values),order=Array.from({length:size},(_,i)=>size-1-i),reconstructed=Array(size*size).fill(0);
-    // U_k(U_k^T A): no division by small singular values. This also retains null-space safety.
-    for(const column of order.slice(0,rank))for(let j=0;j<size;j++){
-      let weight=0;for(let i=0;i<size;i++)weight+=vectors[i*size+column]*pixels[i*size+j];
-      for(let i=0;i<size;i++)reconstructed[i*size+j]+=vectors[i*size+column]*weight;
-    }
+  let a,e;try{
+    a=new Matrix(size,size,pixels);e=a.svd();
+    const u=e.u.toArray(),vt=e.vt.toArray(),values=Array.from(e.values),reconstructed=Array(size*size).fill(0);
+    for(let column=0;column<rank;column++)for(let i=0;i<size;i++)for(let j=0;j<size;j++)
+      reconstructed[i*size+j]+=u[i*size+column]*values[column]*vt[column*size+j];
     const energy=pixels.reduce((s,v)=>s+v*v,0),error=pixels.reduce((s,v,i)=>s+(v-reconstructed[i])**2,0);
-    return {reconstructed,singularValues:order.map(i=>Math.sqrt(Math.max(0,values[i]))),relativeError:energy?Math.sqrt(error/energy):0,
+    return {reconstructed,singularValues:values,relativeError:energy?Math.sqrt(error/energy):0,
       rmse:Math.sqrt(error/pixels.length),retained:energy?Math.max(0,Math.min(1,1-error/energy)):null,
       originalScalars:size*size,factorScalars:rank*(2*size+1)};
-  }finally{e?.vectors.dispose();gram?.dispose();at?.dispose();a?.dispose();}
+  }finally{e?.u.dispose();e?.vt.dispose();a?.dispose();}
 }

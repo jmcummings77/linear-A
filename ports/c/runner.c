@@ -61,6 +61,16 @@ static void execute(const char *op, const matrix *a, const matrix *b, double sca
     if (!strcmp(op, "add")) require(m_add(a, b, result));
     else if (!strcmp(op, "subtract")) require(m_subtract(a, b, result));
     else if (!strcmp(op, "multiply")) require(m_multiply(a, b, result));
+    else if (!strcmp(op,"svd") || !strcmp(op,"svd_one_sweep")) {
+        matrix u={0},s={0},vt={0};
+        require(m_svd(a,1e-12,!strcmp(op,"svd")?100:1,&u,&s,&vt));
+        size_t k=s.rows;
+        require(m_create(a->rows+1+a->cols,k,result));
+        for(size_t i=0;i<a->rows*k;i++)result->values[i]=u.values[i];
+        for(size_t j=0;j<k;j++)result->values[a->rows*k+j]=s.values[j];
+        for(size_t i=0;i<a->cols;i++)for(size_t j=0;j<k;j++)result->values[(a->rows+1+i)*k+j]=vt.values[j*a->cols+i];
+        m_free(&u);m_free(&s);m_free(&vt);
+    }
     else if (!strcmp(op, "solve")) require(m_solve(a,b,result));
     else if (!strcmp(op, "least_squares")) require(m_least_squares(a,b,result));
     else if (!strcmp(op, "solve_cholesky") || !strcmp(op,"rcond")) {

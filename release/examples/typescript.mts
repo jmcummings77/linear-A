@@ -6,3 +6,6 @@ for (const [actual, expected] of [[x.values, [1, 2]], [a.multiply(x).values, b.v
   if (actual.some((v, i) => Math.abs(v - expected[i]) > 1e-12 || !Number.isFinite(v))) throw Error("incorrect solution");
 }
 console.log("solution: 1, 2");
+
+const decomposition = a.svd();
+if (decomposition.values.length !== 2 || decomposition.values[1] <= 0) throw Error("incorrect SVD");

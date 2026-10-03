@@ -19,6 +19,7 @@ from reference import OPERATIONS, fixtures as arithmetic_fixtures, assert_result
 from eigen_reference import eigen_fixtures, generated_eigen, eigen_spectrum, assert_eigen_result
 from general_eigen_reference import general_eigen_fixtures, generated_general_eigen, general_eigen_spectrum, assert_general_eigen_result
 from solve_reference import solve_fixtures
+from svd_reference import svd_fixtures, assert_svd_result
 from vector_reference import vector_fixtures, vector_inputs, vector_expected
 from publication import PublicSanitizer
 
@@ -26,7 +27,7 @@ OPERATIONS = (*OPERATIONS, "eigen_symmetric", "eigen_general", "cross", "rotatio
 
 
 def fixtures():
-    return arithmetic_fixtures() + eigen_fixtures() + general_eigen_fixtures() + vector_fixtures() + solve_fixtures()
+    return arithmetic_fixtures() + eigen_fixtures() + general_eigen_fixtures() + vector_fixtures() + solve_fixtures() + svd_fixtures()
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / ".build"
@@ -40,9 +41,9 @@ DETAILS = {
     "go":"Go float64 matrix; contiguous storage; default optimizing compiler",
     "typescript":"TypeScript compiled to JavaScript; Float64Array; Node.js JIT",
     "python":"Python float matrix; interpreted loops; no NumPy",
-    "cpp":"C++ double matrix; optimized native build; no fast-math; shared C general eigen and factorization kernels",
+    "cpp":"C++ double matrix; optimized native build; no fast-math; shared C general eigen, SVD and factorization kernels",
     "c":"C double matrix; optimized native build; no fast-math",
-    "assembly":"ARM64 arithmetic kernels with C allocation, validation, pivot control, shared real eigensolvers and system solvers",
+    "assembly":"ARM64 arithmetic kernels with C allocation, validation, pivot control, shared real eigensolvers, SVD and system solvers",
     "julia":"Julia Float64 matrix; handwritten loops; JIT; no BLAS calls",
     "wasm":"C double matrix compiled with Emscripten; Node.js WebAssembly runtime; JS/WASM dispatch, allocation, checksum reads, and disposal included"
 }
@@ -166,7 +167,9 @@ def verify(implementation, cases=None):
                 if result.stdout.strip(): raise AssertionError("Invalid request produced output on stdout")
             else:
                 if result.returncode: raise AssertionError(result.stderr.strip()[-2000:])
-                if case["op"] == "eigen_general":
+                if case["op"] == "svd":
+                    assert_svd_result(json.loads(result.stdout), a, case.get("spectrum"))
+                elif case["op"] == "eigen_general":
                     assert_general_eigen_result(json.loads(result.stdout), a, case.get("expected_complex_eigenvalues"),
                                                 spectrum_scale=case.get("spectrum_scale"), componentwise=case.get("componentwise",False))
                 elif case["op"] == "eigen_symmetric":

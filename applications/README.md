@@ -17,12 +17,11 @@ Three local browser applications use the public WebAssembly matrix API:
 
 ## Numerical scope
 
-The image demo obtains U from the symmetric eigendecomposition of AAᵀ and
-reconstructs Uₖ(UₖᵀA), avoiding division by small singular values. This is an
-educational Gram-matrix route to an SVD reconstruction, not a general-purpose SVD
-implementation. It squares the condition number and cannot accurately resolve
-arbitrarily small singular values. Tiny negative computed Gram eigenvalues are
-clamped to zero for the displayed singular values.
+The image demo calls the economy SVD API and reconstructs UₖΣₖVₖᵀ.
+The one-sided Jacobi algorithm works directly on the input columns without
+forming a Gram matrix. It supports rank-deficient inputs, including blank and
+constant images. Floating-point rounding still limits tiny singular values;
+see the [shared SVD contract](../ports/SVD.md) for range and convergence rules.
 
 Errors use the unclipped reconstruction; only grayscale display values are
 clipped to [0,1]. Factor storage counts k(2n+1) floating-point scalars versus n²

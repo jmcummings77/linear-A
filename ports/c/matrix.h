@@ -97,4 +97,11 @@ matrix_status m_eigen_general_with_options(const matrix *source, size_t max_iter
                                           matrix *values_real, matrix *values_imag,
                                           matrix *vectors_real, matrix *vectors_imag);
 
+/* Economy SVD A=U diag(values) Vt, k=min(rows,cols). U is rows-by-k,
+ * values is k-by-1, Vt is k-by-cols. Descending nonnegative singular values.
+ * Initialize distinct outputs with {0}; free each with m_free. Input unchanged.
+ * Use tolerance=1e-12, max_sweeps=100 for defaults. See ports/SVD.md. */
+matrix_status m_svd(const matrix *source, double tolerance, size_t max_sweeps,
+                    matrix *u, matrix *values, matrix *vt);
+
 #endif

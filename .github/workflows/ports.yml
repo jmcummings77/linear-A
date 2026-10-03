@@ -94,6 +94,8 @@ jobs:
           mkdir -p .build/unit
           clang -std=c11 -O3 -g -ffp-contract=off ports/c/matrix.c ports/c/tests.c -lm -o .build/unit/c-tests
           .build/unit/c-tests
+          clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/svd_tests.c -lm -o .build/unit/svd-tests
+          .build/unit/svd-tests
           clang++ -std=c++17 -O3 -g -ffp-contract=off ports/cpp/tests.cpp -o .build/unit/cpp-tests
           .build/unit/cpp-tests
           clang -std=c11 -O3 -g -ffp-contract=off -DMATRIX_USE_ASM ports/c/matrix.c ports/assembly/tests.c ports/assembly/kernels.S -lm -o .build/unit/assembly-tests

@@ -10,5 +10,6 @@ func main() {
  x, err := a.Solve(b); if err != nil { panic(err) }
  r, err := a.Multiply(x); if err != nil { panic(err) }
  for i,v := range x.Values() { if math.IsNaN(v) || math.Abs(v-float64(i+1))>1e-12 || math.IsNaN(r.Values()[i]) || math.Abs(r.Values()[i]-b.Values()[i])>1e-12 { panic("incorrect solution") } }
+ decomposition, err := a.SVD(); if err != nil { panic(err) }; if len(decomposition.Values)!=2 || decomposition.Values[1]<=0 { panic("incorrect SVD") }
  fmt.Println("solution: 1, 2")
 }

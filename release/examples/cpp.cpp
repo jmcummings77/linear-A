@@ -7,5 +7,7 @@ int main() {
     for (size_t i=0;i<2;i++)
         if (!std::isfinite(x.values()[i]) || std::abs(x.values()[i]-(i+1))>1e-12
             || !std::isfinite(reconstructed.values()[i]) || std::abs(reconstructed.values()[i]-b.values()[i])>1e-12) return 1;
+    auto decomposition=a.svd();
+    if(decomposition.values.size()!=2 || decomposition.values[1]<=0) return 1;
     std::cout << "solution: 1, 2\n";
 }

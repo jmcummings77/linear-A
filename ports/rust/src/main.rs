@@ -15,6 +15,8 @@ enum Operation {
     Scale,
     Transpose,
     Multiply,
+    Svd,
+    SvdOneSweep,
     Solve,
     SolveCholesky,
     LeastSquares,
@@ -40,6 +42,8 @@ impl Operation {
             "scale" => Ok(Self::Scale),
             "transpose" => Ok(Self::Transpose),
             "multiply" => Ok(Self::Multiply),
+            "svd" => Ok(Self::Svd),
+            "svd_one_sweep" => Ok(Self::SvdOneSweep),
             "solve" => Ok(Self::Solve),
             "solve_cholesky" => Ok(Self::SolveCholesky),
             "least_squares" => Ok(Self::LeastSquares),
@@ -164,6 +168,24 @@ fn execute(
         Operation::Scale => Outcome::Matrix(a.scale(scalar)?),
         Operation::Transpose => Outcome::Matrix(a.transpose()?),
         Operation::Multiply => Outcome::Matrix(a.multiply(second()?)?),
+        Operation::Svd | Operation::SvdOneSweep => {
+            let r = a.svd_with(
+                1e-12,
+                if matches!(operation, Operation::Svd) {
+                    100
+                } else {
+                    1
+                },
+            )?;
+            let mut values = r.u.values().to_vec();
+            values.extend(&r.values);
+            values.extend(r.vt.transpose()?.values());
+            Outcome::Matrix(Matrix::new(
+                a.rows() + 1 + a.cols(),
+                a.rows().min(a.cols()),
+                &values,
+            )?)
+        }
         Operation::Solve => Outcome::Matrix(a.solve(second()?)?),
         Operation::SolveCholesky => Outcome::Matrix(a.factor_cholesky()?.solve(second()?)?),
         Operation::LeastSquares => Outcome::Matrix(a.least_squares(second()?)?),

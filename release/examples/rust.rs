@@ -8,5 +8,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         assert!((x.values()[i]-(i+1) as f64).abs()<1e-12);
         assert!((reconstructed.values()[i]-b.values()[i]).abs()<1e-12);
     }
+    let decomposition = a.svd()?;
+    assert_eq!(decomposition.values.len(), 2);
+    assert!(decomposition.values[1] > 0.);
     println!("solution: 1, 2"); Ok(())
 }
