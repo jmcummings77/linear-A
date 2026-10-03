@@ -224,3 +224,117 @@ func (a *CSRMatrix) ConjugateGradient(b []float64, o CGOptions) (*CGResult, erro
 	}
 	return result("iteration_limit")
 }
+
+// ReverseCuthillMcKee returns new-to-old indices for the undirected stored pattern.
+func (a *CSRMatrix) ReverseCuthillMcKee() ([]int, error) {
+	if a == nil || a.rows != a.cols {
+		return nil, errors.New("RCM requires square matrix")
+	}
+	n := a.rows
+	graph := make([]map[int]bool, n)
+	for i := range graph {
+		graph[i] = map[int]bool{}
+	}
+	for i := 0; i < n; i++ {
+		for k := a.rp[i]; k < a.rp[i+1]; k++ {
+			j := a.ci[k]
+			if i != j {
+				graph[i][j] = true
+				graph[j][i] = true
+			}
+		}
+	}
+	less := func(i, j int) bool {
+		if len(graph[i]) == len(graph[j]) {
+			return i < j
+		}
+		return len(graph[i]) < len(graph[j])
+	}
+	starts := make([]int, n)
+	for i := range starts {
+		starts[i] = i
+	}
+	sort.Slice(starts, func(i, j int) bool { return less(starts[i], starts[j]) })
+	seen := make([]bool, n)
+	order := []int{}
+	for _, start := range starts {
+		if seen[start] {
+			continue
+		}
+		q := []int{start}
+		seen[start] = true
+		for h := 0; h < len(q); h++ {
+			next := []int{}
+			for j := range graph[q[h]] {
+				if !seen[j] {
+					next = append(next, j)
+				}
+			}
+			sort.Slice(next, func(i, j int) bool { return less(next[i], next[j]) })
+			for _, j := range next {
+				seen[j] = true
+				q = append(q, j)
+			}
+		}
+		order = append(order, q...)
+	}
+	for i, j := 0, len(order)-1; i < j; i, j = i+1, j-1 {
+		order[i], order[j] = order[j], order[i]
+	}
+	return order, nil
+}
+func PermuteVector(p []int, x []float64, inverse bool) ([]float64, error) {
+	n := len(x)
+	if len(p) != n {
+		return nil, errors.New("invalid permutation length")
+	}
+	seen := make([]bool, n)
+	out := make([]float64, n)
+	for i, j := range p {
+		if j < 0 || j >= n || seen[j] || !isFinite(x[i]) {
+			return nil, errors.New("invalid permutation or vector")
+		}
+		seen[j] = true
+	}
+	for i, j := range p {
+		if inverse {
+			out[j] = x[i]
+		} else {
+			out[i] = x[j]
+		}
+	}
+	return out, nil
+}
+func (a *CSRMatrix) PermuteSymmetric(p []int) (*CSRMatrix, error) {
+	if a == nil || a.rows != a.cols {
+		return nil, errors.New("permutation requires square matrix")
+	}
+	ids := make([]float64, a.rows)
+	for i := range ids {
+		ids[i] = float64(i)
+	}
+	inv, e := PermuteVector(p, ids, true)
+	if e != nil {
+		return nil, e
+	}
+	rp := []int{0}
+	ci := []int{}
+	v := []float64{}
+	type entry struct {
+		j int
+		v float64
+	}
+	for _, i := range p {
+		entries := []entry{}
+		for k := a.rp[i]; k < a.rp[i+1]; k++ {
+			entries = append(entries, entry{int(inv[a.ci[k]]), a.values[k]})
+		}
+		sort.Slice(entries, func(i, j int) bool { return entries[i].j < entries[j].j })
+		for _, x := range entries {
+			ci = append(ci, x.j)
+			v = append(v, x.v)
+		}
+		rp = append(rp, len(v))
+	}
+	return NewCSR(a.rows, a.cols, rp, ci, v)
+}

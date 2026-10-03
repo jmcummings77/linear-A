@@ -29,3 +29,8 @@ if not gm.Converged || abs(gm.X[0]-1.)>1e-12 || abs(gm.X[1]-2.)>1e-12 then failw
 
 let ilu=ILU0(sparse)
 if abs(ilu.Apply([|6.;7.|])[0]-1.)>1e-12 || abs(ilu.Apply([|11.;13.|])[0]-20./11.)>1e-12 || not(sparse.Gmres([|11.;13.|],preconditioner=ilu).Converged) then failwith "incorrect ILU reuse"
+
+let order=sparse.ReverseCuthillMcKee()
+let reordered=sparse.PermuteSymmetric(order)
+let permuted=CSRMatrix.PermuteVector(order,[|1.;2.|])
+if CSRMatrix.PermuteVector(order,reordered.Matvec(permuted),true) <> [|6.;7.|] then failwith "incorrect permutation"

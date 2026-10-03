@@ -20,5 +20,7 @@ int main() {
     if(!gm.converged||std::abs(gm.x[0]-1)>1e-12||std::abs(gm.x[1]-2)>1e-12)return 1;
     auto product=sparse.matvec({1,2});auto cg=sparse.conjugate_gradient({6,7},1e-10,0,1000,true,true);
     if(product[0]!=6||product[1]!=7||!cg.converged||std::abs(cg.x[0]-1)>1e-12||std::abs(cg.x[1]-2)>1e-12)return 1;
+    auto order=sparse.reverse_cuthill_mckee();auto reordered=sparse.permute_symmetric(order);auto y=linear_a::CSRMatrix::permute_vector(order,{1,2});
+    if(linear_a::CSRMatrix::permute_vector(order,reordered.matvec(y),true)!=std::vector<double>({6,7}))return 1;
     std::cout << "solution: 1, 2\n";
 }

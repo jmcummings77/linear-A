@@ -9,7 +9,7 @@ let run (args: string[]) =
     let integer i = Int32.Parse(args[i],CultureInfo.InvariantCulture)
     let number i = Double.Parse(args[i],CultureInfo.InvariantCulture)
     let op,rows,cols,nnz,iterations,rtol,atol,limit,jacobi,capture = args[1],integer 2,integer 3,integer 4,integer 5,number 6,number 7,integer 8,integer 9,integer 10
-    if not (List.contains op ["spmv";"dense";"cg";"gmres";"ilu_setup";"ilu_apply"]) || min rows (min cols (min nnz iterations))<0 || jacobi<0 || jacobi>(if op="gmres" then 3 else 1) || capture<0 || capture>1 then invalidArg "args" "Invalid sparse options."
+    if not (List.contains op ["spmv";"dense";"cg";"gmres";"ilu_setup";"ilu_apply";"rcm";"permute";"permutation_check";"rcm_solve";"ilu_solve"]) || min rows (min cols (min nnz iterations))<0 || jacobi<0 || jacobi>(if op="gmres" then 3 else 1) || capture<0 || capture>1 then invalidArg "args" "Invalid sparse options."
     let raw = Console.In.ReadToEnd().Split(Array.empty<char>,StringSplitOptions.RemoveEmptyEntries)
     let count = if op="cg" || op="gmres" then rows else cols
     if raw.Length<>rows+1+2*nnz+count then invalidArg "args" "Incorrect sparse input count."
@@ -27,7 +27,25 @@ let run (args: string[]) =
         for i in 0..rows-1 do
             for p in rp[i]..rp[i+1]-1 do dense[i,ci[p]] <- v[p]
     let compute () =
-        if op="ilu_setup" then
+        if op="rcm_solve" || op="ilu_solve" then
+            let p=if op="rcm_solve" then a.ReverseCuthillMcKee() else [|0..rows-1|]
+            let q=if op="rcm_solve" then a.PermuteSymmetric(p) else a
+            let rhs=if op="rcm_solve" then CSRMatrix.PermuteVector(p,b) else b
+            let result=q.Gmres(rhs,restart=20,relativeTolerance=rtol,absoluteTolerance=atol,maxIterations=limit,preconditioner=ILU0(q))
+            if not result.Converged then failwith ("Ordering solve failed: "+result.Reason)
+            let x=if op="rcm_solve" then CSRMatrix.PermuteVector(p,result.X,true) else result.X
+            Array.append [|float result.Iterations|] x
+        elif op="rcm" then a.ReverseCuthillMcKee() |> Array.map float
+        elif op="permute" || op="permutation_check" then
+            if Array.exists (fun x -> not (Double.IsFinite x) || x<0.0 || x>=float rows || x<>Math.Floor(x)) b then invalidArg "b" "Invalid permutation."
+            let p=Array.map int b
+            let q=a.PermuteSymmetric(p)
+            if op="permute" then Array.concat [Array.map float q.RowOffsets;Array.map float q.ColumnIndices;q.Values]
+            else
+                let x=Array.init rows (fun i -> float (i+1))
+                let y=CSRMatrix.PermuteVector(p,x)
+                Array.concat [y;CSRMatrix.PermuteVector(p,y,true);CSRMatrix.PermuteVector(p,q.Matvec(y),true)]
+        elif op="ilu_setup" then
             let f=ILU0(a)
             [|float f.Size;float f.NNZ|]
         elif op="ilu_apply" then factor.Value.Apply(b)

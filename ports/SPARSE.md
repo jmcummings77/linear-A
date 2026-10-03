@@ -241,3 +241,64 @@ the preconditioned vector. For `gmres`, the preconditioner field formerly named
 `JACOBI` is 0 (none), 1 (Jacobi), 2 (saved ILU), or 3 (ILU built for each solve).
 CG retains only 0 and 1. Reused setup occurs outside the timed region. The
 versioned package examples exercise factor reuse across distinct RHS vectors.
+
+## Reverse Cuthill–McKee and permutations
+
+All eleven ports expose RCM ordering, symmetric CSR permutation, and vector
+permutation. These operations are independent of ILU and can be composed with
+any solver. They require square matrices; numeric symmetry is not required.
+
+The returned permutation is **new-to-old**: `p[new] = old`. Form
+`B[i,j] = A[p[i],p[j]]`, `c[i] = b[p[i]]`, solve `By=c`, and restore
+`x[p[i]] = y[i]`. The inverse vector operation performs that last step. Both
+matrix permutations and vectors own their outputs; the input is unchanged.
+Stored zeros are preserved, rows are sorted canonically, and `nnz` is unchanged.
+Permutation inputs must contain each index exactly once and match the dimension.
+Vector values must be finite. Empty square matrices and empty permutations work.
+
+RCM constructs the undirected **union of the stored pattern and its transpose**,
+including explicit off-diagonal zeros, ignoring the diagonal and duplicate edges.
+Start each component at the unvisited vertex minimizing `(degree, original index)`;
+visit unvisited neighbors in that same order with a FIFO queue. Reverse the whole
+traversal, including the component order. This deterministic minimum-degree seed
+variant does not search for pseudo-peripheral vertices. It can differ from other
+RCM implementations. It uses sparse adjacency storage, never an n-by-n graph.
+See the [Cuthill–McKee description](https://www.boost.org/doc/libs/1_70_0/libs/graph/doc/cuthill_mckee_ordering.html)
+for the degree-ordered breadth-first traversal.
+
+| Port | RCM | Symmetric permutation | Vector permutation / inverse |
+| --- | --- | --- | --- |
+| C#, F# | `a.ReverseCuthillMcKee()` | `a.PermuteSymmetric(p)` | `CSRMatrix.PermuteVector(p, x, inverse)` |
+| Rust | `a.reverse_cuthill_mckee()` | `a.permute_symmetric(&p)` | `CSRMatrix::permute_vector(&p, &x, inverse)` |
+| Go | `a.ReverseCuthillMcKee()` | `a.PermuteSymmetric(p)` | `matrix.PermuteVector(p, x, inverse)` |
+| Python | `a.reverse_cuthill_mckee()` | `a.permute_symmetric(p)` | `CSRMatrix.permute_vector(p, x, inverse)` |
+| TypeScript, WASM | `a.reverseCuthillMcKee()` | `a.permuteSymmetric(p)` | `CSRMatrix.permuteVector(p, x, inverse)` |
+| Julia | `reverse_cuthill_mckee(a)` | `permute_symmetric(a, p)` | `permute_vector(p, x; inverse=false)` |
+| C++ | `a.reverse_cuthill_mckee()` | `a.permute_symmetric(p)` | `CSRMatrix::permute_vector(p, x, inverse)` |
+| C, ARM64 | `m_csr_rcm(a, p, count)` | `m_csr_permute(a, p, count, out)` | `m_permute_vector(p, count, x, inverse, out)` |
+
+Julia permutation values are zero-based, matching its CSR column indices.
+C output arrays must have `count` elements. Vector input and output may alias;
+invalid permutations leave the output unchanged. CSR output must be zero-initialized
+and freed with `m_csr_free`. The C++ and ARM64 ports use the shared C ordering
+kernel; ARM64 does not claim a handwritten assembly RCM implementation. WASM
+ordering and permutations execute in the compiled C kernel; its adapter copies
+CSR arrays back to JavaScript to construct the owned result. Dispose WASM CSR
+results when finished. Julia validates its exposed arrays again at entry.
+
+The report defines structural bandwidth as `max(abs(row-column))` over stored
+entries, or zero for an empty pattern. Diagonal-only matrices have bandwidth zero.
+
+RCM targets bandwidth, not optimal fill, stability, or convergence. ILU(0) can
+become better or worse after reordering, or encounter a zero pivot. There is no
+fallback to a different ordering. The [ordering report](https://jmcummings77.github.io/linear-A/ordering/)
+measures these effects and includes preprocessing in its total-time workloads.
+
+Sparse runner operations `rcm` and `permute` return respectively the permutation
+and packed CSR offsets/indices/values. `permute` takes the permutation in the vector
+slot. `permutation_check` additionally exercises forward/inverse vector mapping
+and the matvec identity. `ilu_solve` and `rcm_solve` return `[iterations, ...x]` in
+original coordinates, using ILU(0), restart 20 and the protocol tolerances/limit.
+Their timed paths include setup and solve; `rcm_solve` also includes ordering,
+CSR/RHS permutation and restoring the solution. All use the existing ten-argument
+sparse protocol, with Jacobi and capture set to zero for ordering benchmarks.

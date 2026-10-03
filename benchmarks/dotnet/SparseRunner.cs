@@ -9,7 +9,7 @@ internal static class SparseRunner
         if (args.Length != (args.Length > 1 && args[1] == "gmres" ? 12 : 11)) throw new ArgumentException("Invalid sparse protocol.");
         var op = args[1]; int Int(int i) => int.Parse(args[i], CultureInfo.InvariantCulture); double Number(int i) => double.Parse(args[i], CultureInfo.InvariantCulture);
         var rows = Int(2); var cols = Int(3); var nnz = Int(4); var iterations = Int(5); var rtol = Number(6); var atol = Number(7); var limit = Int(8); var jacobi = Int(9); var capture = Int(10);
-        if (op is not ("spmv" or "dense" or "cg" or "gmres" or "ilu_setup" or "ilu_apply") || rows < 0 || cols < 0 || nnz < 0 || iterations < 0 || (jacobi < 0 || jacobi > (op == "gmres" ? 3 : 1)) || capture is < 0 or > 1) throw new ArgumentException("Invalid sparse options.");
+        if (op is not ("spmv" or "dense" or "cg" or "gmres" or "ilu_setup" or "ilu_apply" or "rcm" or "permute" or "permutation_check" or "rcm_solve" or "ilu_solve") || rows < 0 || cols < 0 || nnz < 0 || iterations < 0 || (jacobi < 0 || jacobi > (op == "gmres" ? 3 : 1)) || capture is < 0 or > 1) throw new ArgumentException("Invalid sparse options.");
         var tokens = Console.In.ReadToEnd().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries); var count = op is "cg" or "gmres" ? rows : cols;
         if (tokens.Length != checked(rows + 1 + 2 * nnz + count)) throw new ArgumentException("Incorrect sparse input count.");
         var offset = 0; int[] Indices(int n) => Enumerable.Range(0, n).Select(_ => int.Parse(tokens[offset++], CultureInfo.InvariantCulture)).ToArray(); double[] Values(int n) => Enumerable.Range(0, n).Select(_ => double.Parse(tokens[offset++], CultureInfo.InvariantCulture)).ToArray();
@@ -19,6 +19,20 @@ internal static class SparseRunner
         if (op == "dense") { dense = new Matrix<double>(rows, cols); for (var i = 0; i < rows; i++) for (var p = rp[i]; p < rp[i + 1]; p++) dense[i, ci[p]] = v[p]; right = new Matrix<double>(cols, 1); for (var i = 0; i < cols; i++) right[i, 0] = b[i]; }
         double[] Compute()
         {
+            if (op is "rcm_solve" or "ilu_solve")
+            {
+                var p = op == "rcm_solve" ? a.ReverseCuthillMcKee() : Enumerable.Range(0, rows).ToArray(); var q = op == "rcm_solve" ? a.PermuteSymmetric(p) : a; var rhs = op == "rcm_solve" ? CSRMatrix.PermuteVector(p, b) : b;
+                var orderedResult = q.Gmres(rhs, 20, rtol, atol, limit, false, false, new ILU0(q)); if (!orderedResult.Converged) throw new ArithmeticException("Ordering solve failed: " + orderedResult.Reason); var x = op == "rcm_solve" ? CSRMatrix.PermuteVector(p, orderedResult.X, true) : orderedResult.X; return new double[] { orderedResult.Iterations }.Concat(x).ToArray();
+            }
+            if (op == "rcm") return a.ReverseCuthillMcKee().Select(i => (double)i).ToArray();
+            if (op is "permute" or "permutation_check")
+            {
+                if (b.Any(x => !double.IsFinite(x) || x < 0 || x >= rows || x != Math.Floor(x))) throw new ArgumentException("Invalid permutation.");
+                var p = b.Select(x => (int)x).ToArray(); var q = a.PermuteSymmetric(p);
+                if (op == "permute") return q.RowOffsets.Select(x => (double)x).Concat(q.ColumnIndices.Select(x => (double)x)).Concat(q.Values).ToArray();
+                var x = Enumerable.Range(1, rows).Select(i => (double)i).ToArray(); var y = CSRMatrix.PermuteVector(p, x);
+                return y.Concat(CSRMatrix.PermuteVector(p, y, true)).Concat(CSRMatrix.PermuteVector(p, q.Matvec(y), true)).ToArray();
+            }
             if (op == "ilu_setup") { var f = new ILU0(a); return new double[] { f.Size, f.NNZ }; }
             if (op == "ilu_apply") return factor!.Apply(b);
             if (op == "spmv") return a.Matvec(b);

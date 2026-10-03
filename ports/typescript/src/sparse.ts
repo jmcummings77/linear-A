@@ -17,6 +17,28 @@ export class CSRMatrix {
     this.rows=rows;this.cols=cols;this.rp=rp;this.ci=ci;this.v=v;
   }
   get nnz(){return this.v.length;}get rowOffsets(){return this.rp.slice();}get columnIndices(){return this.ci.slice();}get values(){return this.v.slice();}
+  reverseCuthillMcKee():number[]{
+    if(this.rows!==this.cols)throw new RangeError('RCM requires square matrix');
+    const graph=Array.from({length:this.rows},()=>new Set<number>());
+    for(let i=0;i<this.rows;i++)for(let k=this.rp[i];k<this.rp[i+1];k++){const j=this.ci[k];if(i!==j){graph[i].add(j);graph[j].add(i);}}
+    const compare=(a:number,b:number)=>graph[a].size-graph[b].size||a-b,seen=new Set<number>(),order:number[]=[];
+    for(const start of Array.from({length:this.rows},(_,i)=>i).sort(compare)){
+      if(seen.has(start))continue;const queue=[start];seen.add(start);
+      for(let h=0;h<queue.length;h++)for(const j of [...graph[queue[h]]].filter(j=>!seen.has(j)).sort(compare)){seen.add(j);queue.push(j);}
+      order.push(...queue);
+    }return order.reverse();
+  }
+  static permuteVector(order:ArrayLike<number>,input:ArrayLike<number>,inverse=false):number[]{
+    const p=Array.from(order),x=Array.from(input),n=x.length;
+    if(p.length!==n||p.some(i=>!Number.isSafeInteger(i)||i<0||i>=n)||new Set(p).size!==n||x.some(v=>!Number.isFinite(v)))throw new RangeError('invalid permutation or vector');
+    if(!inverse)return p.map(i=>x[i]);const out=Array(n).fill(0);p.forEach((j,i)=>out[j]=x[i]);return out;
+  }
+  permuteSymmetric(order:ArrayLike<number>):CSRMatrix{
+    if(this.rows!==this.cols)throw new RangeError('permutation requires square matrix');
+    const p=Array.from(order),inv=CSRMatrix.permuteVector(p,Array.from({length:this.rows},(_,i)=>i),true),rp=[0],ci:number[]=[],v:number[]=[];
+    for(const i of p){const entries: [number,number][]=[];for(let k=this.rp[i];k<this.rp[i+1];k++)entries.push([inv[this.ci[k]],this.v[k]]);entries.sort((a,b)=>a[0]-b[0]);for(const [j,x] of entries){ci.push(j);v.push(x);}rp.push(v.length);}
+    return new CSRMatrix(this.rows,this.cols,rp,ci,v);
+  }
   static fromDense(a:{rows:number;cols:number;get(i:number,j:number):number}){
     const rp=[0],ci:number[]=[],v:number[]=[];
     for(let i=0;i<a.rows;i++){for(let j=0;j<a.cols;j++){const x=a.get(i,j);if(x!==0){ci.push(j);v.push(x);}}rp.push(v.length);}

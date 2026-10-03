@@ -33,3 +33,8 @@ matrix_status m_ilu0_apply(const matrix_ilu0 *f,const matrix *b,matrix *out){
  status=sparse_status(la_ilu0_apply(f,b->values,b->rows,result.values));if(status)m_free(&result);else *out=result;return status;
 }
 matrix_status m_csr_gmres_preconditioned(const sparse_matrix *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_ilu0 *preconditioner,matrix_gmres_result *out){return sparse_status(la_csr_gmres_preconditioned(a,b,count,restart,rtol,atol,limit,jacobi,capture,preconditioner,out));}
+
+#include "ordering_core.h"
+matrix_status m_csr_rcm(const sparse_matrix *a,size_t *out,size_t count){return sparse_status(la_csr_rcm(a,out,count));}
+matrix_status m_csr_permute(const sparse_matrix *a,const size_t *p,size_t count,sparse_matrix *out){return sparse_status(la_csr_permute(a,p,count,out));}
+matrix_status m_permute_vector(const size_t *p,size_t count,const double *x,bool inverse,double *out){return sparse_status(la_permute_vector(p,count,x,inverse,out));}

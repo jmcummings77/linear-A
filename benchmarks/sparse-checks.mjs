@@ -6,7 +6,20 @@ export function checkSparse(api,cases) {
     let a,factor,output,error;
     try {
       const m=test.a;a=new api.CSRMatrix(m.rows,m.cols,m.offsets,m.indices,m.values);
-      if(test.op==='ilu_setup'){factor=new api.ILU0(a);output=[factor.size,factor.nnz];}
+      if(test.op==='rcm_solve'||test.op==='ilu_solve'){
+        const reorder=test.op==='rcm_solve',p=reorder?a.reverseCuthillMcKee():[],q=reorder?a.permuteSymmetric(p):a;
+        try{factor=new api.ILU0(q);const rhs=reorder?api.CSRMatrix.permuteVector(p,test.b):test.b,r=q.gmres(rhs,{restart:20,rtol:test.options.rtol,atol:test.options.atol,maxIterations:test.options.limit,preconditioner:factor});assert(r.converged,'ordering solve failed');output=reorder?api.CSRMatrix.permuteVector(p,r.x,true):r.x;
+        const ax=a.matvec(output);assert(norm(test.b.map((v,i)=>v-ax[i]))<=Math.max(test.options.atol,test.options.rtol*norm(test.b))*(1+1e-5)+1e-300,'original-system residual');}
+        finally{if(reorder)q.dispose?.();}
+      }
+      else if(test.op==='rcm')output=a.reverseCuthillMcKee();
+      else if(test.op==='permute'||test.op==='permutation_check'){
+        const p=test.b,q=a.permuteSymmetric(p);
+        try{if(test.op==='permute')output=[...q.rowOffsets,...q.columnIndices,...q.values];
+        else{const x=Array.from({length:m.rows},(_,i)=>i+1),y=api.CSRMatrix.permuteVector(p,x);output=[...y,...api.CSRMatrix.permuteVector(p,y,true),...api.CSRMatrix.permuteVector(p,q.matvec(y),true)];}}
+        finally{q.dispose?.();}
+      }
+      else if(test.op==='ilu_setup'){factor=new api.ILU0(a);output=[factor.size,factor.nnz];}
       else if(test.op==='ilu_apply'){factor=new api.ILU0(a);output=Array.from(factor.apply(test.b));}
       else if(test.op==='cg'||test.op==='gmres') {const o=test.options,options={restart:o.restart,rtol:o.rtol,atol:o.atol,maxIterations:o.limit,jacobi:o.jacobi===1,capture:!!o.capture};if(test.op==='gmres'&&o.jacobi>=2){factor=new api.ILU0(a);options.preconditioner=factor;}output=test.op==='gmres'?a.gmres(test.b,options):a.conjugateGradient(test.b,options);}
       else if(test.op==='spmv') output=Array.from(a.matvec(test.b));

@@ -40,6 +40,9 @@ int main(void) {
     if(!failed)failed=fabs(applied.values[0]-20.0/11)>1e-12;m_free(&applied);
     if(!failed)failed=m_csr_gmres_preconditioned(&sparse,rhs,2,20,1e-10,0,1000,false,false,&ilu,&gm);
     if(!failed)failed=gm.reason!=0;m_gmres_free(&gm);m_ilu0_free(&ilu);
+    size_t order[2];sparse_matrix reordered={0};double y[2],restored[2],input[]={1,2};
+    if(!failed)failed=m_csr_rcm(&sparse,order,2)||m_csr_permute(&sparse,order,2,&reordered)||m_permute_vector(order,2,input,false,y)||m_permute_vector(order,2,y,true,restored);
+    if(!failed)failed=restored[0]!=1||restored[1]!=2;m_csr_free(&reordered);
     m_free(&vector);m_free(&product);m_cg_free(&cg);m_csr_free(&sparse);
     if (!failed) puts("solution: 1, 2");
     return failed;

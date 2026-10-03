@@ -11,6 +11,7 @@ import shutil
 import compare
 import report
 import sparse
+import ordering_bench
 from report_design import render_directory
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,7 +44,11 @@ def refresh():
     count = 0
     for path in sorted((ROOT / 'benchmarks/reports').glob('*/index.html')):
         data = embedded(path, 'data')
-        if path.parent.name in ('sparse', 'gmres', 'ilu'):
+        if path.parent.name == 'ordering':
+            live = embedded(path, 'live')
+            ordering_bench.render(data, path, live_override=live)
+            assert embedded(path, 'live') == live
+        elif path.parent.name in ('sparse', 'gmres', 'ilu'):
             live = embedded(path, 'live')
             sparse.render(data, path, live_override=live)
             assert embedded(path, 'live') == live

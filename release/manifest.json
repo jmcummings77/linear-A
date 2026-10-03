@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "capabilities": [
     "arithmetic",
     "determinants",
@@ -13,7 +13,8 @@
     "sparse",
     "conjugate-gradient",
     "gmres",
-    "ilu0"
+    "ilu0",
+    "rcm"
   ],
   "ports": {
     "assembly": {
@@ -36,7 +37,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "c": {
@@ -58,7 +60,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "cpp": {
@@ -81,7 +84,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "csharp": {
@@ -103,7 +107,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "fsharp": {
@@ -125,7 +130,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "go": {
@@ -147,7 +153,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "julia": {
@@ -169,7 +176,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "python": {
@@ -191,7 +199,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "rust": {
@@ -213,7 +222,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "typescript": {
@@ -235,7 +245,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     },
     "wasm": {
@@ -258,7 +269,8 @@
         "sparse",
         "conjugate-gradient",
         "gmres",
-        "ilu0"
+        "ilu0",
+        "rcm"
       ]
     }
   }

@@ -1,7 +1,7 @@
 function sparse_run(args)
     length(args)==(length(args)>0 && args[1]=="gmres" ? 11 : 10) || throw(ArgumentError("invalid sparse protocol"))
     op=args[1];rows,cols,nnz,iterations=parse.(Int,args[2:5]);rtol,atol=parse.(Float64,args[6:7]);limit,jacobi,capture=parse.(Int,args[8:10])
-    op in ("spmv","dense","cg","gmres","ilu_setup","ilu_apply") && min(rows,cols,nnz,iterations)>=0 && jacobi in (op=="gmres" ? (0,1,2,3) : (0,1)) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
+    op in ("spmv","dense","cg","gmres","ilu_setup","ilu_apply","rcm","permute","permutation_check","rcm_solve","ilu_solve") && min(rows,cols,nnz,iterations)>=0 && jacobi in (op=="gmres" ? (0,1,2,3) : (0,1)) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
     tokens=split(read(stdin,String));count=op in ("cg","gmres") ? rows : cols
     length(tokens)==rows+1+2*nnz+count || throw(ArgumentError("incorrect sparse input count"))
     rp=parse.(Int,tokens[1:rows+1]);ci=parse.(Int,tokens[rows+2:rows+1+nnz]);v=parse.(Float64,tokens[rows+2+nnz:rows+1+2*nnz]);b=parse.(Float64,tokens[rows+2+2*nnz:end])
@@ -12,6 +12,22 @@ function sparse_run(args)
         for i in 1:rows,p in rp[i]+1:rp[i+1];dense[i,ci[p]+1]=v[p];end
     end
     function compute()
+        if op in ("rcm_solve","ilu_solve")
+            p=op=="rcm_solve" ? reverse_cuthill_mckee(a) : collect(0:rows-1)
+            q=op=="rcm_solve" ? permute_symmetric(a,p) : a;rhs=op=="rcm_solve" ? permute_vector(p,b) : b
+            result=gmres(q,rhs;restart=20,rtol=rtol,atol=atol,max_iterations=limit,preconditioner=ILU0(q))
+            result.converged || error("ordering solve failed: "*result.reason)
+            x=op=="rcm_solve" ? permute_vector(p,result.x,inverse=true) : result.x
+            return vcat([Float64(result.iterations)],x)
+        end
+        op=="rcm" && return Float64.(reverse_cuthill_mckee(a))
+        if op in ("permute","permutation_check")
+            all(x->isfinite(x)&&0<=x<rows&&isinteger(x),b) || throw(ArgumentError("invalid permutation"))
+            p=Int.(b);q=permute_symmetric(a,p)
+            op=="permute" && return vcat(Float64.(q.offsets),Float64.(q.indices),q.values)
+            x=Float64.(1:rows);y=permute_vector(p,x)
+            return vcat(y,permute_vector(p,y,inverse=true),permute_vector(p,matvec(q,y),inverse=true))
+        end
         if op=="ilu_setup";f=ILU0(a);return Float64[f.factors.rows,length(f.factors.values)];end
         op=="ilu_apply" && return ilu_apply(factor,b)
         op=="spmv" && return matvec(a,b)

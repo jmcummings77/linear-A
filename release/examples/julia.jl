@@ -27,3 +27,7 @@ for (rhs,expected) in [([6.,7.],[1.,2.]),([11.,13.],[20/11,41/11])]
     @assert maximum(abs.(ilu_apply(f,rhs).-expected))<1e-12
     @assert gmres(sparse,rhs;preconditioner=f).converged
 end
+
+order=reverse_cuthill_mckee(sparse)
+reordered=permute_symmetric(sparse,order)
+@assert permute_vector(order,matvec(reordered,permute_vector(order,[1.,2.])),inverse=true)==[6.,7.]

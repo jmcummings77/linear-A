@@ -97,3 +97,46 @@ function conjugate_gradient(a::CSRMatrix,b;rtol=1e-10,atol=0.0,max_iterations=10
     result("iteration_limit")
 end
 export CSRMatrix,csr_from_dense,matvec,conjugate_gradient
+
+"""Deterministic new-to-old RCM indices (zero-based, as in CSR)."""
+function reverse_cuthill_mckee(a::CSRMatrix)
+ validate_csr(a.rows,a.cols,a.offsets,a.indices,a.values)
+ a.rows==a.cols || throw(ArgumentError("RCM requires square matrix"))
+ n=a.rows;graph=[Set{Int}() for _ in 1:n]
+ for i in 1:n, k in a.offsets[i]+1:a.offsets[i+1]
+  j=a.indices[k]+1
+  if i!=j;push!(graph[i],j);push!(graph[j],i);end
+ end
+ key(i)=(length(graph[i]),i);seen=falses(n);order=Int[]
+ for start in sort(collect(1:n),by=key)
+  seen[start] && continue
+  q=[start];seen[start]=true;h=1
+  while h<=length(q)
+   for j in sort([j for j in graph[q[h]] if !seen[j]],by=key);seen[j]=true;push!(q,j);end
+   h+=1
+  end
+  append!(order,q)
+ end
+ reverse(order).-1
+end
+function permute_vector(order,x;inverse=false)
+ n=length(x)
+ length(order)==n && all(i->i isa Integer && !(i isa Bool) && 0<=i<n,order) && length(Set(order))==n && all(isfinite,x) || throw(ArgumentError("invalid permutation or vector"))
+ out=zeros(n)
+ for i in 1:n
+  if inverse;out[order[i]+1]=x[i];else;out[i]=x[order[i]+1];end
+ end
+ out
+end
+function permute_symmetric(a::CSRMatrix,order)
+ validate_csr(a.rows,a.cols,a.offsets,a.indices,a.values)
+ a.rows==a.cols || throw(ArgumentError("permutation requires square matrix"))
+ inv=Int.(permute_vector(order,collect(0:a.rows-1),inverse=true));rp=[0];ci=Int[];v=Float64[]
+ for old in order
+  i=old+1
+  for k in sort(collect(a.offsets[i]+1:a.offsets[i+1]),by=k->inv[a.indices[k]+1]);push!(ci,inv[a.indices[k]+1]);push!(v,a.values[k]);end
+  push!(rp,length(v))
+ end
+ CSRMatrix(a.rows,a.cols,rp,ci,v)
+end
+export reverse_cuthill_mckee,permute_symmetric,permute_vector

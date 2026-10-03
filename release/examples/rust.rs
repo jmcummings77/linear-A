@@ -25,5 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert!(gm.converged&&(gm.x[0]-1.).abs()<1e-12&&(gm.x[1]-2.).abs()<1e-12);
     let cg=sparse.conjugate_gradient(&[6.,7.],linear_a::CGOptions{jacobi:true,capture:true,..Default::default()})?;
     assert!(cg.converged&&(cg.x[0]-1.).abs()<1e-12&&(cg.x[1]-2.).abs()<1e-12);
+    let order=sparse.reverse_cuthill_mckee()?;let reordered=sparse.permute_symmetric(&order)?;let y=linear_a::CSRMatrix::permute_vector(&order,&[1.,2.],false)?;
+    assert_eq!(linear_a::CSRMatrix::permute_vector(&order,&reordered.matvec(&y)?,true)?,vec![6.,7.]);
     println!("solution: 1, 2"); Ok(())
 }

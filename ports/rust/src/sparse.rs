@@ -261,3 +261,95 @@ impl CSRMatrix {
         })
     }
 }
+
+impl CSRMatrix {
+    pub fn reverse_cuthill_mckee(&self) -> Result<Vec<usize>, MatrixError> {
+        if self.rows != self.cols {
+            return Err(MatrixError::new("RCM requires square matrix"));
+        }
+        let n = self.rows;
+        let mut graph = vec![std::collections::BTreeSet::new(); n];
+        for i in 0..n {
+            for k in self.rp[i]..self.rp[i + 1] {
+                let j = self.ci[k];
+                if i != j {
+                    graph[i].insert(j);
+                    graph[j].insert(i);
+                }
+            }
+        }
+        let key = |i: &usize| (graph[*i].len(), *i);
+        let mut starts: Vec<usize> = (0..n).collect();
+        starts.sort_by_key(key);
+        let mut seen = vec![false; n];
+        let mut order = vec![];
+        for start in starts {
+            if seen[start] {
+                continue;
+            }
+            let mut q = vec![start];
+            seen[start] = true;
+            let mut h = 0;
+            while h < q.len() {
+                let mut next: Vec<usize> =
+                    graph[q[h]].iter().copied().filter(|&j| !seen[j]).collect();
+                next.sort_by_key(key);
+                for j in next {
+                    seen[j] = true;
+                    q.push(j);
+                }
+                h += 1;
+            }
+            order.extend(q);
+        }
+        order.reverse();
+        Ok(order)
+    }
+    pub fn permute_vector(p: &[usize], x: &[f64], inverse: bool) -> Result<Vec<f64>, MatrixError> {
+        let n = x.len();
+        if p.len() != n {
+            return Err(MatrixError::new("invalid permutation length"));
+        }
+        let mut seen = vec![false; n];
+        let mut out = vec![0.; n];
+        for (i, &j) in p.iter().enumerate() {
+            if j >= n || seen[j] || !x[i].is_finite() {
+                return Err(MatrixError::new("invalid permutation or vector"));
+            }
+            seen[j] = true;
+        }
+        for (i, &j) in p.iter().enumerate() {
+            if inverse {
+                out[j] = x[i]
+            } else {
+                out[i] = x[j]
+            }
+        }
+        Ok(out)
+    }
+    pub fn permute_symmetric(&self, p: &[usize]) -> Result<Self, MatrixError> {
+        if self.rows != self.cols {
+            return Err(MatrixError::new("permutation requires square matrix"));
+        }
+        let inv = Self::permute_vector(
+            p,
+            &(0..self.rows).map(|i| i as f64).collect::<Vec<_>>(),
+            true,
+        )?;
+        let mut rp = vec![0];
+        let mut ci = vec![];
+        let mut v = vec![];
+        for &i in p {
+            let mut entries: Vec<_> = (self.rp[i]..self.rp[i + 1])
+                .map(|k| (inv[self.ci[k]] as usize, self.values[k]))
+                .collect();
+            entries.sort_by_key(|x| x.0);
+            for (j, x) in entries {
+                ci.push(j);
+                v.push(x)
+            }
+            rp.push(v.len());
+        }
+        Self::new(self.rows, self.cols, &rp, &ci, &v)
+    }
+}

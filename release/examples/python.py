@@ -30,3 +30,7 @@ f=ILU0(sparse)
 for rhs,expected in [([6,7],[1,2]),([11,13],[20/11,41/11])]:
     assert max(abs(x-y) for x,y in zip(f.apply(rhs),expected))<1e-12
     assert sparse.gmres(rhs,preconditioner=f).converged
+
+p=sparse.reverse_cuthill_mckee();q=sparse.permute_symmetric(p)
+y=CSRMatrix.permute_vector(p,[1,2])
+assert CSRMatrix.permute_vector(p,q.matvec(y),True)==[6,7]

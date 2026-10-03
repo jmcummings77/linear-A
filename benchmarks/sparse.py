@@ -20,6 +20,7 @@ from report_design import apply_report_design
 from sparse_reference import fixtures as csr_fixtures, protocol, check_result as check_csr, diffusion, multiply
 from gmres_reference import fixtures as gmres_fixtures, check_result as check_gmres
 from ilu_reference import fixtures as ilu_fixtures
+from ordering_reference import fixtures as ordering_fixtures, check_solve as check_ordering_solve
 from wasm_publication import sanitize_live_sources
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,9 +28,10 @@ HERE = Path(__file__).resolve().parent
 
 
 def fixtures():
-    return csr_fixtures()+gmres_fixtures()+ilu_fixtures()
+    return csr_fixtures()+gmres_fixtures()+ilu_fixtures()+ordering_fixtures()
 
 def check_result(actual,case):
+    if case["op"] in ("rcm_solve","ilu_solve"):return check_ordering_solve(actual,case)
     return check_gmres(actual,case) if case["op"]=="gmres" else check_csr(actual,case)
 
 def verify(implementation, cases=None):
@@ -107,22 +109,29 @@ def benchmark(implementations, sizes, samples):
     return results
 
 
-def render(data, destination, *, live_override=None):
+def live_bundle(data, extra_sources=None):
     sanitizer = PublicSanitizer()
     data = sanitizer.report(data)
-    live = live_override if live_override is not None else dict(available=False, reason='No verified WebAssembly build is available.')
-    if live_override is None and any(i['id'] == 'wasm' and i['status'] == 'passed' for i in data['implementations']):
+    live = dict(available=False, reason='No verified WebAssembly build is available.')
+    if any(i['id'] == 'wasm' and i['status'] == 'passed' for i in data['implementations']):
         sources = {'module_source': (ROOT / '.build/wasm/matrix.mjs').read_text(),
                    'wrapper_source': (ROOT / 'ports/wasm/matrix.mjs').read_text(),
                    'heat_source': (HERE / 'sparse-heat.mjs').read_text(),
                    'checks_source': (HERE / 'sparse-checks.mjs').read_text(),
                    'worker_source': (HERE / 'sparse-worker.mjs').read_text()}
+        sources.update(extra_sources or {})
         sources, binary = sanitize_live_sources(sources, (ROOT / '.build/wasm/matrix.wasm').read_bytes(), sanitizer)
         digest = hashlib.sha256(binary)
         for key, value in sorted(sources.items()): digest.update((key + value).encode())
         cases = fixtures()
         digest.update(json.dumps(cases, sort_keys=True, allow_nan=False).encode())
-        live = dict(available=True, capabilities=["gmres","ilu0","rhs_cache"], **sources, fixtures=cases, wasm_base64=base64.b64encode(binary).decode(), sha256=digest.hexdigest())
+        live = dict(available=True, capabilities=["gmres","ilu0","rhs_cache","rcm"], **sources, fixtures=cases, wasm_base64=base64.b64encode(binary).decode(), sha256=digest.hexdigest())
+    return live
+
+
+def render(data, destination, *, live_override=None):
+    data = PublicSanitizer().report(data)
+    live = live_override if live_override is not None else live_bundle(data)
     template = (HERE / 'sparse-report.html').read_text()
     # One pass: embedded source/data cannot introduce replacement markers.
     import re

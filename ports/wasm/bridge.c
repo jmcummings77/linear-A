@@ -291,3 +291,30 @@ matrix_gmres_result *wm_csr_gmres_preconditioned(const sparse_matrix *a,const ma
  last_status=m_csr_gmres_preconditioned(a,b->values,b->rows,restart,rtol,atol,limit,jacobi!=0,capture!=0,f,out);
  if(last_status){free(out);return NULL;}return out;
 }
+
+matrix *wm_csr_rcm(const sparse_matrix *a){
+ if(!a){last_status=M_ARGUMENT;return NULL;}size_t n=a->rows;
+ size_t *p=calloc(n?n:1,sizeof(size_t));if(!p){last_status=M_MEMORY;return NULL;}
+ matrix *out=allocate_handle();if(!out){free(p);return NULL;}
+ last_status=m_csr_rcm(a,p,n);if(!last_status)last_status=m_create(n,1,out);
+ if(!last_status)for(size_t i=0;i<n;i++)out->values[i]=(double)p[i];free(p);
+ if(last_status){m_free(out);free(out);return NULL;}return out;
+}
+static size_t *wm_order(const matrix *order,size_t n){
+ last_status=M_ARGUMENT;if(!order||order->rows!=n||order->cols!=1)return NULL;
+ size_t *p=calloc(n?n:1,sizeof(size_t));if(!p){last_status=M_MEMORY;return NULL;}
+ for(size_t i=0;i<n;i++){double x=order->values[i];if(!isfinite(x)||x<0||x>=(double)n||floor(x)!=x){free(p);return NULL;}p[i]=(size_t)x;}return p;
+}
+matrix *wm_csr_permute(const sparse_matrix *a,const matrix *order){
+ if(!a){last_status=M_ARGUMENT;return NULL;}size_t *p=wm_order(order,a->rows);if(!p)return NULL;
+ sparse_matrix result={0};last_status=m_csr_permute(a,p,a->rows,&result);free(p);if(last_status)return NULL;
+ matrix *out=allocate_handle();if(out)last_status=m_create(result.rows+1+2*result.nnz,1,out);
+ if(out&&!last_status){size_t k=0;for(size_t i=0;i<=result.rows;i++)out->values[k++]=(double)result.offsets[i];for(size_t i=0;i<result.nnz;i++)out->values[k++]=(double)result.indices[i];for(size_t i=0;i<result.nnz;i++)out->values[k++]=result.values[i];}
+ m_csr_free(&result);if(last_status){if(out){m_free(out);free(out);}return NULL;}return out;
+}
+matrix *wm_permute_vector(const matrix *order,const matrix *x,int inverse){
+ if(!x||x->cols!=1||(inverse!=0&&inverse!=1)){last_status=M_ARGUMENT;return NULL;}
+ size_t *p=wm_order(order,x->rows);if(!p)return NULL;matrix *out=allocate_handle();
+ if(out)last_status=m_create(x->rows,1,out);if(out&&!last_status)last_status=m_permute_vector(p,x->rows,x->values,inverse!=0,out->values);free(p);
+ if(last_status){if(out){m_free(out);free(out);}return NULL;}return out;
+}

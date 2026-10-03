@@ -2,6 +2,7 @@
 #define LINEAR_A_CPP_SPARSE_HPP
 #include "matrix.hpp"
 #include "../c/sparse_core.h"
+#include "../c/ordering_core.h"
 #include "../c/gmres_core.h"
 namespace linear_a {
 struct CGResult {std::vector<double> x,residuals;std::vector<std::vector<double>> iterates;std::size_t iterations;std::string reason;bool converged;};
@@ -26,6 +27,9 @@ public:
         if(rows==SIZE_MAX||rp_.size()!=rows+1||ci_.size()!=v_.size())throw std::invalid_argument("invalid CSR arrays");
         auto a=view();if(la_csr_validate(&a))throw std::invalid_argument("invalid canonical CSR");
     }
+    std::vector<std::size_t> reverse_cuthill_mckee()const{auto a=view();std::vector<std::size_t> p(rows_);if(la_csr_rcm(&a,p.data(),p.size()))throw std::invalid_argument("invalid RCM input");return p;}
+    static std::vector<double> permute_vector(const std::vector<std::size_t>& p,const std::vector<double>& x,bool inverse=false){if(p.size()!=x.size())throw std::invalid_argument("invalid permutation length");std::vector<double> out(x.size());if(la_permute_vector(p.data(),p.size(),x.data(),inverse,out.data()))throw std::invalid_argument("invalid permutation or vector");return out;}
+    CSRMatrix permute_symmetric(const std::vector<std::size_t>& p)const{auto a=view();la_csr out={};if(la_csr_permute(&a,p.data(),p.size(),&out))throw std::invalid_argument("invalid permutation");try{CSRMatrix result(out.rows,out.cols,{out.offsets,out.offsets+out.rows+1},{out.indices,out.indices+out.nnz},{out.values,out.values+out.nnz});la_csr_free(&out);return result;}catch(...){la_csr_free(&out);throw;}}
     static CSRMatrix from_dense(const Matrix& a){
         std::vector<std::size_t> rp{0},ci;std::vector<double> v;
         for(std::size_t i=0;i<a.rows();i++){for(std::size_t j=0;j<a.cols();j++)if(a.get(i,j)!=0){ci.push_back(j);v.push_back(a.get(i,j));}rp.push_back(v.size());}

@@ -37,6 +37,37 @@ public sealed partial class CSRMatrix
         }
         Rows = rows; Cols = cols;
     }
+    /// <summary>New-to-old RCM ordering of the undirected stored pattern, including zeros.</summary>
+    public int[] ReverseCuthillMcKee()
+    {
+        if (Rows != Cols) throw new ArgumentException("RCM requires square matrix.");
+        var graph = Enumerable.Range(0, Rows).Select(_ => new HashSet<int>()).ToArray();
+        for (var i = 0; i < Rows; i++) for (var k = offsets[i]; k < offsets[i + 1]; k++) { var j = indices[k]; if (i != j) { graph[i].Add(j); graph[j].Add(i); } }
+        var seen = new bool[Rows]; var order = new List<int>();
+        foreach (var start in Enumerable.Range(0, Rows).OrderBy(i => graph[i].Count).ThenBy(i => i))
+        {
+            if (seen[start]) continue; var queue = new List<int> { start }; seen[start] = true;
+            for (var h = 0; h < queue.Count; h++) foreach (var j in graph[queue[h]].Where(j => !seen[j]).OrderBy(j => graph[j].Count).ThenBy(j => j)) { seen[j] = true; queue.Add(j); }
+            order.AddRange(queue);
+        }
+        order.Reverse(); return order.ToArray();
+    }
+    public static double[] PermuteVector(int[] order, double[] x, bool inverse = false)
+    {
+        ArgumentNullException.ThrowIfNull(order); ArgumentNullException.ThrowIfNull(x);
+        var n = x.Length; var seen = new bool[n]; var result = new double[n];
+        if (order.Length != n) throw new ArgumentException("Invalid permutation length.");
+        for (var i = 0; i < n; i++) { var j = order[i]; if (j < 0 || j >= n || seen[j] || !double.IsFinite(x[i])) throw new ArgumentException("Invalid permutation or vector."); seen[j] = true; }
+        for (var i = 0; i < n; i++) { if (inverse) result[order[i]] = x[i]; else result[i] = x[order[i]]; } return result;
+    }
+    public CSRMatrix PermuteSymmetric(int[] order)
+    {
+        if (Rows != Cols) throw new ArgumentException("Permutation requires square matrix.");
+        var inv = PermuteVector(order, Enumerable.Range(0, Rows).Select(i => (double)i).ToArray(), true);
+        var rp = new List<int> { 0 }; var ci = new List<int>(); var v = new List<double>();
+        foreach (var i in order) { foreach (var k in Enumerable.Range(offsets[i], offsets[i + 1] - offsets[i]).OrderBy(k => inv[indices[k]])) { ci.Add((int)inv[indices[k]]); v.Add(values[k]); } rp.Add(v.Count); }
+        return new(Rows, Cols, rp.ToArray(), ci.ToArray(), v.ToArray());
+    }
     public static CSRMatrix FromDense(Matrix<double> a)
     {
         ArgumentNullException.ThrowIfNull(a);

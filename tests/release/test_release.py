@@ -63,7 +63,7 @@ class ReleaseTests(unittest.TestCase):
     def test_tagged_release_rejects_unverified_source_only_build(self):
         with tempfile.TemporaryDirectory() as d:
             result=subprocess.run([sys.executable,str(ROOT/'release/build.py'),
-                '--tag','v0.6.0','--source-only','--output',d],capture_output=True,text=True)
+                '--tag','v0.7.0','--source-only','--output',d],capture_output=True,text=True)
             self.assertNotEqual(result.returncode,0)
             self.assertIn('tagged releases require',result.stderr)
             self.assertFalse((Path(d)/'release.json').exists())
@@ -78,7 +78,7 @@ class ReleaseTests(unittest.TestCase):
             self.assertIn('ports/SPARSE.md',files)
             self.assertIn('ports/c/general_eigen.h',files)
             self.assertIn('LICENSE',files)
-            self.assertIn('docs/api/0.6.0/README.md',files)
+            self.assertIn('docs/api/0.7.0/README.md',files)
             self.assertFalse(any('.build/' in name or 'node_modules/' in name or '.git/' in name for name in files))
 
 if __name__=='__main__': unittest.main()

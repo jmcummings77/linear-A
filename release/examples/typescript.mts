@@ -26,3 +26,6 @@ if(!gm.converged||Math.abs(gm.x[0]-1)>1e-12||Math.abs(gm.x[1]-2)>1e-12)throw Err
 
 const ilu=new ILU0(sparse);
 if(Math.abs(ilu.apply([6,7])[0]-1)>1e-12||Math.abs(ilu.apply([11,13])[0]-20/11)>1e-12||!sparse.gmres([11,13],{preconditioner:ilu}).converged)throw Error("incorrect ILU reuse");
+
+const order=sparse.reverseCuthillMcKee(),reordered=sparse.permuteSymmetric(order),permuted=CSRMatrix.permuteVector(order,[1,2]);
+if(CSRMatrix.permuteVector(order,reordered.matvec(permuted),true).join()!=="6,7")throw Error("incorrect permutation");

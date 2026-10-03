@@ -36,6 +36,42 @@ class CSRMatrix:
     column_indices=property(lambda self:self._ci.copy())
     values=property(lambda self:self._v.copy())
 
+    def reverse_cuthill_mckee(self):
+        """New-to-old ordering of the undirected stored pattern, including zeros."""
+        if self.rows!=self.cols:raise ValueError('RCM requires square matrix')
+        graph=[set() for _ in range(self.rows)]
+        for i in range(self.rows):
+            for j in self._ci[self._rp[i]:self._rp[i+1]]:
+                if i!=j:graph[i].add(j);graph[j].add(i)
+        key=lambda i:(len(graph[i]),i)
+        seen=set();order=[]
+        for start in sorted(range(self.rows),key=key):
+            if start in seen:continue
+            queue=[start];seen.add(start)
+            for i in queue:
+                for j in sorted(graph[i]-seen,key=key):seen.add(j);queue.append(j)
+            order.extend(queue)
+        return order[::-1]
+
+    @staticmethod
+    def permute_vector(order,x,inverse=False):
+        p=list(order);x=list(x);n=len(x)
+        if len(p)!=n or any(type(i) is not int or i<0 or i>=n for i in p) or len(set(p))!=n or any(not math.isfinite(v) for v in x):raise ValueError('invalid permutation or vector')
+        if not inverse:return [x[i] for i in p]
+        out=[0.]*n
+        for i,j in enumerate(p):out[j]=x[i]
+        return out
+
+    def permute_symmetric(self,order):
+        p=list(order);n=self.rows
+        if self.cols!=n:raise ValueError('permutation requires square matrix')
+        inv=self.permute_vector(p,list(range(n)),True)
+        rp,ci,v=[0],[],[]
+        for i in p:
+            for j,value in sorted((inv[self._ci[k]],self._v[k]) for k in range(self._rp[i],self._rp[i+1])):ci.append(j);v.append(value)
+            rp.append(len(v))
+        return CSRMatrix(n,n,rp,ci,v)
+
     @classmethod
     def from_dense(cls,a):
         rp,ci,v=[0],[],[]

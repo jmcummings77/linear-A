@@ -5,6 +5,7 @@ import (
 	"errors"
 	matrix "github.com/jmcummings77/linear-A/ports/go"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -37,7 +38,7 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
-	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ilu_setup" && op != "ilu_apply") || jacobi > 3 || (op != "gmres" && jacobi > 1) || capture > 1 {
+	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve") || jacobi > 3 || (op != "gmres" && jacobi > 1) || capture > 1 {
 		return errors.New("invalid sparse operation/options")
 	}
 	raw, e := io.ReadAll(os.Stdin)
@@ -122,6 +123,106 @@ func sparseRun(args []string) error {
 		}
 	}
 	compute := func() ([]float64, error) {
+		if op == "rcm_solve" || op == "ilu_solve" {
+			q := a
+			rhs := b
+			var p []int
+			var err error
+			if op == "rcm_solve" {
+				p, err = a.ReverseCuthillMcKee()
+				if err != nil {
+					return nil, err
+				}
+				q, err = a.PermuteSymmetric(p)
+				if err != nil {
+					return nil, err
+				}
+				rhs, err = matrix.PermuteVector(p, b, false)
+				if err != nil {
+					return nil, err
+				}
+			}
+			f, err := matrix.NewILU0(q)
+			if err != nil {
+				return nil, err
+			}
+			o := matrix.DefaultGMRESOptions()
+			o.Restart = 20
+			o.RelativeTolerance = rtol
+			o.AbsoluteTolerance = atol
+			o.MaxIterations = limit
+			o.Preconditioner = f
+			r, err := q.GMRES(rhs, o)
+			if err != nil {
+				return nil, err
+			}
+			if !r.Converged {
+				return nil, errors.New("ordering solve failed")
+			}
+			x := r.X
+			if op == "rcm_solve" {
+				x, err = matrix.PermuteVector(p, x, true)
+				if err != nil {
+					return nil, err
+				}
+			}
+			return append([]float64{float64(r.Iterations)}, x...), nil
+		}
+		if op == "rcm" {
+			p, e := a.ReverseCuthillMcKee()
+			if e != nil {
+				return nil, e
+			}
+			out := make([]float64, len(p))
+			for i, j := range p {
+				out[i] = float64(j)
+			}
+			return out, nil
+		}
+		if op == "permute" || op == "permutation_check" {
+			p := make([]int, len(b))
+			for i, x := range b {
+				if math.IsNaN(x) || math.IsInf(x, 0) || x < 0 || x >= float64(rows) || x != math.Floor(x) {
+					return nil, errors.New("invalid permutation")
+				}
+				p[i] = int(x)
+			}
+			q, e := a.PermuteSymmetric(p)
+			if e != nil {
+				return nil, e
+			}
+			if op == "permute" {
+				out := []float64{}
+				for _, x := range q.RowOffsets() {
+					out = append(out, float64(x))
+				}
+				for _, x := range q.ColumnIndices() {
+					out = append(out, float64(x))
+				}
+				return append(out, q.Values()...), nil
+			}
+			x := make([]float64, rows)
+			for i := range x {
+				x[i] = float64(i + 1)
+			}
+			y, e := matrix.PermuteVector(p, x, false)
+			if e != nil {
+				return nil, e
+			}
+			back, e := matrix.PermuteVector(p, y, true)
+			if e != nil {
+				return nil, e
+			}
+			z, e := q.Matvec(y)
+			if e != nil {
+				return nil, e
+			}
+			z, e = matrix.PermuteVector(p, z, true)
+			if e != nil {
+				return nil, e
+			}
+			return append(append(y, back...), z...), nil
+		}
 		if op == "ilu_setup" {
 			f, e := matrix.NewILU0(a)
 			if e != nil {

@@ -10,7 +10,7 @@ use case.
 [Browse all reports](https://jmcummings77.github.io/linear-A/) ·
 [Shared API and implementation differences](ports/README.md) ·
 [Release kits and installation](release/README.md) ·
-[Versioned API contract](docs/api/0.6.0/README.md)
+[Versioned API contract](docs/api/0.7.0/README.md)
 
 ## Choose an implementation
 
@@ -163,3 +163,8 @@ with matched workloads, sample variation, and provenance caveats.
 
 Contributions to any implementation, the shared math checks, reports, and docs
 are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
+
+Explore [sparse matrix ordering](https://jmcummings77.github.io/linear-A/ordering/):
+compare natural and Reverse Cuthill–McKee orderings, animate the stored pattern,
+and measure whether bandwidth reduction pays for itself in an ILU/GMRES solve.
+All eleven ports support the same permutation contract.

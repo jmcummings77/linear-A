@@ -563,3 +563,20 @@ with `--render-only benchmarks/reports/ilu/results.json` without rerunning
 measurements. The report's repeated-RHS chart is an explicitly labelled cost
 estimate from independent medians. Consumer examples test actual factor reuse
 with different RHS vectors.
+
+### Sparse ordering
+
+```sh
+python3 benchmarks/ordering_bench.py --require-all
+python3 benchmarks/ordering_bench.py --no-build --sizes 8 16 --samples 5
+python3 benchmarks/ordering_bench.py --render-only benchmarks/reports/ordering/results.json
+```
+
+The default run measures a 12×12 transport grid and a seeded scrambling of its
+indices across all eleven ports. It separates RCM, CSR permutation, ILU setup,
+prepared GMRES solves, and measured end-to-end totals. Timings retain failures and
+check restored solutions against the original system before calibration. The
+standalone HTML embeds a verified WASM bundle, an animated sparsity plot, and true
+residual curves for both orderings. Live controls run in a worker after a 300 ms
+debounce; playback is opt-in. Motion is a graphical interpolation, not an
+intermediate linear system. Existing saved report measurements are not rewritten.

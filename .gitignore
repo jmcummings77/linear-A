@@ -280,6 +280,7 @@ benchmarks/reports/*
 !benchmarks/reports/sparse/
 !benchmarks/reports/gmres/
 !benchmarks/reports/ilu/
+!benchmarks/reports/ordering/
 !benchmarks/reports/validation/
 !benchmarks/reports/wasm-profile-check/
 !benchmarks/reports/wasm-verification/

@@ -6,7 +6,7 @@ static double sparse_token(void){double x;if(scanf("%lf",&x)!=1||!isfinite(x))fa
 static size_t sparse_index(void){double x=sparse_token();if(x<0||x>=(double)SIZE_MAX||floor(x)!=x)fail("invalid CSR index");return (size_t)x;}
 static int sparse_cli(int argc,char **argv){
     if(argc!=(argc>2&&!strcmp(argv[2],"gmres")?13:12))fail("expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE");
-    const char *op=argv[2];if(strcmp(op,"spmv")&&strcmp(op,"dense")&&strcmp(op,"cg")&&strcmp(op,"gmres")&&strcmp(op,"ilu_setup")&&strcmp(op,"ilu_apply"))fail("invalid sparse operation");
+    const char *op=argv[2];if(strcmp(op,"spmv")&&strcmp(op,"dense")&&strcmp(op,"cg")&&strcmp(op,"gmres")&&strcmp(op,"ilu_setup")&&strcmp(op,"ilu_apply")&&strcmp(op,"rcm")&&strcmp(op,"permute")&&strcmp(op,"permutation_check")&&strcmp(op,"rcm_solve")&&strcmp(op,"ilu_solve"))fail("invalid sparse operation");
     size_t rows=integer(argv[3]),cols=integer(argv[4]),nnz=integer(argv[5]),iterations=integer(argv[6]),limit=integer(argv[9]),jacobi=integer(argv[10]),capture=integer(argv[11]);
     double rtol=number(argv[7]),atol=number(argv[8]);if(jacobi>3||(strcmp(op,"gmres")&&jacobi>1)||capture>1||rows==SIZE_MAX||rows>SIZE_MAX/sizeof(size_t)-1||nnz>SIZE_MAX/sizeof(double))fail("invalid sparse dimensions/options");
     size_t *rp=(size_t*)calloc(rows+1,sizeof(size_t)),*ci=(size_t*)calloc(nnz?nnz:1,sizeof(size_t));double *v=(double*)calloc(nnz?nnz:1,sizeof(double));
@@ -32,7 +32,45 @@ static int sparse_cli(int argc,char **argv){
     for(size_t run=0;run<runs;run++){
         if(iterations&&run==3)start=now_ns();
         matrix out={0};
-        if(!strcmp(op,"ilu_setup")){
+        if(!strcmp(op,"rcm_solve")||!strcmp(op,"ilu_solve")){
+            int reorder=!strcmp(op,"rcm_solve");require(m_create(1,rows+1,&out));
+#ifdef __cplusplus
+            std::unique_ptr<linear_a::CSRMatrix> reordered;std::vector<size_t> p;std::vector<double> rhs(b.values,b.values+count);
+            if(reorder){p=sparse.reverse_cuthill_mckee();reordered.reset(new linear_a::CSRMatrix(sparse.permute_symmetric(p)));rhs=linear_a::CSRMatrix::permute_vector(p,rhs);}
+            const auto& q=reordered?*reordered:sparse;linear_a::ILU0 f(q);auto result=q.gmres(rhs,20,rtol,atol,limit,false,false,&f);if(!result.converged)fail("ordering solve failed");auto x=reorder?linear_a::CSRMatrix::permute_vector(p,result.x,true):result.x;out.values[0]=(double)result.iterations;for(size_t i=0;i<rows;i++)out.values[i+1]=x[i];
+#else
+            sparse_matrix reordered={0};const sparse_matrix *q=&sparse;size_t *p=NULL;matrix rhs={0};const double *right=b.values;
+            if(reorder){p=(size_t*)calloc(rows?rows:1,sizeof(size_t));if(!p)fail("allocation failed");require(m_csr_rcm(&sparse,p,rows));require(m_csr_permute(&sparse,p,rows,&reordered));q=&reordered;require(m_create(rows,1,&rhs));require(m_permute_vector(p,rows,b.values,false,rhs.values));right=rhs.values;}
+            matrix_ilu0 f={0};require(m_ilu0_create(q,&f));matrix_gmres_result result={0};require(m_csr_gmres_preconditioned(q,right,count,20,rtol,atol,limit,false,false,&f,&result));if(result.reason)fail("ordering solve failed");out.values[0]=(double)result.iterations;if(reorder)require(m_permute_vector(p,rows,result.x,true,out.values+1));else if(rows)memcpy(out.values+1,result.x,rows*sizeof(double));m_gmres_free(&result);m_ilu0_free(&f);m_csr_free(&reordered);m_free(&rhs);free(p);
+#endif
+        }else if(!strcmp(op,"rcm")){
+            require(m_create(rows,1,&out));
+#ifdef __cplusplus
+            auto p=sparse.reverse_cuthill_mckee();for(size_t i=0;i<rows;i++)out.values[i]=(double)p[i];
+#else
+            size_t *p=(size_t*)calloc(rows?rows:1,sizeof(size_t));if(!p)fail("allocation failed");require(m_csr_rcm(&sparse,p,rows));for(size_t i=0;i<rows;i++)out.values[i]=(double)p[i];free(p);
+#endif
+        }else if(!strcmp(op,"permute")||!strcmp(op,"permutation_check")){
+            size_t *p=(size_t*)calloc(count?count:1,sizeof(size_t));if(!p)fail("allocation failed");for(size_t i=0;i<count;i++){double x=b.values[i];if(x<0||x>=(double)rows||floor(x)!=x)fail("invalid permutation");p[i]=(size_t)x;}
+#ifdef __cplusplus
+            std::vector<size_t> order(p,p+count);auto q=sparse.permute_symmetric(order);const auto& qr=q.row_offsets();const auto& qc=q.column_indices();const auto& qv=q.values();
+#else
+            sparse_matrix q={0};require(m_csr_permute(&sparse,p,count,&q));const size_t *qr=q.offsets,*qc=q.indices;const double *qv=q.values;
+#endif
+            if(!strcmp(op,"permute")){require(m_create(1,rows+1+2*nnz,&out));size_t k=0;for(size_t i=0;i<=rows;i++)out.values[k++]=(double)qr[i];for(size_t i=0;i<nnz;i++)out.values[k++]=(double)qc[i];for(size_t i=0;i<nnz;i++)out.values[k++]=qv[i];}
+            else{
+                require(m_create(1,3*rows,&out));
+#ifdef __cplusplus
+                std::vector<double> x(rows);for(size_t i=0;i<rows;i++)x[i]=(double)(i+1);auto y=linear_a::CSRMatrix::permute_vector(order,x);auto back=linear_a::CSRMatrix::permute_vector(order,y,true);auto z=linear_a::CSRMatrix::permute_vector(order,q.matvec(y),true);for(size_t i=0;i<rows;i++){out.values[i]=y[i];out.values[rows+i]=back[i];out.values[2*rows+i]=z[i];}
+#else
+                matrix x={0},y={0},z={0};require(m_create(rows,1,&x));require(m_create(rows,1,&y));for(size_t i=0;i<rows;i++)x.values[i]=(double)(i+1);require(m_permute_vector(p,rows,x.values,false,y.values));if(rows)memcpy(out.values,y.values,rows*sizeof(double));require(m_permute_vector(p,rows,y.values,true,out.values+rows));require(m_csr_matvec(&q,&y,&z));require(m_permute_vector(p,rows,z.values,true,out.values+2*rows));m_free(&x);m_free(&y);m_free(&z);
+#endif
+            }
+#ifndef __cplusplus
+            m_csr_free(&q);
+#endif
+            free(p);
+        }else if(!strcmp(op,"ilu_setup")){
 #ifdef __cplusplus
             linear_a::ILU0 f(sparse);require(m_create(1,2,&out));out.values[0]=(double)f.size();out.values[1]=(double)f.nnz();
 #else

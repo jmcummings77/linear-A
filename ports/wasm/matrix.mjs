@@ -366,6 +366,14 @@ export async function createMatrixAPI({
     get rowOffsets(){return this.#offsets.slice();}get columnIndices(){return this.#indices.slice();}get values(){return this.#values.slice();}
     #alive(){if(!this.#pointer)throw new Error('CSR matrix has been disposed');return this.#pointer;}
     dispose(){if(this.#pointer){runtime._wm_csr_destroy(this.#pointer);this.#pointer=0;}}
+    reverseCuthillMcKee(){let out;try{out=new Matrix(runtime._wm_csr_rcm(this.#alive()),0,undefined,ownedHandle);return Array.from(out.toArray());}finally{out?.dispose();}}
+    static permuteVector(order,x,inverse=false){
+      if(typeof inverse!=='boolean')throw new TypeError('inverse must be boolean');
+      let p,b,out;try{p=new Matrix(order.length,1,order);b=new Matrix(x.length,1,x);out=new Matrix(runtime._wm_permute_vector(matrixPointer(p),matrixPointer(b),+inverse),0,undefined,ownedHandle);return Array.from(out.toArray());}finally{p?.dispose();b?.dispose();out?.dispose();}
+    }
+    permuteSymmetric(order){
+      let p,out;try{p=new Matrix(order.length,1,order);out=new Matrix(runtime._wm_csr_permute(this.#alive(),matrixPointer(p)),0,undefined,ownedHandle);const data=out.toArray(),n=this.rows,m=this.nnz;return new CSRMatrix(n,n,data.slice(0,n+1),data.slice(n+1,n+1+m),data.slice(n+1+m));}finally{p?.dispose();out?.dispose();}
+    }
     static fromDense(a){
       const rp=[0],ci=[],v=[];
       for(let i=0;i<a.rows;i++){for(let j=0;j<a.cols;j++){const value=a.get(i,j);if(value!==0){ci.push(j);v.push(value);}}rp.push(v.length);}

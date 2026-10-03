@@ -31,5 +31,9 @@ func main() {
  if math.Abs(first[0]-1)>1e-12||math.Abs(second[0]-20.0/11)>1e-12{panic("incorrect ILU reuse")}
  iluOptions:=matrix.DefaultGMRESOptions();iluOptions.Preconditioner=ilu
  solved,err:=sparse.GMRES([]float64{11,13},iluOptions);if err!=nil||!solved.Converged{panic("incorrect ILU GMRES")}
+ order,err:=sparse.ReverseCuthillMcKee();if err!=nil{panic(err)}
+ reordered,err:=sparse.PermuteSymmetric(order);if err!=nil{panic(err)}
+ permuted,err:=matrix.PermuteVector(order,[]float64{1,2},false);if err!=nil{panic(err)}
+ z,err:=reordered.Matvec(permuted);if err!=nil{panic(err)};restored,err:=matrix.PermuteVector(order,z,true);if err!=nil||restored[0]!=6||restored[1]!=7{panic("incorrect permutation")}
  fmt.Println("solution: 1, 2")
 }

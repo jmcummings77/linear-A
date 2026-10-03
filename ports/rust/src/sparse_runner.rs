@@ -22,7 +22,20 @@ pub fn run(args: &[String]) -> Result<()> {
     let limit: usize = args[8].parse()?;
     let jacobi: usize = args[9].parse()?;
     let capture: usize = args[10].parse()?;
-    if !["spmv", "dense", "cg", "gmres", "ilu_setup", "ilu_apply"].contains(&op)
+    if ![
+        "spmv",
+        "dense",
+        "cg",
+        "gmres",
+        "ilu_setup",
+        "ilu_apply",
+        "rcm",
+        "permute",
+        "permutation_check",
+        "rcm_solve",
+        "ilu_solve",
+    ]
+    .contains(&op)
         || jacobi > 3
         || (op != "gmres" && jacobi > 1)
         || capture > 1
@@ -80,6 +93,74 @@ pub fn run(args: &[String]) -> Result<()> {
         None
     };
     let compute = || -> Result<Vec<f64>> {
+        if op == "rcm_solve" || op == "ilu_solve" {
+            let p = if op == "rcm_solve" {
+                a.reverse_cuthill_mckee()?
+            } else {
+                (0..rows).collect()
+            };
+            let reordered = if op == "rcm_solve" {
+                Some(a.permute_symmetric(&p)?)
+            } else {
+                None
+            };
+            let q = reordered.as_ref().unwrap_or(&a);
+            let rhs = if op == "rcm_solve" {
+                CSRMatrix::permute_vector(&p, &b, false)?
+            } else {
+                b.clone()
+            };
+            let options = GMRESOptions {
+                restart: 20,
+                relative_tolerance: rtol,
+                absolute_tolerance: atol,
+                max_iterations: limit,
+                ..Default::default()
+            };
+            let result = q.gmres_preconditioned(&rhs, options, &ILU0::new(q)?)?;
+            if !result.converged {
+                return Err("ordering solve failed".into());
+            }
+            let mut out = vec![result.iterations as f64];
+            out.extend(if op == "rcm_solve" {
+                CSRMatrix::permute_vector(&p, &result.x, true)?
+            } else {
+                result.x
+            });
+            return Ok(out);
+        }
+        if op == "rcm" {
+            return Ok(a
+                .reverse_cuthill_mckee()?
+                .iter()
+                .map(|&i| i as f64)
+                .collect());
+        }
+        if op == "permute" || op == "permutation_check" {
+            if b.iter()
+                .any(|x| !x.is_finite() || *x < 0. || *x >= rows as f64 || x.fract() != 0.)
+            {
+                return Err("invalid permutation".into());
+            }
+            let p: Vec<usize> = b.iter().map(|x| *x as usize).collect();
+            let q = a.permute_symmetric(&p)?;
+            if op == "permute" {
+                let mut out: Vec<f64> = q
+                    .row_offsets()
+                    .iter()
+                    .chain(q.column_indices().iter())
+                    .map(|&x| x as f64)
+                    .collect();
+                out.extend(q.values());
+                return Ok(out);
+            }
+            let x: Vec<f64> = (1..=rows).map(|i| i as f64).collect();
+            let y = CSRMatrix::permute_vector(&p, &x, false)?;
+            let mut out = y.clone();
+            out.extend(CSRMatrix::permute_vector(&p, &y, true)?);
+            out.extend(CSRMatrix::permute_vector(&p, &q.matvec(&y)?, true)?);
+            return Ok(out);
+        }
         if op == "ilu_setup" {
             let f = ILU0::new(&a)?;
             return Ok(vec![f.size() as f64, f.nnz() as f64]);

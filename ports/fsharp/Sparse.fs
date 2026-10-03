@@ -27,6 +27,53 @@ type CSRMatrix(rows: int, cols: int, offsets: int[], indices: int[], values: dou
     member _.RowOffsets = Array.copy rp
     member _.ColumnIndices = Array.copy ci
     member _.Values = Array.copy v
+    member _.ReverseCuthillMcKee() =
+        if rows<>cols then invalidArg "rows" "RCM requires square matrix."
+        let graph = Array.init rows (fun _ -> Collections.Generic.HashSet<int>())
+        for i in 0..rows-1 do
+            for k in rp[i]..rp[i+1]-1 do
+                let j=ci[k]
+                if i<>j then
+                    graph[i].Add(j) |> ignore
+                    graph[j].Add(i) |> ignore
+        let key i = graph[i].Count,i
+        let seen = Array.create rows false
+        let order = ResizeArray<int>()
+        for start in Array.sortBy key [|0..rows-1|] do
+            if not seen[start] then
+                let queue=ResizeArray<int>()
+                queue.Add(start)
+                seen[start] <- true
+                let mutable h=0
+                while h<queue.Count do
+                    for j in graph[queue[h]] |> Seq.filter (fun j -> not seen[j]) |> Seq.sortBy key |> Seq.toArray do
+                        seen[j] <- true
+                        queue.Add(j)
+                    h <- h+1
+                order.AddRange(queue)
+        order.ToArray() |> Array.rev
+    static member PermuteVector(order:int[],x:double[],?inverse:bool) =
+        if order.Length<>x.Length then invalidArg "order" "Invalid permutation length."
+        let seen=Array.create x.Length false
+        for i in 0..x.Length-1 do
+            let j=order[i]
+            if j<0 || j>=x.Length || seen[j] || not (Double.IsFinite x[i]) then invalidArg "order" "Invalid permutation or vector."
+            seen[j] <- true
+        let result=Array.zeroCreate<double> x.Length
+        for i in 0..x.Length-1 do
+            if defaultArg inverse false then result[order[i]] <- x[i] else result[i] <- x[order[i]]
+        result
+    member _.PermuteSymmetric(order:int[]) =
+        if rows<>cols then invalidArg "rows" "Permutation requires square matrix."
+        let inv=CSRMatrix.PermuteVector(order,Array.init rows float,true)
+        let offsets,indices,entries=ResizeArray<int>(),ResizeArray<int>(),ResizeArray<double>()
+        offsets.Add(0)
+        for i in order do
+            for k in [|rp[i]..rp[i+1]-1|] |> Array.sortBy (fun k -> inv[ci[k]]) do
+                indices.Add(int inv[ci[k]])
+                entries.Add(v[k])
+            offsets.Add(entries.Count)
+        CSRMatrix(rows,cols,offsets.ToArray(),indices.ToArray(),entries.ToArray())
     static member FromDense(a: Matrix) =
         let rp,ci,v = ResizeArray<int>(),ResizeArray<int>(),ResizeArray<double>()
         rp.Add(0)
