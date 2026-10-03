@@ -10,7 +10,7 @@ use case.
 [Browse all reports](https://jmcummings77.github.io/linear-A/) ·
 [Shared API and implementation differences](ports/README.md) ·
 [Release kits and installation](release/README.md) ·
-[Versioned API contract](docs/api/0.7.0/README.md)
+[Versioned API contract](docs/api/0.8.0/README.md)
 
 ## Choose an implementation
 
@@ -168,3 +168,5 @@ Explore [sparse matrix ordering](https://jmcummings77.github.io/linear-A/orderin
 compare natural and Reverse Cuthill–McKee orderings, animate the stored pattern,
 and measure whether bandwidth reduction pays for itself in an ILU/GMRES solve.
 All eleven ports support the same permutation contract.
+
+Explore [sparse Cholesky](https://jmcummings77.github.io/linear-A/cholesky/): animate fill creation, compare natural and RCM ordering, and separate analysis, factorization, repeated solves and factor storage. All eleven ports implement the [same contract](ports/CHOLESKY.md).

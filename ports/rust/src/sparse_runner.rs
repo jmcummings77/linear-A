@@ -1,4 +1,4 @@
-use linear_a::{CGOptions, CSRMatrix, GMRESOptions, Matrix, ILU0};
+use linear_a::{CGOptions, CSRMatrix, GMRESOptions, Matrix, SparseCholeskySymbolic, ILU0};
 use std::io::{self, Read};
 use std::time::Instant;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -34,6 +34,11 @@ pub fn run(args: &[String]) -> Result<()> {
         "permutation_check",
         "rcm_solve",
         "ilu_solve",
+        "chol_symbolic",
+        "chol_factor",
+        "chol_solve",
+        "chol_total",
+        "chol_rcm_total",
     ]
     .contains(&op)
         || jacobi > 3
@@ -92,7 +97,67 @@ pub fn run(args: &[String]) -> Result<()> {
     } else {
         None
     };
+    let plan = if op == "chol_factor" || op == "chol_solve" {
+        Some(SparseCholeskySymbolic::new(&a)?)
+    } else {
+        None
+    };
+    let chol = if op == "chol_solve" {
+        Some(plan.as_ref().unwrap().factorize(&a)?)
+    } else {
+        None
+    };
     let compute = || -> Result<Vec<f64>> {
+        if op == "chol_symbolic" {
+            let s = SparseCholeskySymbolic::new(&a)?;
+            return Ok(s
+                .row_offsets()
+                .iter()
+                .chain(s.column_indices())
+                .map(|&v| v as f64)
+                .chain(s.fill_steps().iter().map(|&v| v as f64))
+                .collect());
+        }
+        if op == "chol_factor" {
+            let l = plan.as_ref().unwrap().factorize(&a)?.lower();
+            return Ok(l
+                .row_offsets()
+                .iter()
+                .chain(l.column_indices())
+                .map(|&v| v as f64)
+                .chain(l.values().iter().copied())
+                .collect());
+        }
+        if op == "chol_solve" {
+            return Ok(chol.as_ref().unwrap().solve(&b)?);
+        }
+        if op == "chol_total" || op == "chol_rcm_total" {
+            let p = if op == "chol_rcm_total" {
+                Some(a.reverse_cuthill_mckee()?)
+            } else {
+                None
+            };
+            let reordered = if let Some(p) = &p {
+                Some(a.permute_symmetric(p)?)
+            } else {
+                None
+            };
+            let q = reordered.as_ref().unwrap_or(&a);
+            let rhs = if let Some(p) = &p {
+                CSRMatrix::permute_vector(p, &b, false)?
+            } else {
+                b.clone()
+            };
+            let x = SparseCholeskySymbolic::new(&q)?
+                .factorize(&q)?
+                .solve(&rhs)?;
+            return Ok(if let Some(p) = &p {
+                CSRMatrix::permute_vector(p, &x, true)?
+            } else {
+                x
+            });
+        }
+
         if op == "rcm_solve" || op == "ilu_solve" {
             let p = if op == "rcm_solve" {
                 a.reverse_cuthill_mckee()?

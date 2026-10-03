@@ -6,7 +6,7 @@ static double sparse_token(void){double x;if(scanf("%lf",&x)!=1||!isfinite(x))fa
 static size_t sparse_index(void){double x=sparse_token();if(x<0||x>=(double)SIZE_MAX||floor(x)!=x)fail("invalid CSR index");return (size_t)x;}
 static int sparse_cli(int argc,char **argv){
     if(argc!=(argc>2&&!strcmp(argv[2],"gmres")?13:12))fail("expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE");
-    const char *op=argv[2];if(strcmp(op,"spmv")&&strcmp(op,"dense")&&strcmp(op,"cg")&&strcmp(op,"gmres")&&strcmp(op,"ilu_setup")&&strcmp(op,"ilu_apply")&&strcmp(op,"rcm")&&strcmp(op,"permute")&&strcmp(op,"permutation_check")&&strcmp(op,"rcm_solve")&&strcmp(op,"ilu_solve"))fail("invalid sparse operation");
+    const char *op=argv[2];if(strcmp(op,"spmv")&&strcmp(op,"dense")&&strcmp(op,"cg")&&strcmp(op,"gmres")&&strcmp(op,"ilu_setup")&&strcmp(op,"ilu_apply")&&strcmp(op,"rcm")&&strcmp(op,"permute")&&strcmp(op,"permutation_check")&&strcmp(op,"rcm_solve")&&strcmp(op,"ilu_solve")&&strcmp(op,"chol_symbolic")&&strcmp(op,"chol_factor")&&strcmp(op,"chol_solve")&&strcmp(op,"chol_total")&&strcmp(op,"chol_rcm_total"))fail("invalid sparse operation");
     size_t rows=integer(argv[3]),cols=integer(argv[4]),nnz=integer(argv[5]),iterations=integer(argv[6]),limit=integer(argv[9]),jacobi=integer(argv[10]),capture=integer(argv[11]);
     double rtol=number(argv[7]),atol=number(argv[8]);if(jacobi>3||(strcmp(op,"gmres")&&jacobi>1)||capture>1||rows==SIZE_MAX||rows>SIZE_MAX/sizeof(size_t)-1||nnz>SIZE_MAX/sizeof(double))fail("invalid sparse dimensions/options");
     size_t *rp=(size_t*)calloc(rows+1,sizeof(size_t)),*ci=(size_t*)calloc(nnz?nnz:1,sizeof(size_t));double *v=(double*)calloc(nnz?nnz:1,sizeof(double));
@@ -26,13 +26,52 @@ static int sparse_cli(int argc,char **argv){
     matrix_ilu0 factor={0};
     if(!strcmp(op,"ilu_apply")||(!strcmp(op,"gmres")&&jacobi==2))require(m_ilu0_create(&sparse,&factor));
 #endif
+#ifdef __cplusplus
+    std::unique_ptr<linear_a::SparseCholeskySymbolic> plan;
+    std::unique_ptr<linear_a::SparseCholesky> chol;
+    if(!strcmp(op,"chol_factor")||!strcmp(op,"chol_solve"))plan.reset(new linear_a::SparseCholeskySymbolic(sparse));
+    if(!strcmp(op,"chol_solve"))chol.reset(new linear_a::SparseCholesky(plan->factorize(sparse)));
+#else
+    matrix_cholesky_symbolic plan={0};matrix_cholesky chol={0};
+    if(!strcmp(op,"chol_factor")||!strcmp(op,"chol_solve"))require(m_cholesky_analyze(&sparse,&plan));
+    if(!strcmp(op,"chol_solve"))require(m_cholesky_factorize(&plan,&sparse,&chol));
+#endif
     if(!strcmp(op,"dense")){require(m_create(rows,cols,&dense));for(size_t i=0;i<rows;i++)for(size_t p=rp[i];p<rp[i+1];p++)dense.values[i*cols+ci[p]]=v[p];}
     free(rp);free(ci);free(v);
     double checksum=0;uint64_t start=0,elapsed=0;size_t runs=iterations?iterations+3:1;
     for(size_t run=0;run<runs;run++){
         if(iterations&&run==3)start=now_ns();
         matrix out={0};
-        if(!strcmp(op,"rcm_solve")||!strcmp(op,"ilu_solve")){
+        if(!strcmp(op,"chol_symbolic")){
+#ifdef __cplusplus
+            linear_a::SparseCholeskySymbolic s(sparse);auto rp=s.row_offsets(),ci=s.column_indices();auto steps=s.fill_steps();size_t m=s.nnz();require(m_create(1,rows+1+2*m,&out));size_t k=0;for(auto x:rp)out.values[k++]=(double)x;for(auto x:ci)out.values[k++]=(double)x;for(auto x:steps)out.values[k++]=(double)x;
+#else
+            matrix_cholesky_symbolic s={0};require(m_cholesky_analyze(&sparse,&s));size_t m=s.pattern.nnz;require(m_create(1,rows+1+2*m,&out));size_t k=0;for(size_t i=0;i<=rows;i++)out.values[k++]=(double)s.pattern.offsets[i];for(size_t p=0;p<m;p++)out.values[k++]=(double)s.pattern.indices[p];for(size_t p=0;p<m;p++)out.values[k++]=s.steps[p]==SIZE_MAX?-1:(double)s.steps[p];m_cholesky_symbolic_free(&s);
+#endif
+        }else if(!strcmp(op,"chol_factor")){
+#ifdef __cplusplus
+            auto f=plan->factorize(sparse);auto l=f.lower();size_t m=l.nnz();require(m_create(1,rows+1+2*m,&out));size_t k=0;for(auto x:l.row_offsets())out.values[k++]=(double)x;for(auto x:l.column_indices())out.values[k++]=(double)x;for(auto x:l.values())out.values[k++]=x;
+#else
+            matrix_cholesky f={0};require(m_cholesky_factorize(&plan,&sparse,&f));size_t m=f.lower.nnz;require(m_create(1,rows+1+2*m,&out));size_t k=0;for(size_t i=0;i<=rows;i++)out.values[k++]=(double)f.lower.offsets[i];for(size_t p=0;p<m;p++)out.values[k++]=(double)f.lower.indices[p];for(size_t p=0;p<m;p++)out.values[k++]=f.lower.values[p];m_cholesky_free(&f);
+#endif
+        }else if(!strcmp(op,"chol_solve")){
+#ifdef __cplusplus
+            auto x=chol->solve(std::vector<double>(b.values,b.values+count));require(m_create(rows,1,&out));for(size_t i=0;i<rows;i++)out.values[i]=x[i];
+#else
+            require(m_cholesky_solve(&chol,&b,&out));
+#endif
+        }else if(!strcmp(op,"chol_total")||!strcmp(op,"chol_rcm_total")){
+            int reorder=!strcmp(op,"chol_rcm_total");
+#ifdef __cplusplus
+            std::unique_ptr<linear_a::CSRMatrix> reordered;std::vector<size_t> p;std::vector<double> rhs(b.values,b.values+count);
+            if(reorder){p=sparse.reverse_cuthill_mckee();reordered.reset(new linear_a::CSRMatrix(sparse.permute_symmetric(p)));rhs=linear_a::CSRMatrix::permute_vector(p,rhs);}
+            const auto& q=reordered?*reordered:sparse;linear_a::SparseCholeskySymbolic s(q);auto f=s.factorize(q);auto x=f.solve(rhs);if(reorder)x=linear_a::CSRMatrix::permute_vector(p,x,true);require(m_create(rows,1,&out));for(size_t i=0;i<rows;i++)out.values[i]=x[i];
+#else
+            sparse_matrix reordered={0};const sparse_matrix *q=&sparse;size_t *p=NULL;matrix rhs={0};const matrix *right=&b;
+            if(reorder){p=(size_t*)calloc(rows?rows:1,sizeof(size_t));if(!p)fail("allocation failed");require(m_csr_rcm(&sparse,p,rows));require(m_csr_permute(&sparse,p,rows,&reordered));q=&reordered;require(m_create(rows,1,&rhs));require(m_permute_vector(p,rows,b.values,false,rhs.values));right=&rhs;}
+            matrix_cholesky_symbolic s={0};matrix_cholesky f={0};matrix x={0};require(m_cholesky_analyze(q,&s));require(m_cholesky_factorize(&s,q,&f));require(m_cholesky_solve(&f,right,&x));require(m_create(rows,1,&out));if(reorder)require(m_permute_vector(p,rows,x.values,true,out.values));else if(rows)memcpy(out.values,x.values,rows*sizeof(double));m_free(&x);m_cholesky_free(&f);m_cholesky_symbolic_free(&s);m_csr_free(&reordered);m_free(&rhs);free(p);
+#endif
+        }else if(!strcmp(op,"rcm_solve")||!strcmp(op,"ilu_solve")){
             int reorder=!strcmp(op,"rcm_solve");require(m_create(1,rows+1,&out));
 #ifdef __cplusplus
             std::unique_ptr<linear_a::CSRMatrix> reordered;std::vector<size_t> p;std::vector<double> rhs(b.values,b.values+count);
@@ -136,7 +175,7 @@ static int sparse_cli(int argc,char **argv){
     }
     if(iterations){elapsed=now_ns()-start;if(!isfinite(checksum))fail("nonfinite checksum");printf("{\"elapsed_ns\":%" PRIu64 ",\"iterations\":%zu,\"checksum\":%.17g}\n",elapsed,iterations,checksum);}
 #ifndef __cplusplus
-    m_ilu0_free(&factor);m_csr_free(&sparse);
+    m_cholesky_free(&chol);m_cholesky_symbolic_free(&plan);m_ilu0_free(&factor);m_csr_free(&sparse);
 #endif
     m_free(&b);m_free(&dense);return 0;
 }

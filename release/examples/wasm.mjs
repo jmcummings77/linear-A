@@ -1,5 +1,5 @@
 import { createMatrixAPI } from "linear-a-wasm";
-const { Matrix, CSRMatrix, ILU0 } = await createMatrixAPI();
+const { Matrix, CSRMatrix, ILU0, SparseCholeskySymbolic } = await createMatrixAPI();
 const a = new Matrix(2, 2, [4, 1, 2, 3]);
 const b = new Matrix(2, 1, [6, 8]);
 const x = a.solve(b);
@@ -22,7 +22,9 @@ try {
 const sparse=new CSRMatrix(2,2,[0,2,4],[0,1,0,1],[4,1,1,3]);
 const order=sparse.reverseCuthillMcKee(),reordered=sparse.permuteSymmetric(order);
 try{const y=CSRMatrix.permuteVector(order,[1,2]);if(CSRMatrix.permuteVector(order,reordered.matvec(y),true).join()!=="6,7")throw Error("incorrect permutation");}finally{reordered.dispose();}
-try{const ilu=new ILU0(sparse);
+try{const plan=new SparseCholeskySymbolic(sparse);let chol,lower;
+try{chol=plan.factorize(sparse);lower=chol.lower;if(Math.abs(chol.solve([6,7])[0]-1)>1e-12||Math.abs(chol.solve([11,13])[0]-20/11)>1e-12||lower.nnz!==3)throw Error("incorrect Cholesky reuse");}finally{lower?.dispose();chol?.dispose();plan.dispose();}
+const ilu=new ILU0(sparse);
 try{if(Math.abs(ilu.apply([6,7])[0]-1)>1e-12||Math.abs(ilu.apply([11,13])[0]-20/11)>1e-12||!sparse.gmres([11,13],{preconditioner:ilu}).converged)throw Error("incorrect ILU reuse");}finally{ilu.dispose();}
 const gm=sparse.gmres([6,7],{restart:2,jacobi:true,capture:true});
 if(!gm.converged||Math.abs(gm.x[0]-1)>1e-12||Math.abs(gm.x[1]-2)>1e-12)throw Error("incorrect GMRES");

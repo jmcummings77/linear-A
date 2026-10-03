@@ -3,6 +3,7 @@
 #include "matrix.hpp"
 #include "../c/sparse_core.h"
 #include "../c/ordering_core.h"
+#include "../c/cholesky_core.h"
 #include "../c/gmres_core.h"
 namespace linear_a {
 struct CGResult {std::vector<double> x,residuals;std::vector<std::vector<double>> iterates;std::size_t iterations;std::string reason;bool converged;};
@@ -20,6 +21,7 @@ public:
 };
 class CSRMatrix {
  friend class ILU0;
+ friend class SparseCholeskySymbolic;
     std::size_t rows_,cols_;std::vector<std::size_t> rp_,ci_;std::vector<double> v_;
     la_csr view() const {return {rows_,cols_,v_.size(),const_cast<std::size_t*>(rp_.data()),const_cast<std::size_t*>(ci_.data()),const_cast<double*>(v_.data())};}
 public:
@@ -64,5 +66,30 @@ public:
 
 };
 inline ILU0::ILU0(const CSRMatrix& a){auto view=a.view();int c=la_ilu0_create(&view,&factor_);if(c==2)throw std::bad_alloc();if(c)throw std::runtime_error("invalid ILU0 matrix, zero pivot or nonfinite factor");}
+class SparseCholesky {
+ friend class SparseCholeskySymbolic;
+ la_cholesky f_{};
+ SparseCholesky(const la_cholesky_symbolic& s,const la_csr& a){int c=la_cholesky_factorize(&s,&a,&f_);if(c==2)throw std::bad_alloc();if(c)throw std::runtime_error("invalid Cholesky matrix or nonpositive pivot");}
+public:
+ ~SparseCholesky(){la_cholesky_free(&f_);}
+ SparseCholesky(const SparseCholesky&)=delete;SparseCholesky& operator=(const SparseCholesky&)=delete;
+ SparseCholesky(SparseCholesky&& other)noexcept:f_(other.f_){other.f_={};}
+ std::size_t size()const{return f_.lower.rows;}std::size_t nnz()const{return f_.lower.nnz;}
+ CSRMatrix lower()const{const auto& a=f_.lower;return CSRMatrix(a.rows,a.cols,{a.offsets,a.offsets+a.rows+1},{a.indices,a.indices+a.nnz},{a.values,a.values+a.nnz});}
+ std::vector<double> solve(const std::vector<double>& b)const{std::vector<double>x(size());if(la_cholesky_solve(&f_,b.data(),b.size(),x.data()))throw std::runtime_error("invalid or nonfinite Cholesky solve");return x;}
+};
+class SparseCholeskySymbolic {
+ la_cholesky_symbolic s_{};
+public:
+ explicit SparseCholeskySymbolic(const CSRMatrix& a){auto v=a.view();int c=la_cholesky_analyze(&v,&s_);if(c==2)throw std::bad_alloc();if(c)throw std::invalid_argument("invalid Cholesky structure");}
+ ~SparseCholeskySymbolic(){la_cholesky_symbolic_free(&s_);}
+ SparseCholeskySymbolic(const SparseCholeskySymbolic&)=delete;SparseCholeskySymbolic& operator=(const SparseCholeskySymbolic&)=delete;
+ std::size_t size()const{return s_.pattern.rows;}std::size_t nnz()const{return s_.pattern.nnz;}std::size_t fill_count()const{return s_.fill_count;}
+ std::vector<std::size_t> row_offsets()const{return {s_.pattern.offsets,s_.pattern.offsets+size()+1};}
+ std::vector<std::size_t> column_indices()const{return {s_.pattern.indices,s_.pattern.indices+nnz()};}
+ std::vector<std::ptrdiff_t> fill_steps()const{std::vector<std::ptrdiff_t> v;for(std::size_t p=0;p<nnz();p++)v.push_back(s_.steps[p]==SIZE_MAX?-1:static_cast<std::ptrdiff_t>(s_.steps[p]));return v;}
+ SparseCholesky factorize(const CSRMatrix& a)const{auto v=a.view();return SparseCholesky(s_,v);}
+};
+
 }
 #endif

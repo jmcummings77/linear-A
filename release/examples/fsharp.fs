@@ -34,3 +34,7 @@ let order=sparse.ReverseCuthillMcKee()
 let reordered=sparse.PermuteSymmetric(order)
 let permuted=CSRMatrix.PermuteVector(order,[|1.;2.|])
 if CSRMatrix.PermuteVector(order,reordered.Matvec(permuted),true) <> [|6.;7.|] then failwith "incorrect permutation"
+
+let plan=SparseCholeskySymbolic(sparse)
+let chol=plan.Factorize(sparse)
+if abs(chol.Solve([|6.;7.|])[0]-1.)>1e-12 || abs(chol.Solve([|11.;13.|])[0]-20./11.)>1e-12 || chol.Lower.NNZ<>3 then failwith "incorrect Cholesky reuse"

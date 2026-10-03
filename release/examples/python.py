@@ -34,3 +34,9 @@ for rhs,expected in [([6,7],[1,2]),([11,13],[20/11,41/11])]:
 p=sparse.reverse_cuthill_mckee();q=sparse.permute_symmetric(p)
 y=CSRMatrix.permute_vector(p,[1,2])
 assert CSRMatrix.permute_vector(p,q.matvec(y),True)==[6,7]
+
+from matrix import SparseCholeskySymbolic
+plan=SparseCholeskySymbolic(sparse)
+chol=plan.factorize(sparse)
+assert abs(chol.solve([6,7])[0]-1)<1e-12 and abs(chol.solve([11,13])[0]-20/11)<1e-12
+assert plan.fill_count==0 and chol.lower.nnz==3

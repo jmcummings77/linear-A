@@ -38,7 +38,7 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
-	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve") || jacobi > 3 || (op != "gmres" && jacobi > 1) || capture > 1 {
+	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve" && op != "chol_symbolic" && op != "chol_factor" && op != "chol_solve" && op != "chol_total" && op != "chol_rcm_total") || jacobi > 3 || (op != "gmres" && jacobi > 1) || capture > 1 {
 		return errors.New("invalid sparse operation/options")
 	}
 	raw, e := io.ReadAll(os.Stdin)
@@ -122,7 +122,87 @@ func sparseRun(args []string) error {
 			return e
 		}
 	}
+	var plan *matrix.SparseCholeskySymbolic
+	var chol *matrix.SparseCholesky
+	if op == "chol_factor" || op == "chol_solve" {
+		plan, e = matrix.NewSparseCholeskySymbolic(a)
+		if e != nil {
+			return e
+		}
+	}
+	if op == "chol_solve" {
+		chol, e = plan.Factorize(a)
+		if e != nil {
+			return e
+		}
+	}
 	compute := func() ([]float64, error) {
+		if op == "chol_symbolic" {
+			s, e := matrix.NewSparseCholeskySymbolic(a)
+			if e != nil {
+				return nil, e
+			}
+			v := []float64{}
+			for _, xs := range [][]int{s.RowOffsets(), s.ColumnIndices(), s.FillSteps()} {
+				for _, x := range xs {
+					v = append(v, float64(x))
+				}
+			}
+			return v, nil
+		}
+		if op == "chol_factor" {
+			f, e := plan.Factorize(a)
+			if e != nil {
+				return nil, e
+			}
+			l := f.Lower()
+			v := []float64{}
+			for _, xs := range [][]int{l.RowOffsets(), l.ColumnIndices()} {
+				for _, x := range xs {
+					v = append(v, float64(x))
+				}
+			}
+			return append(v, l.Values()...), nil
+		}
+		if op == "chol_solve" {
+			return chol.Solve(b)
+		}
+		if op == "chol_total" || op == "chol_rcm_total" {
+			q, rhs := a, b
+			var p []int
+			var e error
+			if op == "chol_rcm_total" {
+				p, e = a.ReverseCuthillMcKee()
+				if e != nil {
+					return nil, e
+				}
+				q, e = a.PermuteSymmetric(p)
+				if e != nil {
+					return nil, e
+				}
+				rhs, e = matrix.PermuteVector(p, b, false)
+				if e != nil {
+					return nil, e
+				}
+			}
+			s, e := matrix.NewSparseCholeskySymbolic(q)
+			if e != nil {
+				return nil, e
+			}
+			f, e := s.Factorize(q)
+			if e != nil {
+				return nil, e
+			}
+			x, e := f.Solve(rhs)
+			if e != nil {
+				return nil, e
+			}
+			if op == "chol_rcm_total" {
+				return matrix.PermuteVector(p, x, true)
+			}
+			return x, nil
+		}
+
 		if op == "rcm_solve" || op == "ilu_solve" {
 			q := a
 			rhs := b

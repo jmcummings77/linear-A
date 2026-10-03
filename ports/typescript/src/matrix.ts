@@ -489,3 +489,5 @@ export class Matrix {
 export type {GMRESOptions,GMRESResult} from "./gmres.js";
 
 export {ILU0} from "./ilu.js";
+
+export {SparseCholeskySymbolic,SparseCholesky} from './cholesky.js';

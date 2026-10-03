@@ -318,3 +318,27 @@ matrix *wm_permute_vector(const matrix *order,const matrix *x,int inverse){
  if(out)last_status=m_create(x->rows,1,out);if(out&&!last_status)last_status=m_permute_vector(p,x->rows,x->values,inverse!=0,out->values);free(p);
  if(last_status){if(out){m_free(out);free(out);}return NULL;}return out;
 }
+
+matrix_cholesky_symbolic *wm_cholesky_analyze(const sparse_matrix *a){
+ matrix_cholesky_symbolic *s=calloc(1,sizeof(*s));if(!s){last_status=M_MEMORY;return NULL;}
+ last_status=m_cholesky_analyze(a,s);if(last_status){free(s);return NULL;}return s;
+}
+void wm_cholesky_symbolic_destroy(matrix_cholesky_symbolic *s){if(s){m_cholesky_symbolic_free(s);free(s);}}
+matrix *wm_cholesky_pattern(const matrix_cholesky_symbolic *s){
+ if(!s){last_status=M_ARGUMENT;return NULL;}const la_csr *a=&s->pattern;matrix *out=allocate_handle();if(!out)return NULL;
+ last_status=m_create(a->rows+1+2*a->nnz,1,out);
+ if(!last_status){size_t k=0;for(size_t i=0;i<=a->rows;i++)out->values[k++]=(double)a->offsets[i];for(size_t p=0;p<a->nnz;p++)out->values[k++]=(double)a->indices[p];for(size_t p=0;p<a->nnz;p++)out->values[k++]=s->steps[p]==SIZE_MAX?-1:(double)s->steps[p];}
+ if(last_status){m_free(out);free(out);return NULL;}return out;
+}
+matrix_cholesky *wm_cholesky_factorize(const matrix_cholesky_symbolic *s,const sparse_matrix *a){
+ matrix_cholesky *f=calloc(1,sizeof(*f));if(!f){last_status=M_MEMORY;return NULL;}
+ last_status=m_cholesky_factorize(s,a,f);if(last_status){free(f);return NULL;}return f;
+}
+void wm_cholesky_destroy(matrix_cholesky *f){if(f){m_cholesky_free(f);free(f);}}
+matrix *wm_cholesky_lower(const matrix_cholesky *f){
+ if(!f){last_status=M_ARGUMENT;return NULL;}const la_csr *a=&f->lower;matrix *out=allocate_handle();if(!out)return NULL;
+ last_status=m_create(a->rows+1+2*a->nnz,1,out);
+ if(!last_status){size_t k=0;for(size_t i=0;i<=a->rows;i++)out->values[k++]=(double)a->offsets[i];for(size_t p=0;p<a->nnz;p++)out->values[k++]=(double)a->indices[p];for(size_t p=0;p<a->nnz;p++)out->values[k++]=a->values[p];}
+ if(last_status){m_free(out);free(out);return NULL;}return out;
+}
+matrix *wm_cholesky_solve(const matrix_cholesky *f,const matrix *b){matrix *out=allocate_handle();if(!out)return NULL;last_status=m_cholesky_solve(f,b,out);if(last_status){free(out);return NULL;}return out;}

@@ -374,6 +374,8 @@ export solve_ridge, svd, pseudoinverse, solve_minimum_norm, spectral_diagnostics
 
 include("sparse.jl")
 include("ilu.jl")
+include("cholesky.jl")
+export SparseCholeskySymbolic, SparseCholesky, cholesky_factorize, cholesky_solve
 include("gmres.jl")
 export ILU0, ilu_apply
 export gmres

@@ -341,6 +341,26 @@ export async function createMatrixAPI({
   }
 
   let csrPointer,iluPointer;
+  class SparseCholeskySymbolic {
+    #pointer;#size;#rp;#ci;#steps;
+    constructor(a){
+      this.#size=a.rows;this.#pointer=checkedHandle(runtime._wm_cholesky_analyze(csrPointer(a)));
+      let out;try{out=new Matrix(runtime._wm_cholesky_pattern(this.#pointer),0,undefined,ownedHandle);const v=Array.from(out.toArray()),n=this.#size,m=(v.length-n-1)/2;this.#rp=v.slice(0,n+1);this.#ci=v.slice(n+1,n+1+m);this.#steps=v.slice(n+1+m);}catch(e){this.dispose();throw e;}finally{out?.dispose();}
+    }
+    get size(){return this.#size;}get nnz(){return this.#ci.length;}get fillCount(){return this.#steps.filter(k=>k>=0).length;}
+    get rowOffsets(){return this.#rp.slice();}get columnIndices(){return this.#ci.slice();}get fillSteps(){return this.#steps.slice();}
+    factorize(a){if(!this.#pointer)throw new Error('Cholesky plan has been disposed');return new SparseCholesky(checkedHandle(runtime._wm_cholesky_factorize(this.#pointer,csrPointer(a))),this.size,this.nnz,ownedHandle);}
+    dispose(){if(this.#pointer){runtime._wm_cholesky_symbolic_destroy(this.#pointer);this.#pointer=0;}}
+  }
+  class SparseCholesky {
+    #pointer;#size;#nnz;
+    constructor(pointer,size,nnz,token){if(token!==ownedHandle)throw new TypeError('Use SparseCholeskySymbolic.factorize');this.#pointer=pointer;this.#size=size;this.#nnz=nnz;}
+    get size(){return this.#size;}get nnz(){return this.#nnz;}
+    #alive(){if(!this.#pointer)throw new Error('Cholesky factor has been disposed');return this.#pointer;}
+    get lower(){let out;try{out=new Matrix(runtime._wm_cholesky_lower(this.#alive()),0,undefined,ownedHandle);const v=out.toArray(),n=this.size,m=this.nnz;return new CSRMatrix(n,n,v.slice(0,n+1),v.slice(n+1,n+1+m),v.slice(n+1+m));}finally{out?.dispose();}}
+    solve(values){let b,out;try{b=new Matrix(values.length,1,values);out=new Matrix(runtime._wm_cholesky_solve(this.#alive(),matrixPointer(b)),0,undefined,ownedHandle);return Array.from(out.toArray());}finally{b?.dispose();out?.dispose();}}
+    dispose(){if(this.#pointer){runtime._wm_cholesky_destroy(this.#pointer);this.#pointer=0;}}
+  }
   class ILU0 {
     #pointer;#size;#nnz;
     static {iluPointer=f=>f.#alive();}
@@ -418,5 +438,5 @@ export async function createMatrixAPI({
     Object.defineProperty(Matrix.prototype, Symbol.dispose, { value: Matrix.prototype.dispose });
     Object.defineProperty(Factorization.prototype, Symbol.dispose, { value: Factorization.prototype.dispose });
   }
-  return { Matrix, Factorization, CSRMatrix, ILU0 };
+  return { Matrix, Factorization, CSRMatrix, ILU0, SparseCholeskySymbolic, SparseCholesky };
 }

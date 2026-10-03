@@ -38,3 +38,14 @@ matrix_status m_csr_gmres_preconditioned(const sparse_matrix *a,const double *b,
 matrix_status m_csr_rcm(const sparse_matrix *a,size_t *out,size_t count){return sparse_status(la_csr_rcm(a,out,count));}
 matrix_status m_csr_permute(const sparse_matrix *a,const size_t *p,size_t count,sparse_matrix *out){return sparse_status(la_csr_permute(a,p,count,out));}
 matrix_status m_permute_vector(const size_t *p,size_t count,const double *x,bool inverse,double *out){return sparse_status(la_permute_vector(p,count,x,inverse,out));}
+
+matrix_status m_cholesky_analyze(const sparse_matrix *a,matrix_cholesky_symbolic *out){return sparse_status(la_cholesky_analyze(a,out));}
+void m_cholesky_symbolic_free(matrix_cholesky_symbolic *s){la_cholesky_symbolic_free(s);}
+matrix_status m_cholesky_factorize(const matrix_cholesky_symbolic *s,const sparse_matrix *a,matrix_cholesky *out){return sparse_status(la_cholesky_factorize(s,a,out));}
+void m_cholesky_free(matrix_cholesky *f){la_cholesky_free(f);}
+matrix_status m_cholesky_solve(const matrix_cholesky *f,const matrix *b,matrix *out){
+ if(!f||validate(b)||!empty_output(out)||b==out)return M_ARGUMENT;
+ if(b->cols!=1||b->rows!=f->lower.rows)return M_SHAPE;
+ matrix result={0};matrix_status code=m_create(b->rows,1,&result);if(code)return code;
+ code=sparse_status(la_cholesky_solve(f,b->values,b->rows,result.values));if(code)m_free(&result);else *out=result;return code;
+}

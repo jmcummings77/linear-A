@@ -1,5 +1,5 @@
 {
-  "version": "0.7.0",
+  "version": "0.8.0",
   "capabilities": [
     "arithmetic",
     "determinants",
@@ -14,7 +14,8 @@
     "conjugate-gradient",
     "gmres",
     "ilu0",
-    "rcm"
+    "rcm",
+    "sparse-cholesky"
   ],
   "ports": {
     "assembly": {
@@ -38,7 +39,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "c": {
@@ -61,7 +63,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "cpp": {
@@ -85,7 +88,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "csharp": {
@@ -108,7 +112,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "fsharp": {
@@ -131,7 +136,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "go": {
@@ -154,7 +160,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "julia": {
@@ -177,7 +184,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "python": {
@@ -200,7 +208,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "rust": {
@@ -223,7 +232,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "typescript": {
@@ -246,7 +256,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     },
     "wasm": {
@@ -270,7 +281,8 @@
         "conjugate-gradient",
         "gmres",
         "ilu0",
-        "rcm"
+        "rcm",
+        "sparse-cholesky"
       ]
     }
   }

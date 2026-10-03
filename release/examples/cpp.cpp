@@ -22,5 +22,7 @@ int main() {
     if(product[0]!=6||product[1]!=7||!cg.converged||std::abs(cg.x[0]-1)>1e-12||std::abs(cg.x[1]-2)>1e-12)return 1;
     auto order=sparse.reverse_cuthill_mckee();auto reordered=sparse.permute_symmetric(order);auto y=linear_a::CSRMatrix::permute_vector(order,{1,2});
     if(linear_a::CSRMatrix::permute_vector(order,reordered.matvec(y),true)!=std::vector<double>({6,7}))return 1;
+    linear_a::SparseCholeskySymbolic plan(sparse);auto chol=plan.factorize(sparse);
+    if(std::abs(chol.solve({6,7})[0]-1)>1e-12||std::abs(chol.solve({11,13})[0]-20.0/11)>1e-12||chol.lower().nnz()!=3)return 1;
     std::cout << "solution: 1, 2\n";
 }

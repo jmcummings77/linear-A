@@ -295,3 +295,5 @@ benchmarks/reports/*
 !/release/examples/*
 !/tests/release/
 !/tests/release/*.py
+
+!benchmarks/reports/cholesky/

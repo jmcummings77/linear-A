@@ -12,6 +12,7 @@ import compare
 import report
 import sparse
 import ordering_bench
+import cholesky_bench
 from report_design import render_directory
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,7 +45,11 @@ def refresh():
     count = 0
     for path in sorted((ROOT / 'benchmarks/reports').glob('*/index.html')):
         data = embedded(path, 'data')
-        if path.parent.name == 'ordering':
+        if path.parent.name == 'cholesky':
+            live = embedded(path, 'live')
+            cholesky_bench.render(data, path, live_override=live)
+            assert embedded(path, 'live') == live
+        elif path.parent.name == 'ordering':
             live = embedded(path, 'live')
             ordering_bench.render(data, path, live_override=live)
             assert embedded(path, 'live') == live

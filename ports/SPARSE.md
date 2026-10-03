@@ -302,3 +302,7 @@ original coordinates, using ILU(0), restart 20 and the protocol tolerances/limit
 Their timed paths include setup and solve; `rcm_solve` also includes ordering,
 CSR/RHS permutation and restoring the solution. All use the existing ten-argument
 sparse protocol, with Jacobi and capture set to zero for ordering benchmarks.
+
+## Sparse Cholesky
+
+For direct SPD solves, all ports provide reusable symbolic analysis, numerical Cholesky factors and triangular solves. See [Sparse Cholesky](CHOLESKY.md) for fill semantics, APIs and numerical limits.

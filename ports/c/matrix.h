@@ -136,4 +136,12 @@ matrix_status m_ilu0_create(const sparse_matrix *a,matrix_ilu0 *out);
 void m_ilu0_free(matrix_ilu0 *f);
 matrix_status m_ilu0_apply(const matrix_ilu0 *f,const matrix *b,matrix *out);
 matrix_status m_csr_gmres_preconditioned(const sparse_matrix *a,const double *b,size_t count,size_t restart,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_ilu0 *preconditioner,matrix_gmres_result *out);
+#include "cholesky_core.h"
+typedef la_cholesky_symbolic matrix_cholesky_symbolic;
+typedef la_cholesky matrix_cholesky;
+matrix_status m_cholesky_analyze(const sparse_matrix *a,matrix_cholesky_symbolic *out);
+void m_cholesky_symbolic_free(matrix_cholesky_symbolic *s);
+matrix_status m_cholesky_factorize(const matrix_cholesky_symbolic *s,const sparse_matrix *a,matrix_cholesky *out);
+void m_cholesky_free(matrix_cholesky *f);
+matrix_status m_cholesky_solve(const matrix_cholesky *f,const matrix *b,matrix *out);
 #endif

@@ -374,3 +374,5 @@ pub use gmres::{GMRESOptions, GMRESResult};
 
 mod ilu;
 pub use ilu::ILU0;
+mod cholesky;
+pub use cholesky::{SparseCholesky, SparseCholeskySymbolic};

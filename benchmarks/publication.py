@@ -238,7 +238,7 @@ class PublicSanitizer:
             model = machine.get("cpu_model")
             if isinstance(model, str) and re.fullmatch(r"[\w .+()@-]{1,200}", model) and "\n" not in model:
                 result["machine"]["cpu_model"] = self.text(model)
-        result["methodology"] = self._leaves(data.get("methodology"), ("numeric_type", "matrix_layout", "timing", "warmup", "sampling", "profiles", "limitations"))
+        result["methodology"] = self._leaves(data.get("methodology"), ("numeric_type", "matrix_layout", "timing", "warmup", "sampling", "storage", "profiles", "limitations"))
         result["implementations"] = []
         for item in data.get("implementations", []):
             if not isinstance(item, dict):
@@ -253,7 +253,7 @@ class PublicSanitizer:
         for item in data.get("results", []):
             if not isinstance(item, dict):
                 continue
-            cleaned = self._leaves(item, ("implementation", "operation", "size", "status", "iterations", "median_ns", "min_ns", "max_ns", "mad_ns", "error", "nnz", "unknowns", "logical_dense_bytes", "logical_csr_bytes", "cg_iterations", "contrast", "solver_iterations", "restart", "restart_count", "logical_workspace_bytes", "logical_preconditioner_bytes", "problem", "ordering", "bandwidth"))
+            cleaned = self._leaves(item, ("implementation", "operation", "size", "status", "iterations", "median_ns", "min_ns", "max_ns", "mad_ns", "error", "nnz", "unknowns", "logical_dense_bytes", "logical_csr_bytes", "cg_iterations", "contrast", "solver_iterations", "restart", "restart_count", "logical_workspace_bytes", "logical_preconditioner_bytes", "factor_nnz", "fill_count", "logical_factor_bytes", "problem", "ordering", "bandwidth"))
             if isinstance(item.get("samples"), list):
                 cleaned["samples"] = [self._leaves(sample, ("elapsed_ns", "iterations", "checksum", "ns_per_op")) for sample in item["samples"] if isinstance(sample, dict)]
             result["results"].append(cleaned)
