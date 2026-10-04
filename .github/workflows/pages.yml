@@ -7,6 +7,8 @@ on:
       - '.github/workflows/pages.yml'
       - 'benchmarks/pages/**'
       - 'benchmarks/reports/**'
+      - 'benchmarks/check_provenance.py'
+      - 'benchmarks/legacy-results.json'
       - 'experiments/machine-code-dot/results/**'
       - 'experiments/matmul-locality/results/**'
       - 'applications/index.html'
@@ -34,6 +36,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Validate recorded benchmark provenance
+        run: python3 benchmarks/check_provenance.py
       - uses: actions/configure-pages@v6
       - name: Assemble saved reports
         run: |

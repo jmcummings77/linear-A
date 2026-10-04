@@ -1,10 +1,12 @@
 import importlib.util
+from contextlib import redirect_stdout
 import io
 import json
 from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+from unittest import mock
 import zipfile
 import subprocess
 import sys
@@ -15,6 +17,20 @@ build=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(build)
 
 class ReleaseTests(unittest.TestCase):
+    def test_version_flag_reads_manifest_without_building(self):
+        with tempfile.TemporaryDirectory() as d:
+            manifest=Path(d)/'manifest.json'
+            manifest.write_text(json.dumps({'version':'9.8.7','ports':{}}))
+            output=io.StringIO()
+            with mock.patch.object(build,'MANIFEST',manifest), \
+                    mock.patch.object(sys,'argv',['release/build.py','--version']), \
+                    mock.patch.object(build,'check_manifest') as check_manifest, \
+                    redirect_stdout(output), self.assertRaises(SystemExit) as result:
+                build.main()
+            self.assertEqual(result.exception.code,0)
+            self.assertEqual(output.getvalue(),'9.8.7\n')
+            check_manifest.assert_not_called()
+
     def test_manifest_versions_examples_and_checked_table(self):
         manifest=json.loads(build.MANIFEST.read_text())
         self.assertEqual(len(manifest['ports']),11)
@@ -61,9 +77,10 @@ class ReleaseTests(unittest.TestCase):
             build.audit_assets([package], ['/home/private-user'])
 
     def test_tagged_release_rejects_unverified_source_only_build(self):
+        version=json.loads(build.MANIFEST.read_text())['version']
         with tempfile.TemporaryDirectory() as d:
             result=subprocess.run([sys.executable,str(ROOT/'release/build.py'),
-                '--tag','v0.10.0','--source-only','--output',d],capture_output=True,text=True)
+                '--tag','v'+version,'--source-only','--output',d],capture_output=True,text=True)
             self.assertNotEqual(result.returncode,0)
             self.assertIn('tagged releases require',result.stderr)
             self.assertFalse((Path(d)/'release.json').exists())
@@ -78,7 +95,7 @@ class ReleaseTests(unittest.TestCase):
             self.assertIn('ports/SPARSE.md',files)
             self.assertIn('ports/c/general_eigen.h',files)
             self.assertIn('LICENSE',files)
-            self.assertIn('docs/api/0.10.0/README.md',files)
+            self.assertIn('docs/api/'+manifest['version']+'/README.md',files)
             self.assertFalse(any('.build/' in name or 'node_modules/' in name or '.git/' in name for name in files))
 
 if __name__=='__main__': unittest.main()

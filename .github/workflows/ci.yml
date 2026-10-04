@@ -10,6 +10,18 @@ permissions:
   contents: read
 
 jobs:
+  benchmark-provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Validate recorded benchmark provenance
+        run: python3 benchmarks/check_provenance.py
+      - name: Test benchmark source capture and publication gate
+        run: |
+          python3 -m unittest discover -s tests/benchmark_harness -p 'test_provenance_gate.py' -v
+          python3 -m unittest discover -s tests/benchmark_harness -p 'test_reproduce.py' -v
   test:
     runs-on: ${{ matrix.os }}
     strategy:
