@@ -32,6 +32,7 @@ order=reverse_cuthill_mckee(sparse)
 reordered=permute_symmetric(sparse,order)
 @assert permute_vector(order,matvec(reordered,permute_vector(order,[1.,2.])),inverse=true)==[6.,7.]
 
+@assert approximate_minimum_degree(sparse)==[0,1]
 plan=SparseCholeskySymbolic(sparse)
 chol=cholesky_factorize(plan,sparse)
 @assert abs(cholesky_solve(chol,[6.,7.])[1]-1)<1e-12 && abs(cholesky_solve(chol,[11.,13.])[1]-20/11)<1e-12

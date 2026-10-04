@@ -7,8 +7,8 @@ export function checkSparse(api,cases) {
     try {
       const m=test.a;a=new api.CSRMatrix(m.rows,m.cols,m.offsets,m.indices,m.values);
       if(test.op.startsWith('chol_')){
-        let plan,l,q=a;const reorder=test.op==='chol_rcm_total';
-        try{const p=reorder?a.reverseCuthillMcKee():undefined;if(reorder)q=a.permuteSymmetric(p);plan=new api.SparseCholeskySymbolic(q);
+        let plan,l,q=a;const reorder=test.op==='chol_rcm_total'||test.op==='chol_amd_total';
+        try{const p=test.op==='chol_amd_total'?a.approximateMinimumDegree():reorder?a.reverseCuthillMcKee():undefined;if(reorder)q=a.permuteSymmetric(p);plan=new api.SparseCholeskySymbolic(q);
           if(test.op==='chol_symbolic')output=[...plan.rowOffsets,...plan.columnIndices,...plan.fillSteps];
           else{factor=plan.factorize(q);if(test.op==='chol_factor'){l=factor.lower;output=[...l.rowOffsets,...l.columnIndices,...l.values];}
           else{const x=factor.solve(reorder?api.CSRMatrix.permuteVector(p,test.b):test.b);output=reorder?api.CSRMatrix.permuteVector(p,x,true):x;
@@ -21,6 +21,7 @@ export function checkSparse(api,cases) {
         const ax=a.matvec(output);assert(norm(test.b.map((v,i)=>v-ax[i]))<=Math.max(test.options.atol,test.options.rtol*norm(test.b))*(1+1e-5)+1e-300,'original-system residual');}
         finally{if(reorder)q.dispose?.();}
       }
+      else if(test.op==='amd')output=a.approximateMinimumDegree();
       else if(test.op==='rcm')output=a.reverseCuthillMcKee();
       else if(test.op==='permute'||test.op==='permutation_check'){
         const p=test.b,q=a.permuteSymmetric(p);

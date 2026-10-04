@@ -31,5 +31,6 @@ const order=sparse.reverseCuthillMcKee(),reordered=sparse.permuteSymmetric(order
 if(CSRMatrix.permuteVector(order,reordered.matvec(permuted),true).join()!=="6,7")throw Error("incorrect permutation");
 
 import {SparseCholeskySymbolic} from "linear-a-typescript";
+if(JSON.stringify(sparse.approximateMinimumDegree())!=="[0,1]")throw Error("incorrect AMD ordering");
 const plan=new SparseCholeskySymbolic(sparse),chol=plan.factorize(sparse);
 if(Math.abs(chol.solve([6,7])[0]-1)>1e-12||Math.abs(chol.solve([11,13])[0]-20/11)>1e-12||plan.fillCount!==0||chol.lower.nnz!==3)throw Error("incorrect Cholesky reuse");

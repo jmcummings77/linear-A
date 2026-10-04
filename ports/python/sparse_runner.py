@@ -8,7 +8,7 @@ from matrix import Matrix
 def run(args):
     if len(args)!=(11 if args and args[0]=='gmres' else 10):raise ValueError('expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE')
     op=args[0];rows,cols,nnz,iters=map(int,args[1:5]);rtol,atol=map(float,args[5:7]);limit,jacobi,capture=map(int,args[7:10]);restart=int(args[10]) if op=='gmres' else 30
-    if op not in ('spmv','dense','cg','gmres','ilu_setup','ilu_apply','rcm','permute','permutation_check','rcm_solve','ilu_solve','chol_symbolic','chol_factor','chol_solve','chol_total','chol_rcm_total') or min(rows,cols,nnz,iters)<0 or jacobi not in (range(4) if op=='gmres' else (0,1)) or capture not in (0,1):raise ValueError('invalid sparse protocol')
+    if op not in ('spmv','dense','cg','gmres','ilu_setup','ilu_apply','rcm','amd','permute','permutation_check','rcm_solve','ilu_solve','chol_symbolic','chol_factor','chol_solve','chol_total','chol_rcm_total','chol_amd_total') or min(rows,cols,nnz,iters)<0 or jacobi not in (range(4) if op=='gmres' else (0,1)) or capture not in (0,1):raise ValueError('invalid sparse protocol')
     raw=sys.stdin.read().split();count=rows if op in ('cg','gmres') else cols
     if len(raw)!=rows+1+2*nnz+count:raise ValueError('incorrect sparse input count')
     rp=list(map(int,raw[:rows+1]));ci=list(map(int,raw[rows+1:rows+1+nnz]));v=list(map(float,raw[rows+1+nnz:rows+1+2*nnz]));b=list(map(float,raw[rows+1+2*nnz:]))
@@ -28,8 +28,8 @@ def run(args):
         if op=='chol_factor':
             l=plan.factorize(a).lower;return l.row_offsets+l.column_indices+l.values
         if op=='chol_solve':return chol.solve(b)
-        if op in ('chol_total','chol_rcm_total'):
-            p=a.reverse_cuthill_mckee() if op=='chol_rcm_total' else None
+        if op in ('chol_total','chol_rcm_total','chol_amd_total'):
+            p=a.approximate_minimum_degree() if op=='chol_amd_total' else a.reverse_cuthill_mckee() if op=='chol_rcm_total' else None
             q=a.permute_symmetric(p) if p is not None else a
             x=SparseCholeskySymbolic(q).factorize(q).solve(CSRMatrix.permute_vector(p,b) if p is not None else b)
             return CSRMatrix.permute_vector(p,x,True) if p is not None else x
@@ -41,6 +41,7 @@ def run(args):
             if not result.converged:raise ArithmeticError('ordering solve failed: '+result.reason)
             x=CSRMatrix.permute_vector(p,result.x,True) if op=='rcm_solve' else result.x
             return [result.iterations]+x
+        if op=='amd':return a.approximate_minimum_degree()
         if op=='rcm':return a.reverse_cuthill_mckee()
         if op in ('permute','permutation_check'):
             if any(not math.isfinite(x) or x!=int(x) for x in b):raise ValueError('invalid permutation')

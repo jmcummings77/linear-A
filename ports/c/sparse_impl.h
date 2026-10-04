@@ -36,6 +36,7 @@ matrix_status m_csr_gmres_preconditioned(const sparse_matrix *a,const double *b,
 
 #include "ordering_core.h"
 matrix_status m_csr_rcm(const sparse_matrix *a,size_t *out,size_t count){return sparse_status(la_csr_rcm(a,out,count));}
+matrix_status m_csr_amd(const sparse_matrix *a,size_t *out,size_t count){return sparse_status(la_csr_amd(a,out,count));}
 matrix_status m_csr_permute(const sparse_matrix *a,const size_t *p,size_t count,sparse_matrix *out){return sparse_status(la_csr_permute(a,p,count,out));}
 matrix_status m_permute_vector(const size_t *p,size_t count,const double *x,bool inverse,double *out){return sparse_status(la_permute_vector(p,count,x,inverse,out));}
 

@@ -43,6 +43,7 @@ int main(void) {
     size_t order[2];sparse_matrix reordered={0};double y[2],restored[2],input[]={1,2};
     if(!failed)failed=m_csr_rcm(&sparse,order,2)||m_csr_permute(&sparse,order,2,&reordered)||m_permute_vector(order,2,input,false,y)||m_permute_vector(order,2,y,true,restored);
     if(!failed)failed=restored[0]!=1||restored[1]!=2;m_csr_free(&reordered);
+    size_t amd_order[2];if(!failed)failed=m_csr_amd(&sparse,amd_order,2)||amd_order[0]!=0||amd_order[1]!=1;
     matrix_cholesky_symbolic plan={0};matrix_cholesky chol={0};matrix cx={0};
     if(!failed)failed=m_cholesky_analyze(&sparse,&plan)||m_cholesky_factorize(&plan,&sparse,&chol);
     if(!failed){vector.values[0]=6;vector.values[1]=7;failed=m_cholesky_solve(&chol,&vector,&cx);}

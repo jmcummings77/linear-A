@@ -27,6 +27,42 @@ type CSRMatrix(rows: int, cols: int, offsets: int[], indices: int[], values: dou
     member _.RowOffsets = Array.copy rp
     member _.ColumnIndices = Array.copy ci
     member _.Values = Array.copy v
+    member _.ApproximateMinimumDegree() =
+        if rows<>cols then invalidArg "rows" "AMD requires square matrix."
+        let direct = Array.init rows (fun _ -> Collections.Generic.HashSet<int>())
+        let elements = Array.init rows (fun _ -> Collections.Generic.HashSet<int>())
+        for i in 0..rows-1 do
+            for k in rp[i]..rp[i+1]-1 do
+                let j=ci[k]
+                if i<>j then
+                    direct[i].Add(j) |> ignore
+                    direct[j].Add(i) |> ignore
+        let active = Collections.Generic.HashSet<int>([|0..rows-1|])
+        let degree = direct |> Array.map (fun g -> g.Count)
+        let order = ResizeArray<int>()
+        while active.Count>0 do
+            let pivot = active |> Seq.minBy (fun i -> min degree[i] (active.Count-1),i)
+            let neighbors = Collections.Generic.HashSet<int>(direct[pivot])
+            for e in elements do
+                if e.Contains(pivot) then
+                    neighbors.UnionWith(e)
+                    e.Clear()
+            neighbors.Remove(pivot) |> ignore
+            active.Remove(pivot) |> ignore
+            order.Add(pivot)
+            direct[pivot].Clear()
+            for i in neighbors do
+                direct[i].Remove(pivot) |> ignore
+                direct[i].ExceptWith(neighbors)
+            elements[pivot] <- neighbors
+            for i in neighbors do
+                let mutable bound = int64 neighbors.Count-1L+int64 direct[i].Count
+                for e in 0..rows-1 do
+                    if e<>pivot && elements[e].Contains(i) then
+                        bound <- bound + int64 (elements[e] |> Seq.filter (neighbors.Contains >> not) |> Seq.length)
+                degree[i] <- int (min (int64 active.Count-1L) bound)
+        order.ToArray()
+
     member _.ReverseCuthillMcKee() =
         if rows<>cols then invalidArg "rows" "RCM requires square matrix."
         let graph = Array.init rows (fun _ -> Collections.Generic.HashSet<int>())

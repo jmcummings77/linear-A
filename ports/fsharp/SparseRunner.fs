@@ -9,7 +9,7 @@ let run (args: string[]) =
     let integer i = Int32.Parse(args[i],CultureInfo.InvariantCulture)
     let number i = Double.Parse(args[i],CultureInfo.InvariantCulture)
     let op,rows,cols,nnz,iterations,rtol,atol,limit,jacobi,capture = args[1],integer 2,integer 3,integer 4,integer 5,number 6,number 7,integer 8,integer 9,integer 10
-    if not (List.contains op ["spmv";"dense";"cg";"gmres";"ilu_setup";"ilu_apply";"rcm";"permute";"permutation_check";"rcm_solve";"ilu_solve";"chol_symbolic";"chol_factor";"chol_solve";"chol_total";"chol_rcm_total"]) || min rows (min cols (min nnz iterations))<0 || jacobi<0 || jacobi>(if op="gmres" then 3 else 1) || capture<0 || capture>1 then invalidArg "args" "Invalid sparse options."
+    if not (List.contains op ["spmv";"dense";"cg";"gmres";"ilu_setup";"ilu_apply";"rcm";"amd";"permute";"permutation_check";"rcm_solve";"ilu_solve";"chol_symbolic";"chol_factor";"chol_solve";"chol_total";"chol_rcm_total";"chol_amd_total"]) || min rows (min cols (min nnz iterations))<0 || jacobi<0 || jacobi>(if op="gmres" then 3 else 1) || capture<0 || capture>1 then invalidArg "args" "Invalid sparse options."
     let raw = Console.In.ReadToEnd().Split(Array.empty<char>,StringSplitOptions.RemoveEmptyEntries)
     let count = if op="cg" || op="gmres" then rows else cols
     if raw.Length<>rows+1+2*nnz+count then invalidArg "args" "Incorrect sparse input count."
@@ -36,8 +36,8 @@ let run (args: string[]) =
             let l=plan.Value.Factorize(a).Lower
             Array.concat [Array.map float l.RowOffsets;Array.map float l.ColumnIndices;l.Values]
         elif op="chol_solve" then chol.Value.Solve(b)
-        elif op="chol_total" || op="chol_rcm_total" then
-            let p=if op="chol_rcm_total" then Some(a.ReverseCuthillMcKee()) else None
+        elif op="chol_total" || op="chol_rcm_total" || op="chol_amd_total" then
+            let p=if op="chol_amd_total" then Some(a.ApproximateMinimumDegree()) elif op="chol_rcm_total" then Some(a.ReverseCuthillMcKee()) else None
             let q=match p with Some p -> a.PermuteSymmetric(p) | None -> a
             let rhs=match p with Some p -> CSRMatrix.PermuteVector(p,b) | None -> b
             let x=SparseCholeskySymbolic(q).Factorize(q).Solve(rhs)
@@ -50,6 +50,7 @@ let run (args: string[]) =
             if not result.Converged then failwith ("Ordering solve failed: "+result.Reason)
             let x=if op="rcm_solve" then CSRMatrix.PermuteVector(p,result.X,true) else result.X
             Array.append [|float result.Iterations|] x
+        elif op="amd" then a.ApproximateMinimumDegree() |> Array.map float
         elif op="rcm" then a.ReverseCuthillMcKee() |> Array.map float
         elif op="permute" || op="permutation_check" then
             if Array.exists (fun x -> not (Double.IsFinite x) || x<0.0 || x>=float rows || x<>Math.Floor(x)) b then invalidArg "b" "Invalid permutation."

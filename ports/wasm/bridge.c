@@ -300,6 +300,14 @@ matrix *wm_csr_rcm(const sparse_matrix *a){
  if(!last_status)for(size_t i=0;i<n;i++)out->values[i]=(double)p[i];free(p);
  if(last_status){m_free(out);free(out);return NULL;}return out;
 }
+matrix *wm_csr_amd(const sparse_matrix *a){
+ if(!a){last_status=M_ARGUMENT;return NULL;}size_t n=a->rows;
+ size_t *p=calloc(n?n:1,sizeof(size_t));if(!p){last_status=M_MEMORY;return NULL;}
+ matrix *out=allocate_handle();if(!out){free(p);return NULL;}
+ last_status=m_csr_amd(a,p,n);if(!last_status)last_status=m_create(n,1,out);
+ if(!last_status)for(size_t i=0;i<n;i++)out->values[i]=(double)p[i];free(p);
+ if(last_status){m_free(out);free(out);return NULL;}return out;
+}
 static size_t *wm_order(const matrix *order,size_t n){
  last_status=M_ARGUMENT;if(!order||order->rows!=n||order->cols!=1)return NULL;
  size_t *p=calloc(n?n:1,sizeof(size_t));if(!p){last_status=M_MEMORY;return NULL;}

@@ -225,6 +225,90 @@ func (a *CSRMatrix) ConjugateGradient(b []float64, o CGOptions) (*CGResult, erro
 	return result("iteration_limit")
 }
 
+// ApproximateMinimumDegree returns deterministic new-to-old quotient-graph AMD indices.
+func (a *CSRMatrix) ApproximateMinimumDegree() ([]int, error) {
+	if a == nil || a.rows != a.cols {
+		return nil, errors.New("AMD requires square matrix")
+	}
+	n := a.rows
+	direct := make([]map[int]bool, n)
+	elements := make([]map[int]bool, n)
+	active := make([]bool, n)
+	degree := make([]int, n)
+	for i := 0; i < n; i++ {
+		direct[i] = map[int]bool{}
+		elements[i] = map[int]bool{}
+		active[i] = true
+	}
+	for i := 0; i < n; i++ {
+		for k := a.rp[i]; k < a.rp[i+1]; k++ {
+			j := a.ci[k]
+			if i != j {
+				direct[i][j] = true
+				direct[j][i] = true
+			}
+		}
+	}
+	for i := 0; i < n; i++ {
+		degree[i] = len(direct[i])
+	}
+	order := []int{}
+	for remaining := n; remaining > 0; remaining-- {
+		pivot, best := -1, n
+		for i := 0; i < n; i++ {
+			if active[i] {
+				d := degree[i]
+				if d > remaining-1 {
+					d = remaining - 1
+				}
+				if d < best {
+					pivot, best = i, d
+				}
+			}
+		}
+		neighbors := map[int]bool{}
+		for j := range direct[pivot] {
+			neighbors[j] = true
+		}
+		for e, g := range elements {
+			if g[pivot] {
+				for j := range g {
+					neighbors[j] = true
+				}
+				elements[e] = map[int]bool{}
+			}
+		}
+		delete(neighbors, pivot)
+		active[pivot] = false
+		order = append(order, pivot)
+		direct[pivot] = map[int]bool{}
+		for i := range neighbors {
+			delete(direct[i], pivot)
+			for j := range neighbors {
+				delete(direct[i], j)
+			}
+		}
+		elements[pivot] = neighbors
+		for i := range neighbors {
+			bound := len(neighbors) - 1 + len(direct[i])
+			for e, g := range elements {
+				if e != pivot && g[i] {
+					for j := range g {
+						if !neighbors[j] && bound < remaining-2 {
+							bound++
+						}
+					}
+				}
+			}
+			if bound > remaining-2 {
+				bound = remaining - 2
+			}
+			degree[i] = bound
+		}
+	}
+	return order, nil
+}
+
 // ReverseCuthillMcKee returns new-to-old indices for the undirected stored pattern.
 func (a *CSRMatrix) ReverseCuthillMcKee() ([]int, error) {
 	if a == nil || a.rows != a.cols {

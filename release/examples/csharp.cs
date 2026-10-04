@@ -34,5 +34,6 @@ if(Math.Abs(ilu.Apply(new[]{6.0,7})[0]-1)>1e-12 || Math.Abs(second[0]-20.0/11)>1
 var order=sparse.ReverseCuthillMcKee();var reordered=sparse.PermuteSymmetric(order);var permuted=CSRMatrix.PermuteVector(order,new[]{1.0,2});
 if(!CSRMatrix.PermuteVector(order,reordered.Matvec(permuted),true).SequenceEqual(new[]{6.0,7}))throw new Exception("incorrect permutation");
 
+if(!System.Linq.Enumerable.SequenceEqual(sparse.ApproximateMinimumDegree(),new[]{0,1}))throw new Exception("incorrect AMD ordering");
 var plan=new SparseCholeskySymbolic(sparse);var chol=plan.Factorize(sparse);
 if(Math.Abs(chol.Solve(new[]{6.0,7})[0]-1)>1e-12||Math.Abs(chol.Solve(new[]{11.0,13})[0]-20.0/11)>1e-12||chol.Lower.NNZ!=3)throw new Exception("incorrect Cholesky reuse");

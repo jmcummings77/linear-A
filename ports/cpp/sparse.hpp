@@ -30,6 +30,7 @@ public:
         auto a=view();if(la_csr_validate(&a))throw std::invalid_argument("invalid canonical CSR");
     }
     std::vector<std::size_t> reverse_cuthill_mckee()const{auto a=view();std::vector<std::size_t> p(rows_);if(la_csr_rcm(&a,p.data(),p.size()))throw std::invalid_argument("invalid RCM input");return p;}
+    std::vector<std::size_t> approximate_minimum_degree()const{auto a=view();std::vector<std::size_t> p(rows_);if(la_csr_amd(&a,p.data(),p.size()))throw std::invalid_argument("invalid AMD input");return p;}
     static std::vector<double> permute_vector(const std::vector<std::size_t>& p,const std::vector<double>& x,bool inverse=false){if(p.size()!=x.size())throw std::invalid_argument("invalid permutation length");std::vector<double> out(x.size());if(la_permute_vector(p.data(),p.size(),x.data(),inverse,out.data()))throw std::invalid_argument("invalid permutation or vector");return out;}
     CSRMatrix permute_symmetric(const std::vector<std::size_t>& p)const{auto a=view();la_csr out={};if(la_csr_permute(&a,p.data(),p.size(),&out))throw std::invalid_argument("invalid permutation");try{CSRMatrix result(out.rows,out.cols,{out.offsets,out.offsets+out.rows+1},{out.indices,out.indices+out.nnz},{out.values,out.values+out.nnz});la_csr_free(&out);return result;}catch(...){la_csr_free(&out);throw;}}
     static CSRMatrix from_dense(const Matrix& a){

@@ -120,6 +120,7 @@ typedef la_cg_result matrix_cg_result;
  * CG reason: 0 converged, 1 iteration_limit, 2 breakdown, 3 nonfinite. */
 matrix_status m_csr_create(size_t rows,size_t cols,size_t nnz,const size_t *offsets,const size_t *indices,const double *values,sparse_matrix *out);
 matrix_status m_csr_rcm(const sparse_matrix *a,size_t *out,size_t count);
+matrix_status m_csr_amd(const sparse_matrix *a,size_t *out,size_t count);
 matrix_status m_csr_permute(const sparse_matrix *a,const size_t *p,size_t count,sparse_matrix *out);
 matrix_status m_permute_vector(const size_t *p,size_t count,const double *x,bool inverse,double *out);
 matrix_status m_csr_from_dense(const matrix *a,sparse_matrix *out);

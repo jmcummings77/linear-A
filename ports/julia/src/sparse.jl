@@ -98,6 +98,37 @@ function conjugate_gradient(a::CSRMatrix,b;rtol=1e-10,atol=0.0,max_iterations=10
 end
 export CSRMatrix,csr_from_dense,matvec,conjugate_gradient
 
+"""Quotient-graph AMD, returning deterministic zero-based new-to-old indices."""
+function approximate_minimum_degree(a::CSRMatrix)
+ validate_csr(a.rows,a.cols,a.offsets,a.indices,a.values)
+ a.rows==a.cols || throw(ArgumentError("AMD requires square matrix"))
+ n=a.rows;direct=[Set{Int}() for _ in 1:n];elements=[Set{Int}() for _ in 1:n]
+ for i in 1:n, k in a.offsets[i]+1:a.offsets[i+1]
+  j=a.indices[k]+1
+  if i!=j;push!(direct[i],j);push!(direct[j],i);end
+ end
+ active=Set(1:n);degree=length.(direct);order=Int[]
+ while !isempty(active)
+  pivot=first(sort(collect(active),by=i->(min(degree[i],length(active)-1),i)))
+  neighbors=copy(direct[pivot])
+  for e in elements
+   if pivot in e;union!(neighbors,e);empty!(e);end
+  end
+  delete!(neighbors,pivot);delete!(active,pivot);push!(order,pivot-1);empty!(direct[pivot])
+  for i in neighbors;delete!(direct[i],pivot);setdiff!(direct[i],neighbors);end
+  elements[pivot]=neighbors
+  for i in neighbors
+   bound=length(neighbors)-1+length(direct[i])
+   for e in 1:n
+    if e!=pivot && i in elements[e];bound+=length(setdiff(elements[e],neighbors));end
+   end
+   degree[i]=min(length(active)-1,bound)
+  end
+ end
+ order
+end
+export approximate_minimum_degree
+
 """Deterministic new-to-old RCM indices (zero-based, as in CSR)."""
 function reverse_cuthill_mckee(a::CSRMatrix)
  validate_csr(a.rows,a.cols,a.offsets,a.indices,a.values)

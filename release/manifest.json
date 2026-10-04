@@ -1,5 +1,5 @@
 {
-  "version": "0.8.0",
+  "version": "0.9.0",
   "capabilities": [
     "arithmetic",
     "determinants",
@@ -15,7 +15,8 @@
     "gmres",
     "ilu0",
     "rcm",
-    "sparse-cholesky"
+    "sparse-cholesky",
+    "amd"
   ],
   "ports": {
     "assembly": {
@@ -40,7 +41,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "c": {
@@ -64,7 +66,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "cpp": {
@@ -89,7 +92,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "csharp": {
@@ -113,7 +117,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "fsharp": {
@@ -137,7 +142,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "go": {
@@ -161,7 +167,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "julia": {
@@ -185,7 +192,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "python": {
@@ -209,7 +217,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "rust": {
@@ -233,7 +242,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "typescript": {
@@ -257,7 +267,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     },
     "wasm": {
@@ -282,7 +293,8 @@
         "gmres",
         "ilu0",
         "rcm",
-        "sparse-cholesky"
+        "sparse-cholesky",
+        "amd"
       ]
     }
   }

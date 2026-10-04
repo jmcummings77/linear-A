@@ -27,6 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert!(cg.converged&&(cg.x[0]-1.).abs()<1e-12&&(cg.x[1]-2.).abs()<1e-12);
     let order=sparse.reverse_cuthill_mckee()?;let reordered=sparse.permute_symmetric(&order)?;let y=linear_a::CSRMatrix::permute_vector(&order,&[1.,2.],false)?;
     assert_eq!(linear_a::CSRMatrix::permute_vector(&order,&reordered.matvec(&y)?,true)?,vec![6.,7.]);
+    assert_eq!(sparse.approximate_minimum_degree()?,vec![0,1]);
     let plan=linear_a::SparseCholeskySymbolic::new(&sparse)?;let chol=plan.factorize(&sparse)?;
     assert!((chol.solve(&[6.,7.])?[0]-1.).abs()<1e-12&&(chol.solve(&[11.,13.])?[0]-20./11.).abs()<1e-12);
     assert_eq!(chol.lower().nnz(),3);

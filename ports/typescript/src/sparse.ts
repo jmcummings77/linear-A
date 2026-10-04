@@ -17,6 +17,23 @@ export class CSRMatrix {
     this.rows=rows;this.cols=cols;this.rp=rp;this.ci=ci;this.v=v;
   }
   get nnz(){return this.v.length;}get rowOffsets(){return this.rp.slice();}get columnIndices(){return this.ci.slice();}get values(){return this.v.slice();}
+  /** Quotient-graph AMD; deterministic new-to-old indices. */
+  approximateMinimumDegree():number[]{
+    if(this.rows!==this.cols)throw new RangeError('AMD requires square matrix');
+    const n=this.rows,direct=Array.from({length:n},()=>new Set<number>()),elements=Array.from({length:n},()=>new Set<number>());
+    for(let i=0;i<n;i++)for(let k=this.rp[i];k<this.rp[i+1];k++){const j=this.ci[k];if(i!==j){direct[i].add(j);direct[j].add(i);}}
+    const active=new Set(Array.from({length:n},(_,i)=>i)),degree=direct.map(g=>g.size),order:number[]=[];
+    while(active.size){
+      const pivot=[...active].sort((a,b)=>Math.min(degree[a],active.size-1)-Math.min(degree[b],active.size-1)||a-b)[0];
+      const neighbors=new Set(direct[pivot]);
+      for(const e of elements)if(e.has(pivot)){for(const i of e)neighbors.add(i);e.clear();}
+      neighbors.delete(pivot);active.delete(pivot);order.push(pivot);direct[pivot].clear();
+      for(const i of neighbors){direct[i].delete(pivot);for(const j of neighbors)direct[i].delete(j);}
+      elements[pivot]=neighbors;
+      for(const i of neighbors){let bound=neighbors.size-1+direct[i].size;for(let e=0;e<n;e++)if(e!==pivot&&elements[e].has(i))for(const j of elements[e])if(!neighbors.has(j))bound++;degree[i]=Math.min(active.size-1,bound);}
+    }return order;
+  }
+
   reverseCuthillMcKee():number[]{
     if(this.rows!==this.cols)throw new RangeError('RCM requires square matrix');
     const graph=Array.from({length:this.rows},()=>new Set<number>());

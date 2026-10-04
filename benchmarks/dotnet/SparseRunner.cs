@@ -9,7 +9,7 @@ internal static class SparseRunner
         if (args.Length != (args.Length > 1 && args[1] == "gmres" ? 12 : 11)) throw new ArgumentException("Invalid sparse protocol.");
         var op = args[1]; int Int(int i) => int.Parse(args[i], CultureInfo.InvariantCulture); double Number(int i) => double.Parse(args[i], CultureInfo.InvariantCulture);
         var rows = Int(2); var cols = Int(3); var nnz = Int(4); var iterations = Int(5); var rtol = Number(6); var atol = Number(7); var limit = Int(8); var jacobi = Int(9); var capture = Int(10);
-        if (op is not ("spmv" or "dense" or "cg" or "gmres" or "ilu_setup" or "ilu_apply" or "rcm" or "permute" or "permutation_check" or "rcm_solve" or "ilu_solve" or "chol_symbolic" or "chol_factor" or "chol_solve" or "chol_total" or "chol_rcm_total") || rows < 0 || cols < 0 || nnz < 0 || iterations < 0 || (jacobi < 0 || jacobi > (op == "gmres" ? 3 : 1)) || capture is < 0 or > 1) throw new ArgumentException("Invalid sparse options.");
+        if (op is not ("spmv" or "dense" or "cg" or "gmres" or "ilu_setup" or "ilu_apply" or "rcm" or "amd" or "permute" or "permutation_check" or "rcm_solve" or "ilu_solve" or "chol_symbolic" or "chol_factor" or "chol_solve" or "chol_total" or "chol_rcm_total" or "chol_amd_total") || rows < 0 || cols < 0 || nnz < 0 || iterations < 0 || (jacobi < 0 || jacobi > (op == "gmres" ? 3 : 1)) || capture is < 0 or > 1) throw new ArgumentException("Invalid sparse options.");
         var tokens = Console.In.ReadToEnd().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries); var count = op is "cg" or "gmres" ? rows : cols;
         if (tokens.Length != checked(rows + 1 + 2 * nnz + count)) throw new ArgumentException("Incorrect sparse input count.");
         var offset = 0; int[] Indices(int n) => Enumerable.Range(0, n).Select(_ => int.Parse(tokens[offset++], CultureInfo.InvariantCulture)).ToArray(); double[] Values(int n) => Enumerable.Range(0, n).Select(_ => double.Parse(tokens[offset++], CultureInfo.InvariantCulture)).ToArray();
@@ -24,12 +24,13 @@ internal static class SparseRunner
             if (op == "chol_symbolic") { var s = new SparseCholeskySymbolic(a); return s.RowOffsets.Concat(s.ColumnIndices).Concat(s.FillSteps).Select(x => (double)x).ToArray(); }
             if (op == "chol_factor") { var l = plan!.Factorize(a).Lower; return l.RowOffsets.Concat(l.ColumnIndices).Select(x => (double)x).Concat(l.Values).ToArray(); }
             if (op == "chol_solve") return chol!.Solve(b);
-            if (op is "chol_total" or "chol_rcm_total") { var p = op == "chol_rcm_total" ? a.ReverseCuthillMcKee() : null; var q = p is null ? a : a.PermuteSymmetric(p); var x = new SparseCholeskySymbolic(q).Factorize(q).Solve(p is null ? b : CSRMatrix.PermuteVector(p, b)); return p is null ? x : CSRMatrix.PermuteVector(p, x, true); }
-            if (op is "rcm_solve" or "ilu_solve" or "chol_symbolic" or "chol_factor" or "chol_solve" or "chol_total" or "chol_rcm_total")
+            if (op is "chol_total" or "chol_rcm_total" or "chol_amd_total") { var p = op == "chol_amd_total" ? a.ApproximateMinimumDegree() : op == "chol_rcm_total" ? a.ReverseCuthillMcKee() : null; var q = p is null ? a : a.PermuteSymmetric(p); var x = new SparseCholeskySymbolic(q).Factorize(q).Solve(p is null ? b : CSRMatrix.PermuteVector(p, b)); return p is null ? x : CSRMatrix.PermuteVector(p, x, true); }
+            if (op is "rcm_solve" or "ilu_solve" or "chol_symbolic" or "chol_factor" or "chol_solve" or "chol_total" or "chol_rcm_total" or "chol_amd_total")
             {
                 var p = op == "rcm_solve" ? a.ReverseCuthillMcKee() : Enumerable.Range(0, rows).ToArray(); var q = op == "rcm_solve" ? a.PermuteSymmetric(p) : a; var rhs = op == "rcm_solve" ? CSRMatrix.PermuteVector(p, b) : b;
                 var orderedResult = q.Gmres(rhs, 20, rtol, atol, limit, false, false, new ILU0(q)); if (!orderedResult.Converged) throw new ArithmeticException("Ordering solve failed: " + orderedResult.Reason); var x = op == "rcm_solve" ? CSRMatrix.PermuteVector(p, orderedResult.X, true) : orderedResult.X; return new double[] { orderedResult.Iterations }.Concat(x).ToArray();
             }
+            if (op == "amd") return a.ApproximateMinimumDegree().Select(i => (double)i).ToArray();
             if (op == "rcm") return a.ReverseCuthillMcKee().Select(i => (double)i).ToArray();
             if (op is "permute" or "permutation_check")
             {

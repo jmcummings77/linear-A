@@ -263,6 +263,61 @@ impl CSRMatrix {
 }
 
 impl CSRMatrix {
+    /// Quotient-graph AMD with deterministic new-to-old indices.
+    pub fn approximate_minimum_degree(&self) -> Result<Vec<usize>, MatrixError> {
+        if self.rows != self.cols {
+            return Err(MatrixError::new("AMD requires square matrix"));
+        }
+        use std::collections::BTreeSet;
+        let n = self.rows;
+        let mut direct = vec![BTreeSet::new(); n];
+        let mut elements = vec![BTreeSet::new(); n];
+        for i in 0..n {
+            for k in self.rp[i]..self.rp[i + 1] {
+                let j = self.ci[k];
+                if i != j {
+                    direct[i].insert(j);
+                    direct[j].insert(i);
+                }
+            }
+        }
+        let mut active: BTreeSet<usize> = (0..n).collect();
+        let mut degree: Vec<usize> = direct.iter().map(|g| g.len()).collect();
+        let mut order = vec![];
+        while !active.is_empty() {
+            let pivot = *active
+                .iter()
+                .min_by_key(|&&i| (degree[i].min(active.len() - 1), i))
+                .unwrap();
+            let mut neighbors = direct[pivot].clone();
+            for e in &mut elements {
+                if e.contains(&pivot) {
+                    neighbors.extend(e.iter().copied());
+                    e.clear();
+                }
+            }
+            neighbors.remove(&pivot);
+            active.remove(&pivot);
+            order.push(pivot);
+            direct[pivot].clear();
+            for &i in &neighbors {
+                direct[i].remove(&pivot);
+                direct[i].retain(|j| !neighbors.contains(j));
+            }
+            elements[pivot] = neighbors.clone();
+            for &i in &neighbors {
+                let mut bound = neighbors.len() - 1 + direct[i].len();
+                for (e, g) in elements.iter().enumerate() {
+                    if e != pivot && g.contains(&i) {
+                        bound = bound.saturating_add(g.difference(&neighbors).count());
+                    }
+                }
+                degree[i] = bound.min(active.len() - 1);
+            }
+        }
+        Ok(order)
+    }
+
     pub fn reverse_cuthill_mckee(&self) -> Result<Vec<usize>, MatrixError> {
         if self.rows != self.cols {
             return Err(MatrixError::new("RCM requires square matrix"));

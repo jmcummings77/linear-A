@@ -37,6 +37,33 @@ public sealed partial class CSRMatrix
         }
         Rows = rows; Cols = cols;
     }
+    /// <summary>Deterministic quotient-graph approximate minimum degree, new-to-old indices.</summary>
+    public int[] ApproximateMinimumDegree()
+    {
+        if (Rows != Cols) throw new ArgumentException("AMD requires square matrix.");
+        var n = Rows;
+        var direct = Enumerable.Range(0, n).Select(_ => new HashSet<int>()).ToArray();
+        var elements = Enumerable.Range(0, n).Select(_ => new HashSet<int>()).ToArray();
+        for (var i = 0; i < n; i++) for (var k = offsets[i]; k < offsets[i + 1]; k++) { var j = indices[k]; if (i != j) { direct[i].Add(j); direct[j].Add(i); } }
+        var active = new HashSet<int>(Enumerable.Range(0, n)); var degree = direct.Select(g => g.Count).ToArray(); var order = new List<int>();
+        while (active.Count != 0)
+        {
+            var pivot = active.OrderBy(i => Math.Min(degree[i], active.Count - 1)).ThenBy(i => i).First();
+            var neighbors = new HashSet<int>(direct[pivot]);
+            foreach (var e in elements) if (e.Contains(pivot)) { neighbors.UnionWith(e); e.Clear(); }
+            neighbors.Remove(pivot); active.Remove(pivot); order.Add(pivot); direct[pivot].Clear();
+            foreach (var i in neighbors) { direct[i].Remove(pivot); direct[i].ExceptWith(neighbors); }
+            elements[pivot] = neighbors;
+            foreach (var i in neighbors)
+            {
+                long bound = neighbors.Count - 1L + direct[i].Count;
+                for (var e = 0; e < n; e++) if (e != pivot && elements[e].Contains(i)) bound += elements[e].Count(j => !neighbors.Contains(j));
+                degree[i] = (int)Math.Min(active.Count - 1L, bound);
+            }
+        }
+        return order.ToArray();
+    }
+
     /// <summary>New-to-old RCM ordering of the undirected stored pattern, including zeros.</summary>
     public int[] ReverseCuthillMcKee()
     {

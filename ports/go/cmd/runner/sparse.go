@@ -38,7 +38,7 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
-	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve" && op != "chol_symbolic" && op != "chol_factor" && op != "chol_solve" && op != "chol_total" && op != "chol_rcm_total") || jacobi > 3 || (op != "gmres" && jacobi > 1) || capture > 1 {
+	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "amd" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve" && op != "chol_symbolic" && op != "chol_factor" && op != "chol_solve" && op != "chol_total" && op != "chol_rcm_total" && op != "chol_amd_total") || jacobi > 3 || (op != "gmres" && jacobi > 1) || capture > 1 {
 		return errors.New("invalid sparse operation/options")
 	}
 	raw, e := io.ReadAll(os.Stdin)
@@ -167,12 +167,16 @@ func sparseRun(args []string) error {
 		if op == "chol_solve" {
 			return chol.Solve(b)
 		}
-		if op == "chol_total" || op == "chol_rcm_total" {
+		if op == "chol_total" || op == "chol_rcm_total" || op == "chol_amd_total" {
 			q, rhs := a, b
 			var p []int
 			var e error
-			if op == "chol_rcm_total" {
-				p, e = a.ReverseCuthillMcKee()
+			if op == "chol_rcm_total" || op == "chol_amd_total" {
+				if op == "chol_amd_total" {
+					p, e = a.ApproximateMinimumDegree()
+				} else {
+					p, e = a.ReverseCuthillMcKee()
+				}
 				if e != nil {
 					return nil, e
 				}
@@ -197,7 +201,7 @@ func sparseRun(args []string) error {
 			if e != nil {
 				return nil, e
 			}
-			if op == "chol_rcm_total" {
+			if op == "chol_rcm_total" || op == "chol_amd_total" {
 				return matrix.PermuteVector(p, x, true)
 			}
 			return x, nil
@@ -247,6 +251,17 @@ func sparseRun(args []string) error {
 				}
 			}
 			return append([]float64{float64(r.Iterations)}, x...), nil
+		}
+		if op == "amd" {
+			p, e := a.ApproximateMinimumDegree()
+			if e != nil {
+				return nil, e
+			}
+			out := make([]float64, len(p))
+			for i, j := range p {
+				out[i] = float64(j)
+			}
+			return out, nil
 		}
 		if op == "rcm" {
 			p, e := a.ReverseCuthillMcKee()

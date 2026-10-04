@@ -30,6 +30,7 @@ pub fn run(args: &[String]) -> Result<()> {
         "ilu_setup",
         "ilu_apply",
         "rcm",
+        "amd",
         "permute",
         "permutation_check",
         "rcm_solve",
@@ -39,6 +40,7 @@ pub fn run(args: &[String]) -> Result<()> {
         "chol_solve",
         "chol_total",
         "chol_rcm_total",
+        "chol_amd_total",
     ]
     .contains(&op)
         || jacobi > 3
@@ -131,8 +133,10 @@ pub fn run(args: &[String]) -> Result<()> {
         if op == "chol_solve" {
             return Ok(chol.as_ref().unwrap().solve(&b)?);
         }
-        if op == "chol_total" || op == "chol_rcm_total" {
-            let p = if op == "chol_rcm_total" {
+        if op == "chol_total" || op == "chol_rcm_total" || op == "chol_amd_total" {
+            let p = if op == "chol_amd_total" {
+                Some(a.approximate_minimum_degree()?)
+            } else if op == "chol_rcm_total" {
                 Some(a.reverse_cuthill_mckee()?)
             } else {
                 None
@@ -193,6 +197,13 @@ pub fn run(args: &[String]) -> Result<()> {
                 result.x
             });
             return Ok(out);
+        }
+        if op == "amd" {
+            return Ok(a
+                .approximate_minimum_degree()?
+                .iter()
+                .map(|&i| i as f64)
+                .collect());
         }
         if op == "rcm" {
             return Ok(a

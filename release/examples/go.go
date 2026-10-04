@@ -35,6 +35,7 @@ func main() {
  reordered,err:=sparse.PermuteSymmetric(order);if err!=nil{panic(err)}
  permuted,err:=matrix.PermuteVector(order,[]float64{1,2},false);if err!=nil{panic(err)}
  z,err:=reordered.Matvec(permuted);if err!=nil{panic(err)};restored,err:=matrix.PermuteVector(order,z,true);if err!=nil||restored[0]!=6||restored[1]!=7{panic("incorrect permutation")}
+ ap,ae:=sparse.ApproximateMinimumDegree();if ae!=nil||len(ap)!=2||ap[0]!=0||ap[1]!=1{panic("incorrect AMD ordering")}
  plan,err:=matrix.NewSparseCholeskySymbolic(sparse);if err!=nil{panic(err)}
  chol,err:=plan.Factorize(sparse);if err!=nil{panic(err)}
  cx,err:=chol.Solve([]float64{6,7});if err!=nil||math.Abs(cx[0]-1)>1e-12{panic("incorrect Cholesky")}

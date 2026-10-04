@@ -68,7 +68,7 @@ def table(manifest):
     lines = ['# API compatibility: ' + manifest['version'], '',
              'This is the shared float64 contract for these release kits. A check mark is',
              'a declared capability validated by the shared conformance suite in CI.',
-             'Package installation tests separately exercise solving, multiplication, SVD and its inverse APIs, CSR multiplication, conjugate gradient, GMRES, ILU(0) reuse, RCM permutations and sparse Cholesky reuse.', '',
+             'Package installation tests separately exercise solving, multiplication, SVD and its inverse APIs, CSR multiplication, conjugate gradient, GMRES, ILU(0) reuse, RCM/AMD permutations and sparse Cholesky reuse.', '',
              '| Port | Required runtime/toolchain | ' + ' | '.join(manifest['capabilities']) + ' |',
              '| --- | --- | ' + ' | '.join('---' for _ in manifest['capabilities']) + ' |']
     for name, port in manifest['ports'].items():
@@ -101,7 +101,7 @@ def check_manifest(manifest):
 
 def kit_files(name, port, version, provenance=None):
     files = tracked_sources(ROOT, port['source_roots'])
-    for path in ['LICENSE', 'Directory.Build.props', 'global.json', 'ports/README.md', 'ports/SOLVING.md', 'ports/SVD.md', 'ports/SPARSE.md', 'ports/CHOLESKY.md']:
+    for path in ['LICENSE', 'Directory.Build.props', 'global.json', 'ports/README.md', 'ports/SOLVING.md', 'ports/SVD.md', 'ports/SPARSE.md', 'ports/CHOLESKY.md', 'ports/AMD.md']:
         files[path] = (ROOT / path).read_bytes()
     for path in (ROOT / 'docs/api' / version).glob('*.md'):
         files['docs/api/' + version + '/' + path.name] = path.read_bytes()

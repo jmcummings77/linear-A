@@ -36,6 +36,7 @@ y=CSRMatrix.permute_vector(p,[1,2])
 assert CSRMatrix.permute_vector(p,q.matvec(y),True)==[6,7]
 
 from matrix import SparseCholeskySymbolic
+assert sparse.approximate_minimum_degree()==[0,1]
 plan=SparseCholeskySymbolic(sparse)
 chol=plan.factorize(sparse)
 assert abs(chol.solve([6,7])[0]-1)<1e-12 and abs(chol.solve([11,13])[0]-20/11)<1e-12

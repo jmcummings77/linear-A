@@ -22,6 +22,7 @@ try {
 const sparse=new CSRMatrix(2,2,[0,2,4],[0,1,0,1],[4,1,1,3]);
 const order=sparse.reverseCuthillMcKee(),reordered=sparse.permuteSymmetric(order);
 try{const y=CSRMatrix.permuteVector(order,[1,2]);if(CSRMatrix.permuteVector(order,reordered.matvec(y),true).join()!=="6,7")throw Error("incorrect permutation");}finally{reordered.dispose();}
+if(JSON.stringify(sparse.approximateMinimumDegree())!=="[0,1]")throw Error("incorrect AMD ordering");
 try{const plan=new SparseCholeskySymbolic(sparse);let chol,lower;
 try{chol=plan.factorize(sparse);lower=chol.lower;if(Math.abs(chol.solve([6,7])[0]-1)>1e-12||Math.abs(chol.solve([11,13])[0]-20/11)>1e-12||lower.nnz!==3)throw Error("incorrect Cholesky reuse");}finally{lower?.dispose();chol?.dispose();plan.dispose();}
 const ilu=new ILU0(sparse);

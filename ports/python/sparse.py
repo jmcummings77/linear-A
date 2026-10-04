@@ -36,6 +36,45 @@ class CSRMatrix:
     column_indices=property(lambda self:self._ci.copy())
     values=property(lambda self:self._v.copy())
 
+    def approximate_minimum_degree(self):
+        """Deterministic quotient-graph AMD; zero-based new-to-old permutation."""
+        if self.rows != self.cols:
+            raise ValueError('AMD requires square matrix')
+        n = self.rows
+        direct = [set() for _ in range(n)]
+        elements = [set() for _ in range(n)]
+        for i in range(n):
+            for j in self._ci[self._rp[i]:self._rp[i+1]]:
+                if i != j:
+                    direct[i].add(j)
+                    direct[j].add(i)
+        active = set(range(n))
+        degree = [len(g) for g in direct]
+        order = []
+        while active:
+            pivot = min(active, key=lambda i: (min(degree[i], len(active)-1), i))
+            neighbors = direct[pivot].copy()
+            absorbed = [e for e in range(n) if pivot in elements[e]]
+            for e in absorbed:
+                neighbors.update(elements[e])
+            neighbors.discard(pivot)
+            active.remove(pivot)
+            order.append(pivot)
+            for e in absorbed:
+                elements[e].clear()
+            direct[pivot].clear()
+            for i in neighbors:
+                direct[i].discard(pivot)
+                direct[i].difference_update(neighbors)
+            elements[pivot] = neighbors
+            for i in neighbors:
+                bound = len(neighbors)-1 + len(direct[i])
+                for e in range(n):
+                    if e != pivot and i in elements[e]:
+                        bound += len(elements[e] - neighbors)
+                degree[i] = min(len(active)-1, bound)
+        return order
+
     def reverse_cuthill_mckee(self):
         """New-to-old ordering of the undirected stored pattern, including zeros."""
         if self.rows!=self.cols:raise ValueError('RCM requires square matrix')

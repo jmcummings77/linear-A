@@ -86,7 +86,7 @@ jobs:
       - name: Test benchmark harness and profile parsers
         run: |
           python3 -m unittest discover -s tests/benchmark_harness -v
-          node --test tests/cholesky-report.test.mjs tests/ordering-report.test.mjs tests/sparse-report.test.mjs tests/report-theme.test.mjs tests/timing-report.test.mjs tests/geometry-report.test.mjs tests/accuracy-report.test.mjs tests/comparison.test.mjs tests/comparison-ui.test.mjs
+          node --test tests/amd-report.test.mjs tests/cholesky-report.test.mjs tests/ordering-report.test.mjs tests/sparse-report.test.mjs tests/report-theme.test.mjs tests/timing-report.test.mjs tests/geometry-report.test.mjs tests/accuracy-report.test.mjs tests/comparison.test.mjs tests/comparison-ui.test.mjs
       - name: Test Julia library and runner
         run: julia --startup-file=no --threads=1 --project=ports/julia ports/julia/test/runtests.jl
       - name: Test C, C++, and ARM64 libraries
@@ -104,6 +104,8 @@ jobs:
           clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/test_ordering.c -lm -o .build/unit/ordering-tests
           clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c tests/c_cholesky.c -lm -o .build/unit/cholesky-tests
           .build/unit/cholesky-tests
+          clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c tests/c_amd.c -lm -o .build/unit/amd-tests
+          .build/unit/amd-tests
           .build/unit/ordering-tests
           .build/unit/ilu-tests
           clang -std=c11 -O1 -g -ffp-contract=off -fsanitize=address,undefined -fno-sanitize-recover=all ports/c/matrix.c ports/c/pseudoinverse_tests.c -lm -o .build/unit/pseudoinverse-tests

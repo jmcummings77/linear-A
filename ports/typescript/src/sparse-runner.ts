@@ -8,7 +8,7 @@ export function sparseRun(args:string[]){
  if(args.length!==(args[0]==='gmres'?11:10))throw new Error('expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE');
  const [op]=args,[rows,cols,nnz,iters]=args.slice(1,5).map(Number),[rtol,atol]=args.slice(5,7).map(Number),[maxIterations,jacobi,capture]=args.slice(7,10).map(Number);
  const restart=op==='gmres'?Number(args[10]):30;
- if(!['spmv','dense','cg','gmres','ilu_setup','ilu_apply','rcm','permute','permutation_check','rcm_solve','ilu_solve','chol_symbolic','chol_factor','chol_solve','chol_total','chol_rcm_total'].includes(op)||[rows,cols,nnz,iters].some(x=>!Number.isSafeInteger(x)||x<0)||!(op==='gmres'?[0,1,2,3]:[0,1]).includes(jacobi)||![0,1].includes(capture))throw new Error('invalid sparse protocol');
+ if(!['spmv','dense','cg','gmres','ilu_setup','ilu_apply','rcm','amd','permute','permutation_check','rcm_solve','ilu_solve','chol_symbolic','chol_factor','chol_solve','chol_total','chol_rcm_total','chol_amd_total'].includes(op)||[rows,cols,nnz,iters].some(x=>!Number.isSafeInteger(x)||x<0)||!(op==='gmres'?[0,1,2,3]:[0,1]).includes(jacobi)||![0,1].includes(capture))throw new Error('invalid sparse protocol');
  const raw=readFileSync(0,'utf8').trim(),data=raw?raw.split(/\s+/).map(Number):[],count=['cg','gmres'].includes(op)?rows:cols;
  if(data.length!==rows+1+2*nnz+count)throw new Error('incorrect sparse input count');
  const rp=data.slice(0,rows+1),ci=data.slice(rows+1,rows+1+nnz),v=data.slice(rows+1+nnz,rows+1+2*nnz),b=data.slice(rows+1+2*nnz);
@@ -23,8 +23,8 @@ export function sparseRun(args:string[]){
    if(op==='chol_symbolic'){const s=new SparseCholeskySymbolic(a);try{return [...s.rowOffsets,...s.columnIndices,...s.fillSteps];}finally{}}
    if(op==='chol_factor'){const f=plan!.factorize(a);let l;try{l=f.lower;return [...l.rowOffsets,...l.columnIndices,...l.values];}finally{}}
    if(op==='chol_solve')return chol!.solve(b);
-   if(op==='chol_total'||op==='chol_rcm_total'){
-    const p=op==='chol_rcm_total'?a.reverseCuthillMcKee():undefined,q=p?a.permuteSymmetric(p):a;let s,f;
+   if(op==='chol_total'||op==='chol_rcm_total'||op==='chol_amd_total'){
+    const p=op==='chol_amd_total'?a.approximateMinimumDegree():op==='chol_rcm_total'?a.reverseCuthillMcKee():undefined,q=p?a.permuteSymmetric(p):a;let s,f;
     try{s=new SparseCholeskySymbolic(q);f=s.factorize(q);const x=f.solve(p?CSRMatrix.permuteVector(p,b):b);return p?CSRMatrix.permuteVector(p,x,true):x;}finally{}
    }
 
@@ -33,6 +33,7 @@ export function sparseRun(args:string[]){
     try{const rhs=op==='rcm_solve'?CSRMatrix.permuteVector(p,b):b,r=q.gmres(rhs,{restart:20,rtol,atol,maxIterations,preconditioner:f});if(!r.converged)throw new Error('ordering solve failed: '+r.reason);return [r.iterations,...(op==='rcm_solve'?CSRMatrix.permuteVector(p,r.x,true):r.x)];}
     finally{/* Managed factors. */}
    }
+   if(op==='amd')return a.approximateMinimumDegree();
    if(op==='rcm')return a.reverseCuthillMcKee();
    if(op==='permute'||op==='permutation_check'){
     const q=a.permuteSymmetric(b);

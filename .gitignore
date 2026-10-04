@@ -297,3 +297,5 @@ benchmarks/reports/*
 !/tests/release/*.py
 
 !benchmarks/reports/cholesky/
+
+!benchmarks/reports/amd/

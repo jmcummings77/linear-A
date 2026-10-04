@@ -1,7 +1,7 @@
 function sparse_run(args)
     length(args)==(length(args)>0 && args[1]=="gmres" ? 11 : 10) || throw(ArgumentError("invalid sparse protocol"))
     op=args[1];rows,cols,nnz,iterations=parse.(Int,args[2:5]);rtol,atol=parse.(Float64,args[6:7]);limit,jacobi,capture=parse.(Int,args[8:10])
-    op in ("spmv","dense","cg","gmres","ilu_setup","ilu_apply","rcm","permute","permutation_check","rcm_solve","ilu_solve","chol_symbolic","chol_factor","chol_solve","chol_total","chol_rcm_total") && min(rows,cols,nnz,iterations)>=0 && jacobi in (op=="gmres" ? (0,1,2,3) : (0,1)) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
+    op in ("spmv","dense","cg","gmres","ilu_setup","ilu_apply","rcm","amd","permute","permutation_check","rcm_solve","ilu_solve","chol_symbolic","chol_factor","chol_solve","chol_total","chol_rcm_total","chol_amd_total") && min(rows,cols,nnz,iterations)>=0 && jacobi in (op=="gmres" ? (0,1,2,3) : (0,1)) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
     tokens=split(read(stdin,String));count=op in ("cg","gmres") ? rows : cols
     length(tokens)==rows+1+2*nnz+count || throw(ArgumentError("incorrect sparse input count"))
     rp=parse.(Int,tokens[1:rows+1]);ci=parse.(Int,tokens[rows+2:rows+1+nnz]);v=parse.(Float64,tokens[rows+2+nnz:rows+1+2*nnz]);b=parse.(Float64,tokens[rows+2+2*nnz:end])
@@ -17,8 +17,8 @@ function sparse_run(args)
         if op=="chol_symbolic";s=SparseCholeskySymbolic(a);return Float64.(vcat(s.offsets,s.indices,s.fill_steps));end
         if op=="chol_factor";l=cholesky_factorize(plan,a).lower;return vcat(Float64.(l.offsets),Float64.(l.indices),l.values);end
         op=="chol_solve" && return cholesky_solve(chol,b)
-        if op in ("chol_total","chol_rcm_total")
-            p=op=="chol_rcm_total" ? reverse_cuthill_mckee(a) : nothing
+        if op in ("chol_total","chol_rcm_total","chol_amd_total")
+            p=op=="chol_amd_total" ? approximate_minimum_degree(a) : op=="chol_rcm_total" ? reverse_cuthill_mckee(a) : nothing
             q=isnothing(p) ? a : permute_symmetric(a,p);rhs=isnothing(p) ? b : permute_vector(p,b)
             x=cholesky_solve(cholesky_factorize(SparseCholeskySymbolic(q),q),rhs)
             return isnothing(p) ? x : permute_vector(p,x,inverse=true)
@@ -31,6 +31,7 @@ function sparse_run(args)
             x=op=="rcm_solve" ? permute_vector(p,result.x,inverse=true) : result.x
             return vcat([Float64(result.iterations)],x)
         end
+        op=="amd" && return Float64.(approximate_minimum_degree(a))
         op=="rcm" && return Float64.(reverse_cuthill_mckee(a))
         if op in ("permute","permutation_check")
             all(x->isfinite(x)&&0<=x<rows&&isinteger(x),b) || throw(ArgumentError("invalid permutation"))
