@@ -136,8 +136,8 @@ def live_bundle(data, extra_sources=None):
     return live
 
 
-def render(data, destination, *, live_override=None):
-    data = PublicSanitizer().report(data)
+def render(data, destination, *, live_override=None, published=False):
+    data = (PublicSanitizer.for_published() if published else PublicSanitizer()).report(data)
     live = live_override if live_override is not None else live_bundle(data)
     template = (HERE / 'sparse-report.html').read_text()
     # One pass: embedded source/data cannot introduce replacement markers.

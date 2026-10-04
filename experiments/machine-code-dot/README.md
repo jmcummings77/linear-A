@@ -56,10 +56,28 @@ python3 experiments/machine-code-dot/run.py \
 
 Omit the executable overrides when the matching tools are on `PATH`.
 
-Options include `--sizes 16 256 4096 65536`, `--samples 5`, and `--no-build`.
+Options include `--sizes 16 256 4096 65536`, `--samples 5`, `--no-build`, and
+`--output /tmp/linear-a-dot-repeat` for a separate local run.
 The harness uses a private build directory and private runtime caches under this
 experiment. The F# dependency is restored from the .NET SDK's bundled package
 when available. It does not modify the main matrix projects or their harness.
+
+To replace the published measurements, first commit the source and start from a
+clean checkout, then use the shared capture wrapper. It builds in a fresh clone
+and records the recoverable commit, source tree, command and artifact hashes.
+Place the documented toolchains on `PATH` before running:
+
+```sh
+python3 benchmarks/reproduce.py --runner machine-code-dot \
+  --output .build/publishable/machine-code-dot -- --samples 5
+```
+
+Review the capture, copy its complete contents into `experiments/machine-code-dot/results/`,
+and run `python3 benchmarks/check_provenance.py` before committing the report.
+See the [publication workflow](../../benchmarks/README.md#publishing-reproducible-source-records).
+The existing snapshot predates Git provenance recording. Its exact measured
+source cannot be reconstructed, so its frozen measurements and disassembly are
+historical evidence; they are not a recoverable source snapshot.
 
 Output in `results/`:
 

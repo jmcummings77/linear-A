@@ -10,10 +10,13 @@ from report_design import apply_report_design
 ROOT=Path(__file__).resolve().parents[1]
 HERE=Path(__file__).resolve().parent/'comparison'
 
-def select_public(data):
+def select_public(data, *, published=False):
     if not isinstance(data,dict) or data.get("schema_version") != 1 or not isinstance(data.get("results"),list) or not isinstance(data.get("implementations"),list):
         raise ValueError("Expected a schema-version-1 benchmark report")
-    sanitizer=PublicSanitizer(root=ROOT)
+    # Published inputs have already removed host identity. Reinterpreting their
+    # public paths using this machine's username can corrupt names like runner.
+    sanitizer=(PublicSanitizer.for_published() if published
+               else PublicSanitizer(root=ROOT))
     # Explicit schema: no environment, profile payload, runner command or diagnostics.
     report={key:data.get(key) for key in ('schema_version','revision','source_sha256','dirty','created_at','suite','seed','machine','methodology','implementations','results')}
     report=sanitizer.report(report)
@@ -30,9 +33,11 @@ def git_snapshot(ref,path):
     content=subprocess.check_output(['git','show',revision+':'+path],cwd=ROOT,text=True)
     return json.loads(content),revision
 
-def render(snapshots,destination):
+def render(snapshots,destination, *, published=False):
     if not 2<=len(snapshots)<=30:raise ValueError('Need 2–30 snapshots')
-    data=[{'label':PublicSanitizer(root=ROOT).text(label),'data':select_public(report)} for label,report in snapshots]
+    sanitizer=(PublicSanitizer.for_published() if published
+               else PublicSanitizer(root=ROOT))
+    data=[{'label':sanitizer.text(label),'data':select_public(report, published=published)} for label,report in snapshots]
     encoded=json.dumps(data,allow_nan=False).replace('<','\\u003c').replace('&','\\u0026')
     # Embed the pure model and UI together, with no runtime network dependencies.
     model=(HERE/'model.mjs').read_text().replace('export ','')
@@ -58,6 +63,6 @@ def main():
             data=json.loads(path.read_text())
             if args.catalog and not data.get('results'):continue
             snapshots.append(((path.parent.name+' / '+path.name) if args.catalog else 'Snapshot '+str(len(snapshots)+1),data))
-    render(snapshots,args.output)
+    render(snapshots,args.output,published=args.catalog)
     print('Rendered %d snapshots; no benchmarks executed'%len(snapshots))
 if __name__=='__main__':main()

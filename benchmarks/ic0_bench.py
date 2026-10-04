@@ -27,8 +27,8 @@ def cases(size,problem='grid'):
    elif operation in ('cg','jacobi'):rowstats.update(factor_nnz=0,logical_factor_bytes=0)
    yield operation,ordering,dict(name='IC0 '+operation,op=op,a=q,b=rhs,expected=expected,invalid=False,reason='converged',options={**options,'jacobi':mode}),rowstats
 
-def render(data,destination,*,live_override=None):
- data=PublicSanitizer().report(data)
+def render(data,destination,*,live_override=None, published=False):
+ data = (PublicSanitizer.for_published() if published else PublicSanitizer()).report(data)
  live=sparse.live_bundle(data,{'ic0_source':(HERE/'ic0-live.mjs').read_text()}) if live_override is None else live_override
  replacements={'DATA':json_for_html(data),'LIVE':json_for_html(live),'SCRIPT':(HERE/'ic0-report.mjs').read_text()}
  html=re.sub(r'@@(DATA|LIVE|SCRIPT)@@',lambda m:replacements[m[1]],(HERE/'ic0-report.html').read_text())

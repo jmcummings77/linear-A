@@ -8,6 +8,7 @@ on:
       - 'benchmarks/pages/**'
       - 'benchmarks/reports/**'
       - 'benchmarks/check_provenance.py'
+      - 'benchmarks/check_catalog.py'
       - 'benchmarks/legacy-results.json'
       - 'experiments/machine-code-dot/results/**'
       - 'experiments/matmul-locality/results/**'

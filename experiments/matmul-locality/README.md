@@ -62,6 +62,20 @@ accepts M×K×N, such as `--shapes 32x32x32 96x257x65`; dimensions are capped at
 ASan/UBSan builds are correctness-only and cannot generate performance results.
 CI exercises the handwritten kernels with sanitizers, without a performance gate.
 
+For measurements intended to replace the published snapshot, commit the source
+and start from a clean checkout, then use a fresh-clone capture:
+
+```sh
+python3 benchmarks/reproduce.py --runner matmul-locality \
+  --output .build/publishable/matmul-locality -- --blas --profiles
+```
+
+Omit `--blas` outside macOS. Review the capture, copy its complete contents into
+`experiments/matmul-locality/results/`, and run `python3 benchmarks/check_provenance.py`
+before committing the report. The wrapper records the recoverable source commit,
+tree, command and artifact hashes. See the
+[publication workflow](../../benchmarks/README.md#publishing-reproducible-source-records).
+
 ## Correctness
 
 The Python oracle uses exact `Fraction` arithmetic independently of the kernels.
@@ -124,8 +138,12 @@ Exports reuse the repository's path and raw-profile sanitizers. They retain
 function names, compiler version, source context, basic hardware, timestamps,
 source hash and Git provenance, while omitting local paths, environment dumps,
 credentials and machine identifiers. The source hash covers the C sources and
-Python harness. A report may truthfully record an uncommitted source state; the
-hash still identifies the measured source contents. Rendering alone preserves
+Python harness. The existing snapshot recorded an uncommitted source state whose
+exact files were not archived. Its hash cannot reconstruct those files. Its
+frozen measurements, profiles and disassembly remain historical evidence;
+new publications require the clean-source capture above. The optional Accelerate
+library remains an operating-system dependency, not captured source.
+Rendering alone preserves
 every saved measurement. Existing comparison reports and raw profiles remain
 separate and untouched.
 

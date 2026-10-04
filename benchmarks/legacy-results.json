@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "reason": "These historical reports measured dirty working trees whose exact source was not archived. The recorded commits and source hashes cannot recover those edits. These exact measurement files are retained as legacy evidence, not claimed as reproducible source snapshots; changed or new measurements require clean-checkout-v1 provenance.",
+  "schema_version": 2,
+  "reason": "These historical reports measured dirty working trees or omitted source provenance, and their exact measured source was not archived. Recorded commits and source hashes cannot recover those edits. These exact measurement files and supporting artifacts are retained as legacy evidence, not claimed as reproducible source snapshots; changed or new measurements require clean-checkout-v1 provenance.",
   "reports": {
     "benchmarks/reports/amd/results.json": "30ef9a185f0825fc4b85f235104a63360cc9962870e78de27e756a398b0a6289",
     "benchmarks/reports/cholesky/results.json": "f7ccba668b7aa7c41706d32f9d7c60c027cb45f9987c592d1eb1a2d15e27696e",
@@ -15,6 +15,91 @@
     "benchmarks/reports/validation/results.json": "155639ebfa9582630e448eafe76c06c89daae9f539e8b63fc6c4272d4230b809",
     "benchmarks/reports/vectors/results.json": "6353dbd5d750e3fc39a7406e48088aef3afbd4f351fa3a22022827c13c1fd0af",
     "benchmarks/reports/wasm-profile-check/results.json": "6edab0c210b0fb36c4f75d56def189375909f5a9d9d48bb8ab893a48a8e2b966",
-    "benchmarks/reports/wasm-verification/results.json": "07d70ec0b12c7eb471aa715d1f94f00e8bfc31d396cd6730604cd8981c7424d9"
+    "benchmarks/reports/wasm-verification/results.json": "07d70ec0b12c7eb471aa715d1f94f00e8bfc31d396cd6730604cd8981c7424d9",
+    "experiments/machine-code-dot/results/results.json": "751cdef381fcf8f9bc6382431a04498c7cdd3c50e6b794e33a466f91768994b0",
+    "experiments/matmul-locality/results/results.json": "d4779941725cc06a48424375cbc2df3e3d89e47f60bd84720640231bd01a5a18"
+  },
+  "artifacts": {
+    "benchmarks/reports/amd/results.json": {
+      "results.json": "30ef9a185f0825fc4b85f235104a63360cc9962870e78de27e756a398b0a6289"
+    },
+    "benchmarks/reports/cholesky/results.json": {
+      "results.json": "f7ccba668b7aa7c41706d32f9d7c60c027cb45f9987c592d1eb1a2d15e27696e"
+    },
+    "benchmarks/reports/determinants/results.json": {
+      "results.json": "251e752f08e0541604c04c095b7e9b80937c2b26016305a3e4f826cb015811fb"
+    },
+    "benchmarks/reports/eigen/results.json": {
+      "results.json": "8e4fd82743f9956fc5c36424a1d26376a4a160ac23b4e4254b46ae66281f11f4"
+    },
+    "benchmarks/reports/gmres/results.json": {
+      "results.json": "6adf85c813fd73d460ddd870d1c86cf11ac5f159b291750680d3b4c098ced3e7"
+    },
+    "benchmarks/reports/ic0/results.json": {
+      "results.json": "b3b2999505cf55fc256ca1f5fe8d9fe0ca438e78bf9490ebb901f7b79169fdc3"
+    },
+    "benchmarks/reports/ilu/results.json": {
+      "results.json": "2b9d5d40a102c7e4af41f3a8b68d0682a9bd93dc2aa62d1754d6e149093844e1"
+    },
+    "benchmarks/reports/latest/results.json": {
+      "profiles/assembly/sample.txt": "a185e0449f493c4aff7730bbe4819d3e0d72f57b15ce7258959973f930ff53ad",
+      "profiles/c/sample.txt": "f245388fb10cf66b50d612db6fa3893e0fd630afdf03a2dd540bdb86bf56d2ad",
+      "profiles/cpp/sample.txt": "aa40935337193d267fb989fb4d82ce06230cc8a9a4feaae32c9817da8b058729",
+      "profiles/csharp/sample.txt": "2d79eb30560ea675a34d22c23de075c5827b26920c93114827e043112631e10b",
+      "profiles/fsharp/sample.txt": "e50ae22ff36c050c6bc6d858458845454baadcc2b026541350393fdb19b51420",
+      "profiles/go/cpu.raw.txt": "0ace94e252cf36b53067484f6fa5e1fb3a9754223ba844d1b5e7d2f9ae93da00",
+      "profiles/julia/samples.json": "3fbafd9ff76486d92436b2899311b5ae0d817e170e00840c540ef4cd6d18da83",
+      "profiles/python/samples.json": "b53f5ce0e6e7d6b1eae72fc464597542a56151f73830d92328f1817a02177c15",
+      "profiles/rust/sample.txt": "46268947787fba91b9c3e4ccd8dce897738f78f4536761cfd7a681f0fb001e3d",
+      "profiles/typescript/profile.cpuprofile": "79db1890638abf8fd7287f80040c6e80b836aa00141c5fd06217c89d57594e50",
+      "profiles/wasm/profile.cpuprofile": "e79699d7728bce8c88736616e4095f99a73e1520083248cc85e4345477c8af71",
+      "results.json": "55ba08df8e962a7a8695a242f9f44f6a32a38a63b66dfe14624e46e82a9d4f12"
+    },
+    "benchmarks/reports/ordering/results.json": {
+      "results.json": "7332d8e00334c14eb197bc2ef16f06ddd1a204d87d52eae6a8ad4be92f4775dd"
+    },
+    "benchmarks/reports/sparse/results.json": {
+      "results.json": "d8378916d40dbf505a683f9f13d78351ed9aff19b24f84e3016a8a62178a9f83"
+    },
+    "benchmarks/reports/validation/results.json": {
+      "results.json": "155639ebfa9582630e448eafe76c06c89daae9f539e8b63fc6c4272d4230b809"
+    },
+    "benchmarks/reports/vectors/results.json": {
+      "profiles/assembly/sample.txt": "867da521a02865887e859a6261db686124b34bde5181fd29df6acd2831c9bd21",
+      "profiles/c/sample.txt": "2f606206d4aac5772999e663f19d0211ecdd64e9f350bc7a6495dfeb64a92068",
+      "profiles/cpp/sample.txt": "a65abea5b0f3b7e6e986e064aaffc9707e477f588e659bd305f2212d5a10e131",
+      "profiles/csharp/sample.txt": "d4b731347153e710fa1ed463e193f9f31d749976eadff5ddb383fec5a141f89f",
+      "profiles/fsharp/sample.txt": "8f54a8749455f7f26ce303b272038602b2bcbbc7aeb03b5e173b63bce63ac57b",
+      "profiles/go/cpu.raw.txt": "30ee021305ac478c28e2b40f9eeb5d6b0dcbccb9e8ea1faa6e91354a068c34ba",
+      "profiles/julia/samples.json": "77782bb0d91b8eeeaf0edd48c2ba6e37edfd7d9940cfda32a362d1a1629eba35",
+      "profiles/python/samples.json": "27b1d59e58b3144d9660644a16bb2ccc59b076ec0dd07ff79f2e04deb6622eb5",
+      "profiles/rust/sample.txt": "35feb92a9efb8c19bb37c3699545fe20b93c6f68ce4292454aeb9196fa9e9535",
+      "profiles/typescript/profile.cpuprofile": "98966cd8ae56d33c4408ca527d707336e77701ba5782482a29ef38e3581cea15",
+      "profiles/wasm/profile.cpuprofile": "19791de378587598c5b6447aa3540e8daf38a0d88a3a24d272d4d884c3ace056",
+      "results.json": "6353dbd5d750e3fc39a7406e48088aef3afbd4f351fa3a22022827c13c1fd0af"
+    },
+    "benchmarks/reports/wasm-profile-check/results.json": {
+      "profiles/wasm/profile.cpuprofile": "994288c76e3b41799701a83c36202b1b567dd286a57dfede177b04c2618ea3ab",
+      "results.json": "6edab0c210b0fb36c4f75d56def189375909f5a9d9d48bb8ab893a48a8e2b966"
+    },
+    "benchmarks/reports/wasm-verification/results.json": {
+      "results.json": "07d70ec0b12c7eb471aa715d1f94f00e8bfc31d396cd6730604cd8981c7424d9"
+    },
+    "experiments/machine-code-dot/results/results.json": {
+      ".gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "c-disassembly.txt": "5a8c35ddf30af899be5eac314159ae6085115b34fe4aec4acdae7d0d5e5de80e",
+      "disassembly.txt": "0369f9cdaf6974e8efb90b8aee79e0b4f230e7a6ad0c7def299b159602b7cbab",
+      "raw_dot.bin": "894bf6ed543059d94d93164579187b6eca9326492d7648939ee537b021825268",
+      "results.json": "751cdef381fcf8f9bc6382431a04498c7cdd3c50e6b794e33a466f91768994b0"
+    },
+    "experiments/matmul-locality/results/results.json": {
+      "disassembly.txt": "287e78c01e8cffa3167574798d858c11377d9f3f837c236921f0528089a1f663",
+      "profiles/blas.txt": "0c2ce88d3a02f3f4e46e89b7fbd394bae9f0832e5bbff9ae69adc2aad63c6f1d",
+      "profiles/blocked.txt": "f2272f49b314e701889c729c42fb767771af950ae4ae7daf0cf9ed9099c128df",
+      "profiles/ijk.txt": "5c52cfb73af954ab75c04b67d5c5d3b52b01787f7df8764f0e7e336c4c519026",
+      "profiles/ikj.txt": "1ab030f12f601e85a91b4f87f056f0db6f5753883f99f60c0eeb34bbe67a4c8e",
+      "profiles/neon.txt": "f4f9e026a434c1db576b4d0eb92bcb5b1a129e5821fe14136f88ec30bf94bccb",
+      "results.json": "d4779941725cc06a48424375cbc2df3e3d89e47f60bd84720640231bd01a5a18"
+    }
   }
 }

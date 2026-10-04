@@ -40,4 +40,20 @@ public class IC0Tests
         Assert.That(r.X, Is.EqualTo(new double[] { 0 }));
         Assert.That(r.Residuals, Is.EqualTo(new double[] { 1 }));
     }
+
+    [Test]
+    public void IncompleteFactorOmitsTheFillCreatedByTheFirstPivot()
+    {
+        // L = [2 0 0; 1/2 sqrt(15/4) 0; 1/2 0 sqrt(15/4)].
+        // Dropping L[2,1] makes (L L^T)[1,2] = 1/4, so applying
+        // L L^T to [1,2,3] gives [9,39/4,27/2].
+        var a = new CSRMatrix(3, 3, [0, 3, 5, 7], [0, 1, 2, 0, 1, 0, 2], [4, 1, 1, 1, 4, 1, 4]);
+        var factor = new IC0(a);
+
+        Assert.That(new SparseCholeskySymbolic(a).FillCount, Is.EqualTo(1));
+        Assert.That(factor.NNZ, Is.EqualTo(5));
+        Assert.That(factor.Lower.RowOffsets, Is.EqualTo(new[] { 0, 1, 3, 5 }));
+        Assert.That(factor.Lower.ColumnIndices, Is.EqualTo(new[] { 0, 0, 1, 0, 2 }));
+        Assert.That(factor.Apply([9, 9.75, 13.5]), Is.EqualTo(new double[] { 1, 2, 3 }).Within(1e-12));
+    }
 }

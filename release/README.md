@@ -75,9 +75,11 @@ consumed by path or repository subdirectory, not through General.
 `manifest.json` owns the release version and shared capability declarations.
 Keep the Python, Rust, Julia, and TypeScript versions equal to it. .NET and WASM
 package versions are supplied from the manifest. Update `docs/api/<version>/`,
-then regenerate its compatibility table using `python3 release/build.py
---write-table`. Earlier API documents remain versioned. The table is checked
-before every build, while the shared port conformance suite checks capabilities.
+its API title, and the root README's versioned API link together, then regenerate
+the compatibility table using `python3 release/build.py --write-table`. Earlier
+API documents remain versioned. Every build checks the current API document,
+its version title, the root link, and the generated compatibility table; the
+shared port conformance suite checks capabilities.
 
 CI builds and tests the complete artifact set on ARM64, then uploads it as a
 workflow artifact. A manually dispatched run does the same without publishing a

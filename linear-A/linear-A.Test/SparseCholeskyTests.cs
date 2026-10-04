@@ -42,4 +42,17 @@ public class SparseCholeskyTests
         var asymmetric = new CSRMatrix(2, 2, [0, 2, 4], [0, 1, 0, 1], [4, 2, 1, 3]);
         Assert.Throws<ArgumentException>(() => new SparseCholeskySymbolic(asymmetric).Factorize(asymmetric));
     }
+
+    [Test]
+    public void StoredZeroDoesNotRequireAStoredTransposeEntry()
+    {
+        var a = new CSRMatrix(2, 2, [0, 2, 3], [0, 1, 1], [4, 0, 9]);
+        var plan = new SparseCholeskySymbolic(a);
+        var factor = plan.Factorize(a);
+
+        Assert.That(plan.RowOffsets, Is.EqualTo(new[] { 0, 1, 3 }));
+        Assert.That(plan.ColumnIndices, Is.EqualTo(new[] { 0, 0, 1 }));
+        Assert.That(plan.FillSteps, Is.EqualTo(new[] { -1, -1, -1 }));
+        Assert.That(factor.Solve([8, 27]), Is.EqualTo(new double[] { 2, 3 }));
+    }
 }

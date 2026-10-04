@@ -13,13 +13,19 @@ import re
 import subprocess
 import sys
 
+from check_catalog import validate_catalog
+
 ROOT = Path(__file__).resolve().parents[1]
+EXPERIMENT_RUNNERS = {
+    "machine-code-dot": "experiments/machine-code-dot/run.py",
+    "matmul-locality": "experiments/matmul-locality/run.py",
+}
 RUNNERS = frozenset({
     "benchmarks/run.py", "benchmarks/determinants.py", "benchmarks/sparse.py",
     "benchmarks/gmres_bench.py", "benchmarks/ilu_bench.py",
     "benchmarks/ordering_bench.py", "benchmarks/cholesky_bench.py",
     "benchmarks/amd_bench.py", "benchmarks/ic0_bench.py", "benchmarks/multigrid_bench.py",
-})
+}) | frozenset(EXPERIMENT_RUNNERS.values())
 
 
 def sha256(path):
@@ -96,6 +102,17 @@ def _relative_path(value):
             and all(part not in ("", ".", "..") for part in value.split("/")))
 
 
+def forbidden_options(runner):
+    flags = ("--no-build", "--render-only", "--output", "--help", "--amd-library")
+    if runner == EXPERIMENT_RUNNERS["machine-code-dot"]:
+        # Published commands must not retain host-specific executable paths.
+        # Toolchains are selected through PATH and their versions are recorded.
+        flags += ("--dotnet", "--julia")
+    elif runner == EXPERIMENT_RUNNERS["matmul-locality"]:
+        flags += ("--verify-only", "--sanitize")
+    return flags
+
+
 def _check_command(command):
     if (not isinstance(command, list) or not all(isinstance(arg, str) for arg in command)
             or len(command) < 4 or command[0] != "python3" or command[1] not in RUNNERS
@@ -104,8 +121,7 @@ def _check_command(command):
     for arg in command[2:-2]:
         option = arg.split("=", 1)[0]
         if (option in ("--", "-h") or (option.startswith("--")
-                and any(flag.startswith(option) for flag in
-                        ("--no-build", "--render-only", "--output", "--help", "--amd-library")))):
+                and any(flag.startswith(option) for flag in forbidden_options(command[1])))):
             raise ValueError("command contains a forbidden or abbreviated option: %s" % arg)
 
 
@@ -158,22 +174,27 @@ def _legacy_reports(repo_root):
     if not path.exists():
         return {}
     registry = _json(path)
-    reports = registry.get("reports")
-    if (type(registry.get("schema_version")) is not int or registry["schema_version"] != 1
+    reports, artifacts = registry.get("reports"), registry.get("artifacts")
+    if (type(registry.get("schema_version")) is not int or registry["schema_version"] != 2
             or not isinstance(registry.get("reason"), str) or not registry["reason"].strip()
             or not isinstance(reports, dict)
-            or any(not re.fullmatch(r"benchmarks/reports/[^/]+/results\.json", name)
+            or any(not re.fullmatch(r"(?:benchmarks/reports/[^/]+|experiments/(?:machine-code-dot|matmul-locality)/results)/results\.json", name)
                    or not _relative_path(name) or not _hex(digest, 64)
-                   for name, digest in reports.items())):
+                   for name, digest in reports.items())
+            or not isinstance(artifacts, dict) or artifacts.keys() != reports.keys()
+            or any(not isinstance(files, dict) or files.get("results.json") != reports[name]
+                   or any(not _relative_path(path) or not _hex(digest, 64)
+                          for path, digest in files.items())
+                   for name, files in artifacts.items())):
         raise ValueError("invalid legacy-results.json registry")
-    return reports
-
+    return artifacts
 
 
 def check_reports(repo_root=ROOT, report_paths=None):
     """Return (errors, warnings) for published reports or selected directories."""
     repo_root = Path(repo_root).resolve()
     errors, warnings = [], []
+    check_catalog = report_paths is None
     try:
         legacy = _legacy_reports(repo_root)
     except (ValueError, OSError) as error:
@@ -182,6 +203,9 @@ def check_reports(repo_root=ROOT, report_paths=None):
         # Include incomplete report directories so deleting results cannot evade the gate.
         report_paths = sorted(path for path in (repo_root / "benchmarks/reports").glob("*")
                               if path.is_dir())
+        report_paths += [repo_root / "experiments" / name / "results"
+                         for name in EXPERIMENT_RUNNERS
+                         if (repo_root / "experiments" / name / "results").exists()]
     for directory in report_paths:
         directory = Path(directory)
         if not directory.is_absolute():
@@ -190,17 +214,20 @@ def check_reports(repo_root=ROOT, report_paths=None):
             relative = (directory / "results.json").relative_to(repo_root).as_posix()
             if (directory / "provenance.json").exists() or (directory / "provenance.json").is_symlink():
                 validate_report(directory, repo_root)
-            elif relative in legacy and sha256(directory / "results.json") == legacy[relative]:
-                if directory.is_symlink() or (directory / "results.json").is_symlink():
-                    raise ValueError("legacy report must not be a symlink")
+            elif relative in legacy and artifact_hashes(directory) == legacy[relative]:
                 _check_html(directory, _json(directory / "results.json"))
-                warnings.append("%s: unchanged legacy measurement; original dirty source is "
+                warnings.append("%s: unchanged legacy measurement; original measured source is "
                                 "unrecoverable, so this is not a reproducible source snapshot" % relative)
             else:
                 raise ValueError("missing valid provenance; new or changed measurements must "
                                  "be captured with benchmarks/reproduce.py")
         except (ValueError, OSError) as error:
             errors.append("%s: %s" % (directory, error))
+    if check_catalog and not errors:
+        try:
+            validate_catalog(repo_root)
+        except (ValueError, OSError, TypeError, AttributeError) as error:
+            errors.append("benchmarks/comparison/index.html: %s" % error)
     return errors, warnings
 
 

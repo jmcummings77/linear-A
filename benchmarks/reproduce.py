@@ -9,13 +9,13 @@ import subprocess
 import sys
 import tempfile
 
-from check_provenance import artifact_hashes, validate_report
+from check_provenance import EXPERIMENT_RUNNERS, artifact_hashes, forbidden_options, validate_report
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNNERS = (
     'run.py', 'determinants.py', 'sparse.py', 'gmres_bench.py', 'ilu_bench.py',
     'ordering_bench.py', 'cholesky_bench.py', 'amd_bench.py', 'ic0_bench.py', 'multigrid_bench.py',
-)
+) + tuple(EXPERIMENT_RUNNERS)
 
 
 def git(root, *arguments):
@@ -28,15 +28,45 @@ def checked_arguments(runner, arguments):
     arguments = list(arguments)
     # The harness parsers accept abbreviated long options. Reject prefixes too,
     # so --no-b cannot accidentally benchmark a stale binary.
-    forbidden = ('--no-build', '--render-only', '--output', '--help', '--amd-library')
+    forbidden = forbidden_options(EXPERIMENT_RUNNERS.get(runner, 'benchmarks/' + runner))
     for argument in arguments:
         option = argument.split('=', 1)[0]
         if option in ('--', '-h') or (option.startswith('--') and
                 any(flag.startswith(option) for flag in forbidden)):
             raise ValueError('Publication capture does not accept ' + option)
-    if runner not in ('ic0_bench.py', 'multigrid_bench.py') and '--require-all' not in arguments:
+    # IC(0), multigrid and the experiments already fail unless every selected
+    # implementation passes; their parsers do not expose --require-all.
+    if runner not in ('ic0_bench.py', 'multigrid_bench.py', *EXPERIMENT_RUNNERS) and '--require-all' not in arguments:
         arguments.append('--require-all')
     return arguments
+
+
+def validate_completion(data, runner):
+    """Each harness fails differently; require its completed verification record."""
+    if runner == 'machine-code-dot':
+        # This experiment raises on any build, checksum or timing failure. It
+        # writes the final report only after every implementation is measured.
+        if (type(data.get('correctness_checks')) is not int or data['correctness_checks'] <= 0
+                or not data.get('timings') or not data.get('samples')):
+            raise ValueError('Dot experiment must complete correctness checks and timings')
+        if any(len(row.get('ns_per_call', [])) != data['samples'] for row in data['timings']):
+            raise ValueError('Dot experiment has incomplete timing samples')
+        return
+    if runner == 'matmul-locality':
+        variants = {item['id'] for item in data.get('variants', [])}
+        checks, results = data.get('checks', []), data.get('results', [])
+        if (not variants or not checks or any(item.get('passed') is not True for item in checks)
+                or {item.get('variant') for item in checks} != variants
+                or not results or {item.get('variant') for item in results} != variants):
+            raise ValueError('Locality experiment must verify and measure every requested variant')
+        # Missing optional profiles are disclosed by this harness and do not
+        # invalidate completed timings; failed correctness checks always do.
+        return
+    implementations = data.get('implementations', [])
+    if not implementations or any(item.get('status') != 'passed' for item in implementations):
+        raise ValueError('Every requested implementation must pass before publication')
+    if any(row.get('status') != 'passed' for row in data.get('results', [])):
+        raise ValueError('Failed measurements cannot be published')
 
 
 def capture(output, runner='run.py', arguments=(), root=ROOT):
@@ -61,7 +91,8 @@ def capture(output, runner='run.py', arguments=(), root=ROOT):
                        cwd=checkout, check=True)
         if git(checkout, 'status', '--porcelain', '--untracked-files=all'):
             raise ValueError('Fresh benchmark checkout is not clean')
-        command = ['benchmarks/' + runner, *arguments, '--output', str(staged)]
+        runner_path = EXPERIMENT_RUNNERS.get(runner, 'benchmarks/' + runner)
+        command = [runner_path, *arguments, '--output', str(staged)]
         subprocess.run([sys.executable, *command], cwd=checkout, check=True)
         if (git(checkout, 'rev-parse', 'HEAD') != revision or
                 git(checkout, 'status', '--porcelain', '--untracked-files=all')):
@@ -69,11 +100,7 @@ def capture(output, runner='run.py', arguments=(), root=ROOT):
         data = json.loads((staged / 'results.json').read_text(encoding='utf-8'))
         if data.get('revision') != revision or data.get('dirty') is not False:
             raise ValueError('Benchmark did not record the clean source revision')
-        implementations = data.get('implementations', [])
-        if not implementations or any(item.get('status') != 'passed' for item in implementations):
-            raise ValueError('Every requested implementation must pass before publication')
-        if any(row.get('status') != 'passed' for row in data.get('results', [])):
-            raise ValueError('Failed measurements cannot be published')
+        validate_completion(data, runner)
         provenance = {
             'schema_version': 1,
             'capture_method': 'clean-checkout-v1',

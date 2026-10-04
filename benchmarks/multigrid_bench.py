@@ -39,8 +39,8 @@ def cases(size):
 def benchmark(implementations,sizes,samples):
  return sample_cases(implementations,sizes,samples,case_factory=cases)
 
-def render(data,destination,*,live_override=None):
- data=PublicSanitizer().report(data)
+def render(data,destination,*,live_override=None, published=False):
+ data = (PublicSanitizer.for_published() if published else PublicSanitizer()).report(data)
  live=sparse.live_bundle(data,{'multigrid_source':(HERE/'multigrid-live.mjs').read_text()}) if live_override is None else live_override
  replacements={'DATA':json_for_html(data),'LIVE':json_for_html(live),'SCRIPT':(HERE/'multigrid-report.mjs').read_text()}
  html=re.sub(r'@@(DATA|LIVE|SCRIPT)@@',lambda m:replacements[m[1]],(HERE/'multigrid-report.html').read_text())

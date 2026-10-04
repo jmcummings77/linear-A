@@ -56,17 +56,32 @@ python3 benchmarks/reproduce.py --output .build/publishable/latest -- --suite fu
 # Or capture a focused suite (the output directory must not already exist).
 python3 benchmarks/reproduce.py --runner cholesky_bench.py --output .build/publishable/cholesky -- --languages c python --sizes 12
 
+# The separately published experiments use the same clean-source capture.
+python3 benchmarks/reproduce.py --runner matmul-locality --output .build/publishable/matmul-locality -- --samples 3 --shapes 32x32x32
+python3 benchmarks/reproduce.py --runner machine-code-dot --output .build/publishable/machine-code-dot -- --samples 3 --sizes 16
+
 # Review the output, then replace the saved report, including provenance.json.
 rsync -a --delete .build/publishable/latest/ benchmarks/reports/latest/
 python3 benchmarks/check_provenance.py
 ```
 
 The wrapper supports `run.py`, `determinants.py`, `sparse.py`, and the GMRES,
-ILU, ordering, Cholesky, AMD, and IC0 benchmark runners. Pass runner options after
+ILU, ordering, Cholesky, AMD, and IC0 benchmark runners, plus the
+`machine-code-dot` and `matmul-locality` experiment aliases. The dot experiment
+requires ARM64 macOS and all its documented toolchains on `PATH`; executable
+path overrides (`--dotnet`, `--julia`) are excluded from published commands.
+Locality requires Clang
+and uses the variants supported by the host. Pass runner options after
 `--`. Fresh builds and successful verification of every requested implementation
 are mandatory. `--no-build`, `--render-only`, and runner `--output` overrides are
 rejected, including abbreviated forms. The optional external `--amd-library`
 reference is excluded because its source is not captured by this workflow.
+For locality, `--verify-only` and `--sanitize` are also rejected because those
+modes intentionally produce no timing report. Its optional Accelerate baseline
+depends on the recorded macOS version; the vendor library's source is not part
+of the snapshot. Missing optional profiles remain explicitly marked unavailable.
+After review, copy experimental captures into their respective
+`experiments/<name>/results/` directories, including `provenance.json`.
 
 Each capture includes `provenance.json` with the full source commit and Git tree,
 the benchmark command, harness Python version, and SHA-256 hashes of measurement
@@ -74,22 +89,25 @@ artifacts. Compiler/runtime versions and build commands remain in `results.json`
 To repeat a run, check out its recorded revision in a fresh clone, install the
 recorded toolchains, and run the recorded command with `<output>` replaced by a
 new directory. The source revision must be an ancestor of the commit publishing
-the results, so it remains in the repository's history. Prefer capturing a source
-commit already on `main`. If source and reports share a pull request, preserve the
-measured commit with a merge commit; squashing or rebasing it would invalidate
-the recorded ancestry. This preserves source and invocation; hardware, operating system, dependencies and compiler environment
+the results, so it remains in the repository's history. This preserves source
+and invocation; hardware, operating system, dependencies and compiler environment
 still affect timings. It does not promise identical timing samples.
 
-CI and the Pages workflow reject missing provenance, mismatched measurement
+CI and the Pages workflow check both the main reports and the two published
+experiments. They reject missing provenance, mismatched measurement
 hashes, unavailable source commits, and HTML whose embedded measurements differ
-from `results.json`. HTML presentation may still be refreshed without changing
+from `results.json`. The published comparison catalog must match the checked
+reports; regenerate it with `python3 benchmarks/compare.py --catalog` after
+replacing a saved run. HTML presentation may still be refreshed without changing
 measurement artifacts or their provenance. Commit a completed report before
 capturing another run, or keep intermediate captures under ignored `.build/`.
 
-The existing saved reports, including `latest`, were captured with `dirty: true`.
-Their exact measured source was not preserved: the commit and source hash alone
+The existing main reports and locality study were captured with `dirty: true`;
+the dot experiment omitted Git source provenance. Their exact measured source
+was not preserved: a commit and source hash alone
 cannot reconstruct it. They remain historical evidence, not reproducible source
-snapshots. `legacy-results.json` lists their exact measurement hashes as a fixed
+snapshots. `legacy-results.json` lists their exact measurement and supporting
+artifact hashes (including raw profiles and disassembly) as a fixed
 migration exception. Do not add new runs or update hashes there; replace old
 snapshots with captures from `reproduce.py`. Original timings, source metadata and
 profiles are not retroactively relabeled as clean.

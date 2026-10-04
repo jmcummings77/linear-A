@@ -43,11 +43,11 @@ def executable(name, override=None):
         raise RuntimeError('Missing tool: ' + name)
     return str(Path(found).resolve())
 
-def build(args):
+def build(args, output=RESULTS):
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise RuntimeError('This experiment targets ARM64 macOS.')
     BUILD.mkdir(exist_ok=True)
-    RESULTS.mkdir(exist_ok=True)
+    output.mkdir(parents=True, exist_ok=True)
     for directory in ('cli', 'nuget', 'go-cache', 'go', 'julia-depot'):
         (BUILD / directory).mkdir(exist_ok=True)
     clang, cpp, rust, go, node = [executable(n) for n in ('clang', 'clang++', 'rustc', 'go', 'node')]
@@ -83,9 +83,9 @@ def build(args):
     manual_words = [int(x, 16) for x in re.findall(r'0x([0-9a-f]{8})', (SRC / 'raw_dot.h').read_text())]
     if assembled_words != manual_words or len(manual_words) != 9:
         raise RuntimeError('Assembly control does not match the hand-encoded 36-byte function.')
-    (RESULTS / 'raw_dot.bin').write_bytes(struct.pack('<9I', *manual_words))
-    (RESULTS / 'disassembly.txt').write_text(disassembly)
-    (RESULTS / 'c-disassembly.txt').write_text(command(['xcrun', 'llvm-objdump', '--disassemble', BUILD / 'c.o']).replace(repository_prefix, ''))
+    (output / 'raw_dot.bin').write_bytes(struct.pack('<9I', *manual_words))
+    (output / 'disassembly.txt').write_text(disassembly)
+    (output / 'c-disassembly.txt').write_text(command(['xcrun', 'llvm-objdump', '--disassemble', BUILD / 'c.o']).replace(repository_prefix, ''))
     runners = {key: [str(BUILD / key)] for key in ('machine-code', 'assembly', 'c', 'cpp', 'rust')}
     runners.update({'go': [str(BUILD / 'go-runner')], 'typescript': [node, str(SRC / 'dot.ts')],
                     'python': [sys.executable, str(SRC / 'dot.py')],
@@ -125,9 +125,9 @@ def render(result, destination):
     Path(destination).write_text(apply_report_design(page))
 
 
-def report(result):
-    render(result, RESULTS / 'index.html')
-    (RESULTS / 'results.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
+def report(result, output=RESULTS):
+    render(result, output / 'index.html')
+    (output / 'results.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -136,9 +136,12 @@ def main():
     parser.add_argument('--no-build', action='store_true')
     parser.add_argument('--samples', type=int, default=5)
     parser.add_argument('--sizes', type=int, nargs='+', default=[16, 256, 4096, 65536])
+    parser.add_argument('--output', type=Path, default=RESULTS)
     args = parser.parse_args()
     if args.samples < 3 or any(n < 1 or n > 1048576 for n in args.sizes): parser.error('At least 3 samples and lengths 1..1048576 required')
-    runners, versions, words = build(args)
+    revision = command(['git', 'rev-parse', 'HEAD'])
+    dirty = bool(command(['git', 'status', '--porcelain', '--untracked-files=all']))
+    runners, versions, words = build(args, args.output)
     checks = 0
     for key, runner in runners.items():
         for n, count, seed in ((0,33,7),(1,35,0),(3,67,7),(16,97,13),(255,65,991),(4096,33,7)):
@@ -163,8 +166,9 @@ def main():
         for key in runners:
             timings.append(dict(implementation=key,n=n,iterations=iterations[key],
                                 ns_per_call=samples[key],median_ns=statistics.median(samples[key])))
-        (RESULTS / 'timing-checkpoint.json').write_text(json.dumps(timings, indent=2))
-    result = dict(metadata=dict(timestamp_utc=datetime.now(timezone.utc).isoformat(),
+        (args.output / 'timing-checkpoint.json').write_text(json.dumps(timings, indent=2))
+    result = dict(revision=revision, dirty=dirty,
+                  metadata=dict(timestamp_utc=datetime.now(timezone.utc).isoformat(),
                                os=platform.platform(),architecture=platform.machine(),versions=versions,
                                cpu=platform.processor() or platform.machine(),
                                compiler_flags='Native: -O3 -ffp-contract=off; Rust: opt-level=3 target-cpu=native',
@@ -172,8 +176,8 @@ def main():
                                scope='Separate scalar dot kernels, not full matrix-library comparisons'),
                   correctness_checks=checks,samples=args.samples,
                   words=['0x%08x'%word for word in words],timings=timings)
-    report(result)
-    print('Report: '+str(RESULTS/'index.html'),flush=True)
+    report(result, args.output)
+    print('Report: '+str(args.output/'index.html'),flush=True)
     for n in args.sizes:
         print('\nLength %d'%n)
         for row in sorted((r for r in timings if r['n']==n),key=lambda r:r['median_ns']):

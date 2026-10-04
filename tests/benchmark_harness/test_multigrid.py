@@ -42,7 +42,7 @@ class MultigridReportTests(unittest.TestCase):
   data=embedded(source,'data');live=embedded(source,'live')
   before=json.dumps(data,sort_keys=True);runtime=json.dumps(live,sort_keys=True)
   with tempfile.TemporaryDirectory() as d,patch('sparse.live_bundle',side_effect=AssertionError('refresh must not build a runtime')):
-   target=Path(d)/'index.html';render(data,target,live_override=live)
+   target=Path(d)/'index.html';render(data,target,live_override=live,published=True)
    self.assertEqual(embedded(target,'data'),data)
    self.assertEqual(embedded(target,'live'),live)
   self.assertEqual(json.dumps(data,sort_keys=True),before)

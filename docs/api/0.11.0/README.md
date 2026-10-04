@@ -26,7 +26,7 @@ and subtraction require equal shapes. A scalar scales each element.
 | Least squares | Tall or square, numerically full-column-rank systems via column-pivoted QR. Reusable QR factors and reciprocal-condition diagnostics. |
 | Sparse matrices | Canonical CSR construction, dense conversion, and sparse matrix-vector multiplication. Stored zeros remain part of the pattern. |
 | Iterative solvers | Conjugate gradient for symmetric positive-definite systems and restarted GMRES for general square systems; true residual stopping and optional captured iterates. |
-| Sparse preconditioners | Jacobi, reusable ILU(0) for GMRES, and reusable unshifted IC(0) for CG. Incomplete factors retain their prescribed pattern and can fail on computed pivots. |
+| Sparse preconditioners | Jacobi, reusable ILU(0) for GMRES, and reusable unshifted IC(0) and structured geometric multigrid for CG. Incomplete factors retain their prescribed pattern and can fail on computed pivots. |
 | Sparse ordering | Deterministic RCM and AMD orderings, symmetric matrix permutation, and forward/inverse vector permutation with zero-based new-to-old indices. |
 | Sparse Cholesky | Reusable symbolic analysis, positive-definite numerical factorization, and repeated triangular solves. |
 

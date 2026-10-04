@@ -28,11 +28,20 @@ python3 -m unittest discover -s tests/benchmark_harness
 
 The browser has no Git filesystem access: use the CLI for arbitrary Git refs or
 load JSON files from those revisions. “Saved in” identifies the commit containing
-the report file. The report's **recorded revision** and source fingerprint identify
-the measured source, which can be older or dirty. The initial public catalog has
+the report file. The report's **recorded revision** can be older than that commit.
+A dirty source fingerprint does not preserve the uncommitted edits or make them
+recoverable. New published reports carry clean-source capture records; historical
+ones retain their disclosed limitations. The initial public catalog has
 multiple runs recording the same revision; it is not a fabricated before/after
 experiment. Verification-only reports without timing rows are omitted from the
 catalog. Nothing here rewrites historical measurement JSON or raw profiles.
+
+The publication gate checks that every snapshot embedded in the public catalog
+matches the public projection of a report under `benchmarks/reports/`, whose
+source provenance and measurement artifacts are checked separately. After
+replacing a saved run, regenerate the catalog with `benchmarks/compare.py
+--catalog` and run `python3 benchmarks/check_provenance.py`. Arbitrary file and
+Git-ref comparisons remain available for local exports.
 
 ## Matching and interpretation
 

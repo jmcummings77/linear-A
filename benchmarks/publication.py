@@ -62,6 +62,15 @@ class PublicSanitizer:
             if match:
                 self._usernames.add(match[1])
 
+    @classmethod
+    def for_published(cls):
+        """Sanitize recorded public metadata without the reader's host identity.
+
+        A local username such as runner must not rewrite already-public source
+        names such as Runner.csproj. Generic path and credential rules still apply.
+        """
+        return cls(root=".", home="")
+
     def is_local_path(self, value):
         """Recognize host paths; arbitrary browser URLs like /assets/x are excluded."""
         if not isinstance(value, str):

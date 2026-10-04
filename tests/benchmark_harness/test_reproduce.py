@@ -101,6 +101,75 @@ class CaptureTests(unittest.TestCase):
             with self.subTest(option=option), self.assertRaises(ValueError):
                 reproduce.checked_arguments('run.py', [option])
 
+    def test_always_verified_runners_capture_without_an_unsupported_require_all_flag(self):
+        for runner in ('ic0_bench.py', 'multigrid_bench.py'):
+            with self.subTest(runner=runner):
+                source = RUNNER.replace("p.add_argument('--require-all', action='store_true')", '')
+                source = source.replace('assert args.require_all', '')
+                (self.root / 'benchmarks' / runner).write_text(source)
+                self.git('add', '.')
+                self.git('commit', '-qm', 'Always-verified runner fixture')
+                manifest = reproduce.capture(self.directory / runner, runner=runner, root=self.root)
+                self.assertEqual(manifest['command'],
+                                 ['python3', 'benchmarks/' + runner, '--output', '<output>'])
+
+    def install_experiment(self, name, data):
+        path = self.root / reproduce.EXPERIMENT_RUNNERS[name]
+        path.parent.mkdir(parents=True)
+        source = RUNNER.replace('assert args.require_all', 'assert not args.require_all')
+        source = source.replace('args.output.mkdir(parents=True)',
+                                'data = ' + repr(data) + '\n' +
+                                'data.update(revision=revision, dirty=False)\n' +
+                                'args.output.mkdir(parents=True)')
+        path.write_text(source)
+        self.git('add', '.')
+        self.git('commit', '-qm', 'Experiment fixture')
+
+    def test_experiment_adapters_capture_their_own_completion_schemas(self):
+        cases = {
+            'machine-code-dot': {'correctness_checks': 66, 'samples': 3,
+                                 'timings': [{'ns_per_call': [1, 2, 3]}]},
+            'matmul-locality': {'variants': [{'id': 'ijk'}],
+                                'checks': [{'variant': 'ijk', 'passed': True}],
+                                'results': [{'variant': 'ijk', 'median_ns': 1}],
+                                'profiles': [{'variant': 'ijk', 'status': 'unavailable'}]},
+        }
+        for name, data in cases.items():
+            with self.subTest(experiment=name):
+                self.install_experiment(name, data)
+                output = self.directory / name
+                manifest = reproduce.capture(output, runner=name, root=self.root)
+                self.assertEqual(manifest['command'],
+                                 ['python3', reproduce.EXPERIMENT_RUNNERS[name], '--output', '<output>'])
+                self.assertEqual(json.loads((output / 'results.json').read_text())['dirty'], False)
+
+    def test_incomplete_or_failed_experiments_are_not_promoted(self):
+        cases = {
+            'machine-code-dot': {'correctness_checks': 66, 'samples': 3,
+                                 'timings': [{'ns_per_call': [1]}]},
+            'matmul-locality': {'variants': [{'id': 'ijk'}],
+                                'checks': [{'variant': 'ijk', 'passed': False}],
+                                'results': [{'variant': 'ijk'}]},
+        }
+        for name, data in cases.items():
+            with self.subTest(experiment=name):
+                self.install_experiment(name, data)
+                with self.assertRaises(ValueError):
+                    reproduce.capture(self.output, runner=name, root=self.root)
+                self.assertFalse(self.output.exists())
+
+    def test_experiment_options_cannot_reuse_builds_or_render_existing_data(self):
+        for runner in reproduce.EXPERIMENT_RUNNERS:
+            for option in ('--no-build', '--no-b', '--output=elsewhere', '--render=old.json', '--rend'):
+                with self.subTest(runner=runner, option=option), self.assertRaises(ValueError):
+                    reproduce.checked_arguments(runner, [option])
+        for option in ('--verify-only', '--verify', '--sanitize', '--san'):
+            with self.subTest(option=option), self.assertRaises(ValueError):
+                reproduce.checked_arguments('matmul-locality', [option])
+        for option in ('--dotnet=/private/tools/dotnet', '--dot', '--julia', '--jul'):
+            with self.subTest(option=option), self.assertRaises(ValueError):
+                reproduce.checked_arguments('machine-code-dot', [option])
+
 
 if __name__ == '__main__':
     unittest.main()

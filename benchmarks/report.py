@@ -137,9 +137,9 @@ def report_presentation(data, live):
     return replacements
 
 
-def render(data, destination, wasm_directory=None, include_live=True, trace_directory=None, *, live_override=None):
+def render(data, destination, wasm_directory=None, include_live=True, trace_directory=None, *, live_override=None, published=False):
     sanitizer = PublicSanitizer(root=ROOT)
-    data = sanitizer.report(data)
+    data = (PublicSanitizer.for_published() if published else sanitizer).report(data)
     template = Path(__file__).with_name("report.html").read_text()
     # Regenerating presentation can retain an already-published executable bundle
     # byte-for-byte, independently of whatever build happens to be on this host.

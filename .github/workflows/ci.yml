@@ -22,6 +22,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tests/benchmark_harness -p 'test_provenance_gate.py' -v
           python3 -m unittest discover -s tests/benchmark_harness -p 'test_reproduce.py' -v
+          python3 -m unittest discover -s tests/benchmark_harness -p 'test_catalog_provenance.py' -v
   test:
     runs-on: ${{ matrix.os }}
     strategy:

@@ -223,9 +223,20 @@ All eleven implementations also provide [ridge regularization](SVD.md#ridge-regu
 
 ## Sparse matrices and iterative solvers
 
-All eleven ports provide canonical CSR construction, sparse matrix-vector multiplication, and conjugate gradient with optional Jacobi preconditioning. Results include the accepted solution, stop reason, iteration count, true residual history, and optional iteration snapshots. See [the sparse contract](SPARSE.md).
+All eleven ports provide canonical CSR construction, sparse matrix-vector
+multiplication, conjugate gradient for symmetric positive-definite systems, and
+restarted GMRES for general square systems. Both solvers support Jacobi
+preconditioning; GMRES also accepts reusable ILU(0) factors, and CG accepts
+reusable IC(0) factors. Results include the accepted solution, stop reason,
+iteration count, true residual history, and optional iteration snapshots. See
+[the sparse contract](SPARSE.md) and [the IC(0) contract](IC0.md) for APIs,
+preconditioner requirements, and failure rules.
 
-All ports support [approximate minimum degree ordering](AMD.md), with deterministic new-to-old permutations and shared conformance fixtures.
+All ports support [Reverse Cuthill–McKee ordering and permutations](SPARSE.md#reverse-cuthillmckee-and-permutations)
+and [approximate minimum degree ordering](AMD.md), with deterministic new-to-old
+permutations and shared conformance fixtures. Reusable
+[sparse Cholesky analysis and factors](CHOLESKY.md) provide a direct solve for
+symmetric positive-definite systems, with separate symbolic and numerical phases.
 
 Compare [IC(0), plain CG, Jacobi-CG and full Cholesky](https://jmcummings77.github.io/linear-A/ic0/) with reusable factors, three orderings, and live solution/residual fields. See the [IC(0) contract](IC0.md).
 

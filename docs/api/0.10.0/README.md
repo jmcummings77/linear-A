@@ -24,6 +24,11 @@ and subtraction require equal shapes. A scalar scales each element.
 | Geometry | Three-dimensional vector cross product; 2D, axis, and normalized axis-angle rotations. Right-handed active rotations of column vectors, angles in radians. |
 | Linear solves | `A X = B`, including multiple right-hand sides. Reusable LU and Cholesky factors own a snapshot. LU uses partial pivoting. |
 | Least squares | Tall or square, numerically full-column-rank systems via column-pivoted QR. Reusable QR factors and reciprocal-condition diagnostics. |
+| Sparse matrices | Canonical CSR construction, dense conversion, and sparse matrix-vector multiplication. Stored zeros remain part of the pattern. |
+| Iterative solvers | Conjugate gradient for symmetric positive-definite systems and restarted GMRES for general square systems; true residual stopping and optional captured iterates. |
+| Sparse preconditioners | Jacobi, reusable ILU(0) for GMRES, and reusable unshifted IC(0) for CG. Incomplete factors retain their prescribed pattern and can fail on computed pivots. |
+| Sparse ordering | Deterministic RCM and AMD orderings, symmetric matrix permutation, and forward/inverse vector permutation with zero-based new-to-old indices. |
+| Sparse Cholesky | Reusable symbolic analysis, positive-definite numerical factorization, and repeated triangular solves. |
 
 No solver promises exact answers or certified error bounds. Rank tests are
 numerical; nonfinite, incompatible, or out-of-range inputs can fail. LU and Cholesky reject singular systems; QR rejects numerical rank deficiency. SVD minimum-norm solving accepts deficient rank. Inspect residuals and conditioning when interpreting a result.
@@ -79,6 +84,8 @@ Since version 0.8.0, the library provides reusable symbolic analysis, positive-d
 
 ## Approximate minimum degree
 
-Version 0.10.0 adds approximate minimum degree ordering in every port; see [the AMD contract](../../../ports/AMD.md).
+Since version 0.9.0, all ports provide approximate minimum degree ordering; see [the AMD contract](../../../ports/AMD.md).
+
+## Incomplete Cholesky
 
 Version 0.10.0 adds reusable unshifted IC(0) and preconditioned conjugate gradient in every port. See [the shared IC(0) contract](../../../ports/IC0.md) for API names, failure semantics, ownership and ordering.

@@ -63,10 +63,11 @@ number of nonnegative `fill_steps` (Julia); C stores `fill_count` directly.
 Julia's CSR indices, offsets and fill steps are zero-based despite one-based
 array indexing.
 
-Apply `ReverseCuthillMcKee` and `PermuteSymmetric` before analysis to compare
-orders. Permute the right-hand side and restore the solution with the same
-new-to-old permutation. RCM reduces bandwidth heuristically; it need not reduce
-fill, factorization time, or total time. AMD is not implemented.
+Apply [RCM](SPARSE.md#reverse-cuthillmckee-and-permutations) or
+[AMD](AMD.md), then `PermuteSymmetric`, before analysis to compare orders.
+Permute the right-hand side and restore the solution with the same new-to-old
+permutation. RCM targets bandwidth and AMD targets elimination degree; neither
+heuristic guarantees less fill, faster factorization, or lower total time.
 
 ## Measurement and visualization
 
