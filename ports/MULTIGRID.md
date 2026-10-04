@@ -91,11 +91,7 @@ Run local conformance and scaling checks with:
 python3 benchmarks/multigrid_bench.py --sizes 7 15 31 --samples 3
 ```
 
-For a public snapshot, commit the source first and use the clean-capture workflow:
-
-```sh
-python3 benchmarks/reproduce.py --runner multigrid_bench.py --output .build/publishable/multigrid -- --sizes 7 15 31 --samples 3
-```
+The published report includes a [source record](../benchmarks/reports/multigrid/provenance.json) with the full clean source commit, Git tree, invocation and measurement hashes. To reproduce its workload, check out that revision in a fresh clone, install the recorded toolchains, and run the recorded command with `<output>` replaced by a new directory. Hardware and runtime variation mean timings will differ.
 
 The standalone report is saved under `benchmarks/reports/multigrid/` and linked
 from the report directory. The suite compares plain CG, Jacobi, IC(0) and MG,

@@ -30,3 +30,22 @@ class MultigridReferenceTests(unittest.TestCase):
   self.assertEqual(byop['mg_total'][2]['options']['jacobi'],5)
   self.assertEqual(byop['mg_solve'][3]['logical_factor_bytes'],8)
   self.assertGreater(byop['mg_solve'][3]['logical_workspace_bytes'],49*8)
+
+class MultigridReportTests(unittest.TestCase):
+ def test_refresh_preserves_measurements_and_embedded_runtime(self):
+  import json,tempfile
+  from unittest.mock import patch
+  from multigrid_bench import render
+  from refresh_reports import embedded
+  root=Path(__file__).resolve().parents[2]
+  source=root/'benchmarks/reports/multigrid/index.html'
+  data=embedded(source,'data');live=embedded(source,'live')
+  before=json.dumps(data,sort_keys=True);runtime=json.dumps(live,sort_keys=True)
+  with tempfile.TemporaryDirectory() as d,patch('sparse.live_bundle',side_effect=AssertionError('refresh must not build a runtime')):
+   target=Path(d)/'index.html';render(data,target,live_override=live)
+   self.assertEqual(embedded(target,'data'),data)
+   self.assertEqual(embedded(target,'live'),live)
+  self.assertEqual(json.dumps(data,sort_keys=True),before)
+  self.assertEqual(json.dumps(live,sort_keys=True),runtime)
+  self.assertIn('multigrid',live['capabilities'])
+  self.assertEqual(len(live['fixtures']),277)
