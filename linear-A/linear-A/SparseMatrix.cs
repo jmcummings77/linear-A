@@ -124,7 +124,7 @@ public sealed partial class CSRMatrix
         while (lo < hi) { var mid = lo + (hi - lo) / 2; if (indices[mid] < col) lo = mid + 1; else hi = mid; }
         return lo;
     }
-    public CGResult ConjugateGradient(double[] b, double relativeTolerance = 1e-10, double absoluteTolerance = 0, int maxIterations = 1000, bool jacobi = false, bool capture = false, IC0? preconditioner = null)
+    public CGResult ConjugateGradient(double[] b, double relativeTolerance = 1e-10, double absoluteTolerance = 0, int maxIterations = 1000, bool jacobi = false, bool capture = false, ISymmetricPreconditioner? preconditioner = null)
     {
         ArgumentNullException.ThrowIfNull(b); var n = Rows;
         if (Cols != n || b.Length != n || b.Any(x => !double.IsFinite(x))) throw new ArgumentException("CG requires square matrix and finite matching vector.");

@@ -38,3 +38,7 @@ if(Math.abs(chol.solve([6,7])[0]-1)>1e-12||Math.abs(chol.solve([11,13])[0]-20/11
 import {IC0} from "linear-a-typescript";
 const ic=new IC0(sparse);
 for(const rhs of [[6,7],[11,13]]){const pcg=sparse.conjugateGradient(rhs,{preconditioner:ic});if(!pcg.converged||pcg.iterations!==1)throw Error("incorrect IC0 reuse");}
+
+import {GeometricMultigrid} from "linear-a-typescript";
+const mg=new GeometricMultigrid(3),grid=mg.matrix,rhsMG=grid.matvec(Array(9).fill(1));
+if(!grid.conjugateGradient(rhsMG,{preconditioner:mg}).converged||mg.apply(rhsMG).length!==9||mg.levels!==2)throw Error("incorrect multigrid");

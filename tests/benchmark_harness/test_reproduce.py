@@ -102,7 +102,7 @@ class CaptureTests(unittest.TestCase):
                 reproduce.checked_arguments('run.py', [option])
 
     def test_always_verified_runners_capture_without_an_unsupported_require_all_flag(self):
-        for runner in ('ic0_bench.py',):
+        for runner in ('ic0_bench.py', 'multigrid_bench.py'):
             with self.subTest(runner=runner):
                 source = RUNNER.replace("p.add_argument('--require-all', action='store_true')", '')
                 source = source.replace('assert args.require_all', '')

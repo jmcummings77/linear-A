@@ -40,3 +40,6 @@ if(Math.Abs(chol.Solve(new[]{6.0,7})[0]-1)>1e-12||Math.Abs(chol.Solve(new[]{11.0
 
 var ic=new IC0(sparse);
 foreach(var rhs in new[]{new[]{6.0,7},new[]{11.0,13}}){var pcg=sparse.ConjugateGradient(rhs,preconditioner:ic);if(!pcg.Converged||pcg.Iterations!=1)throw new Exception("incorrect IC0 reuse");}
+
+var mg=new GeometricMultigrid(3);var grid=mg.Matrix;var rhsMG=grid.Matvec(Enumerable.Repeat(1.0,9).ToArray());
+if(!grid.ConjugateGradient(rhsMG,preconditioner:mg).Converged || mg.Apply(rhsMG).Length!=9 || mg.Levels!=2)throw new Exception("incorrect multigrid");

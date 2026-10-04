@@ -301,3 +301,5 @@ benchmarks/reports/*
 !benchmarks/reports/amd/
 
 !benchmarks/reports/ic0/
+
+!benchmarks/reports/multigrid/

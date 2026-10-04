@@ -53,6 +53,11 @@ int main(void) {
     matrix_ic0 ic={0};if(!failed)failed=m_ic0_create(&sparse,&ic);
     for(int k=0;k<2&&!failed;k++){double right[]={k?11:6,k?13:7};matrix_cg_result pcg={0};failed=m_csr_cg_preconditioned(&sparse,right,2,1e-10,0,1000,false,false,&ic,&pcg);if(!failed)failed=pcg.reason!=0||pcg.iterations!=1;m_cg_free(&pcg);}m_ic0_free(&ic);
     m_free(&vector);m_free(&product);m_cg_free(&cg);m_csr_free(&sparse);
+    matrix_multigrid mg={0};sparse_matrix grid={0};matrix rhs_mg={0},applied_mg={0};matrix_cg_result result_mg={0};
+    if(!failed)failed=m_multigrid_create(3,&mg)||m_multigrid_matrix(&mg,&grid)||m_create(9,1,&rhs_mg);
+    if(!failed){for(size_t i=0;i<9;i++)rhs_mg.values[i]=1;failed=m_multigrid_apply(&mg,&rhs_mg,&applied_mg)||m_csr_cg_multigrid(&grid,rhs_mg.values,9,1e-10,0,100,false,false,&mg,&result_mg);}
+    if(!failed)failed=result_mg.reason!=0||applied_mg.rows!=9;
+    m_cg_free(&result_mg);m_free(&applied_mg);m_free(&rhs_mg);m_csr_free(&grid);
     if (!failed) puts("solution: 1, 2");
     return failed;
 }

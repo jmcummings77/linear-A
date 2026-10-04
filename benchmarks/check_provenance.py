@@ -24,7 +24,7 @@ RUNNERS = frozenset({
     "benchmarks/run.py", "benchmarks/determinants.py", "benchmarks/sparse.py",
     "benchmarks/gmres_bench.py", "benchmarks/ilu_bench.py",
     "benchmarks/ordering_bench.py", "benchmarks/cholesky_bench.py",
-    "benchmarks/amd_bench.py", "benchmarks/ic0_bench.py",
+    "benchmarks/amd_bench.py", "benchmarks/ic0_bench.py", "benchmarks/multigrid_bench.py",
 }) | frozenset(EXPERIMENT_RUNNERS.values())
 
 

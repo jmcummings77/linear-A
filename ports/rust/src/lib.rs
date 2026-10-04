@@ -376,3 +376,6 @@ mod ilu;
 pub use ilu::ILU0;
 mod cholesky;
 pub use cholesky::{SparseCholesky, SparseCholeskySymbolic, IC0};
+
+mod multigrid;
+pub use multigrid::{GeometricMultigrid, SymmetricPreconditioner};

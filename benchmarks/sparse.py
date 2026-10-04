@@ -23,6 +23,7 @@ from ilu_reference import fixtures as ilu_fixtures
 from cholesky_reference import fixtures as cholesky_fixtures
 from amd_reference import fixtures as amd_fixtures
 from ic0_reference import fixtures as ic0_fixtures
+from multigrid_reference import fixtures as multigrid_fixtures
 from ordering_reference import fixtures as ordering_fixtures, check_solve as check_ordering_solve
 from wasm_publication import sanitize_live_sources
 
@@ -31,7 +32,7 @@ HERE = Path(__file__).resolve().parent
 
 
 def fixtures():
-    return csr_fixtures()+gmres_fixtures()+ilu_fixtures()+ordering_fixtures()+cholesky_fixtures()+amd_fixtures()+ic0_fixtures()
+    return csr_fixtures()+gmres_fixtures()+ilu_fixtures()+ordering_fixtures()+cholesky_fixtures()+amd_fixtures()+ic0_fixtures()+multigrid_fixtures()
 
 def check_result(actual,case):
     if case["op"].startswith("chol_"):
@@ -131,7 +132,7 @@ def live_bundle(data, extra_sources=None):
         for key, value in sorted(sources.items()): digest.update((key + value).encode())
         cases = fixtures()
         digest.update(json.dumps(cases, sort_keys=True, allow_nan=False).encode())
-        live = dict(available=True, capabilities=["gmres","ilu0","rhs_cache","rcm","cholesky","amd","ic0"], **sources, fixtures=cases, wasm_base64=base64.b64encode(binary).decode(), sha256=digest.hexdigest())
+        live = dict(available=True, capabilities=["gmres","ilu0","rhs_cache","rcm","cholesky","amd","ic0","multigrid"], **sources, fixtures=cases, wasm_base64=base64.b64encode(binary).decode(), sha256=digest.hexdigest())
     return live
 
 

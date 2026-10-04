@@ -658,3 +658,7 @@ standalone HTML embeds a verified WASM bundle, an animated sparsity plot, and tr
 residual curves for both orderings. Live controls run in a worker after a 300 ms
 debounce; playback is opt-in. Motion is a graphical interpolation, not an
 intermediate linear system. Existing saved report measurements are not rewritten.
+
+### Geometric multigrid
+
+`python3 benchmarks/multigrid_bench.py --sizes 7 15 31 --samples 3` compares structured V-cycle, IC(0), Jacobi and plain CG scaling. The standalone report in `reports/multigrid/` includes live WASM level snapshots and independently checked residual histories. See [the contract](../ports/MULTIGRID.md) for grid restrictions and memory accounting.

@@ -282,7 +282,7 @@ public sealed class SparseCholesky
 }
 
 /// <summary>Owned zero-fill incomplete Cholesky; no shifts or pivoting.</summary>
-public sealed class IC0
+public sealed class IC0 : ISymmetricPreconditioner
 {
     private readonly SparseCholesky factor;
 

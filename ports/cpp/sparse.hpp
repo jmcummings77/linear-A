@@ -5,10 +5,19 @@
 #include "../c/ordering_core.h"
 #include "../c/cholesky_core.h"
 #include "../c/gmres_core.h"
+#include "../c/multigrid_core.h"
 namespace linear_a {
 struct CGResult {std::vector<double> x,residuals;std::vector<std::vector<double>> iterates;std::size_t iterations;std::string reason;bool converged;};
 struct GMRESResult {std::vector<double> x,residuals,estimated_residuals;std::vector<std::vector<double>> iterates;std::vector<std::size_t> restarts;std::size_t iterations;std::string reason;bool converged;};
 class CSRMatrix;
+class GeometricMultigrid {
+ friend class CSRMatrix;la_multigrid m_{};
+public:
+ explicit GeometricMultigrid(std::size_t width){if(la_mg_create(width,&m_))throw std::invalid_argument("grid width must be 2^k-1 in 1..255");}
+ std::size_t width()const{return m_.width;}std::size_t size()const{return width()*width();}std::size_t levels()const{std::size_t k=0;for(auto w=width();w;w/=2)k++;return k;}
+ CSRMatrix matrix()const;
+ std::vector<double> apply(const std::vector<double>& b)const{std::vector<double>x(size());if(la_mg_apply(&m_,b.data(),b.size(),x.data()))throw std::runtime_error("invalid or nonfinite multigrid cycle");return x;}
+};
 class IC0 {
  friend class CSRMatrix;
  la_ic0 factor_{};
@@ -67,6 +76,16 @@ public:
             la_cg_free(&r);return result;
         }catch(...){la_cg_free(&r);throw;}
     }
+    CGResult conjugate_gradient_multigrid(const std::vector<double>& b,double rtol=1e-10,double atol=0,std::size_t limit=1000,bool jacobi=false,bool capture=false,const GeometricMultigrid *preconditioner=nullptr)const{
+        auto a=view();la_cg_result r={};int code=preconditioner?la_csr_cg_mg(&a,b.data(),b.size(),rtol,atol,limit,jacobi,capture,&preconditioner->m_,&r):la_csr_cg(&a,b.data(),b.size(),rtol,atol,limit,jacobi,capture,&r);
+        if(code==2)throw std::bad_alloc();if(code)throw std::invalid_argument("invalid CG input, options, symmetry or Jacobi diagonal");
+        const char *reasons[]={"converged","iteration_limit","breakdown","nonfinite"};
+        try{
+            CGResult result;result.x.assign(r.x,r.x+r.size);result.residuals.assign(r.residuals,r.residuals+r.iterations+1);result.iterations=r.iterations;result.reason=reasons[r.reason];result.converged=r.reason==0;
+            if(capture)for(std::size_t i=0;i<=r.iterations;i++)result.iterates.emplace_back(r.iterates+i*r.size,r.iterates+(i+1)*r.size);
+            la_cg_free(&r);return result;
+        }catch(...){la_cg_free(&r);throw;}
+    }
     GMRESResult gmres(const std::vector<double>& b,std::size_t restart=30,double rtol=1e-10,double atol=0,std::size_t limit=1000,bool jacobi=false,bool capture=false,const ILU0 *preconditioner=nullptr)const{
         auto a=view();la_gmres_result r={};int code=la_csr_gmres_preconditioned(&a,b.data(),b.size(),restart,rtol,atol,limit,jacobi,capture,preconditioner?&preconditioner->factor_:nullptr,&r);
         if(code==2)throw std::bad_alloc();if(code)throw std::invalid_argument("invalid GMRES input, options or Jacobi diagonal");
@@ -78,6 +97,7 @@ public:
     }
 
 };
+inline CSRMatrix GeometricMultigrid::matrix()const{la_csr a={};if(la_mg_matrix(&m_,&a))throw std::bad_alloc();try{CSRMatrix out(a.rows,a.cols,{a.offsets,a.offsets+a.rows+1},{a.indices,a.indices+a.nnz},{a.values,a.values+a.nnz});la_csr_free(&a);return out;}catch(...){la_csr_free(&a);throw;}}
 inline IC0::IC0(const CSRMatrix& a){auto v=a.view();int c=la_ic0_create(&v,&factor_);if(c==2)throw std::bad_alloc();if(c)throw std::runtime_error("invalid IC0 matrix or nonpositive pivot");}
 inline CSRMatrix IC0::lower()const{const auto& a=factor_.lower;return CSRMatrix(a.rows,a.cols,{a.offsets,a.offsets+a.rows+1},{a.indices,a.indices+a.nnz},{a.values,a.values+a.nnz});}
 inline ILU0::ILU0(const CSRMatrix& a){auto view=a.view();int c=la_ilu0_create(&view,&factor_);if(c==2)throw std::bad_alloc();if(c)throw std::runtime_error("invalid ILU0 matrix, zero pivot or nonfinite factor");}

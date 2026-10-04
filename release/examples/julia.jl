@@ -43,3 +43,7 @@ for rhs in ([6.,7.],[11.,13.])
     pcg=conjugate_gradient(sparse,rhs;preconditioner=ic)
     @assert pcg.converged && pcg.iterations==1
 end
+
+mg=GeometricMultigrid(3);grid=multigrid_matrix(mg);rhsMG=matvec(grid,ones(9))
+@assert conjugate_gradient(grid,rhsMG;preconditioner=mg).converged
+@assert length(multigrid_apply(mg,rhsMG))==9 && multigrid_levels(mg)==2

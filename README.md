@@ -53,6 +53,6 @@ To explore without installing a toolchain, [open the reports](https://jmcummings
 | Install a release kit | [Release kits and installation](release/README.md) |
 | Contribute a change | [Contributing](CONTRIBUTING.md) |
 
-[Versioned API contract](docs/api/0.10.0/README.md) ·
+[Versioned API contract](docs/api/0.11.0/README.md) ·
 [Earlier API contracts](docs/api/) ·
 [License](LICENSE)

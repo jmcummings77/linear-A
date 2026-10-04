@@ -38,6 +38,7 @@ supported inputs, stopping rules, and numerical limits.
 | [Sparse Cholesky](https://jmcummings77.github.io/linear-A/cholesky/) | Fill creation, analysis, factorization, repeated solves, and factor storage. | [Cholesky](../ports/CHOLESKY.md) |
 | [AMD ordering](https://jmcummings77.github.io/linear-A/amd/) | Natural, RCM, and AMD orderings, reference fill, and an elimination graph. | [AMD](../ports/AMD.md) |
 | [IC(0)](https://jmcummings77.github.io/linear-A/ic0/) | Plain CG, Jacobi-CG, IC(0), and full Cholesky with live residual fields. | [IC(0)](../ports/IC0.md) |
+| [Geometric multigrid](https://jmcummings77.github.io/linear-A/multigrid/) | Structured V-cycle, IC(0), Jacobi, and plain CG scaling with live coarse-grid corrections. | [Multigrid](../ports/MULTIGRID.md) |
 
 ## Controlled experiments
 
@@ -74,6 +75,8 @@ provenance. Those reports retain their disclosed limitations.
 
 New published captures require committed source and a clean checkout, build in
 a fresh clone, and preserve a recoverable commit, invocation, and artifact hashes.
+The [saved multigrid report](../benchmarks/reports/multigrid/provenance.json) records
+its clean source commit, source tree, command, and artifact hashes.
 See the [capture workflow](../benchmarks/README.md#publishing-reproducible-source-records).
 The [benchmark guide](../benchmarks/README.md) contains commands and profiling
 details; the [runner protocol](../benchmarks/PROTOCOL.md) defines portable inputs,

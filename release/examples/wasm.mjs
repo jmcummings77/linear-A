@@ -1,5 +1,5 @@
 import { createMatrixAPI } from "linear-a-wasm";
-const { Matrix, CSRMatrix, ILU0, IC0, SparseCholeskySymbolic } = await createMatrixAPI();
+const { Matrix, CSRMatrix, ILU0, IC0, SparseCholeskySymbolic, GeometricMultigrid } = await createMatrixAPI();
 const a = new Matrix(2, 2, [4, 1, 2, 3]);
 const b = new Matrix(2, 1, [6, 8]);
 const x = a.solve(b);
@@ -32,3 +32,6 @@ const gm=sparse.gmres([6,7],{restart:2,jacobi:true,capture:true});
 if(!gm.converged||Math.abs(gm.x[0]-1)>1e-12||Math.abs(gm.x[1]-2)>1e-12)throw Error("incorrect GMRES");
 const product=sparse.matvec([1,2]),cg=sparse.conjugateGradient([6,7],{jacobi:true,capture:true});
 if(product[0]!==6||product[1]!==7||!cg.converged||Math.abs(cg.x[0]-1)>1e-12||Math.abs(cg.x[1]-2)>1e-12)throw Error("incorrect sparse solver");}finally{sparse.dispose();}
+
+const mg=new GeometricMultigrid(3),grid=mg.matrix;
+try{const rhsMG=grid.matvec(Array(9).fill(1));if(!grid.conjugateGradient(rhsMG,{preconditioner:mg}).converged||mg.apply(rhsMG).length!==9||mg.levels!==2)throw Error("incorrect multigrid");}finally{grid.dispose();mg.dispose();}

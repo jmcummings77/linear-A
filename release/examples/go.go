@@ -42,5 +42,9 @@ func main() {
  cy,err:=chol.Solve([]float64{11,13});if err!=nil||math.Abs(cy[0]-20.0/11)>1e-12||chol.Lower().NNZ()!=3{panic("incorrect Cholesky reuse")}
  ic,err:=matrix.NewIC0(sparse);if err!=nil{panic(err)}
  for _,rhs:=range [][]float64{{6,7},{11,13}}{o:=matrix.DefaultCGOptions();o.Preconditioner=ic;pcg,e:=sparse.ConjugateGradient(rhs,o);if e!=nil||!pcg.Converged||pcg.Iterations!=1{panic("incorrect IC0 reuse")}}
+ mg,err:=matrix.NewGeometricMultigrid(3);if err!=nil{panic(err)}
+ grid,err:=mg.Matrix();if err!=nil{panic(err)};rhsMG,err:=grid.Matvec([]float64{1,1,1,1,1,1,1,1,1});if err!=nil{panic(err)}
+ optionsMG:=matrix.DefaultCGOptions();optionsMG.Preconditioner=mg;resultMG,err:=grid.ConjugateGradient(rhsMG,optionsMG);if err!=nil||!resultMG.Converged||mg.Levels()!=2{panic("incorrect multigrid")}
+ appliedMG,err:=mg.Apply(rhsMG);if err!=nil||len(appliedMG)!=9{panic("incorrect V-cycle") }
  fmt.Println("solution: 1, 2")
 }

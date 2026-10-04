@@ -9,11 +9,13 @@ internal static class SparseRunner
         if (args.Length != (args.Length > 1 && args[1] == "gmres" ? 12 : 11)) throw new ArgumentException("Invalid sparse protocol.");
         var op = args[1]; int Int(int i) => int.Parse(args[i], CultureInfo.InvariantCulture); double Number(int i) => double.Parse(args[i], CultureInfo.InvariantCulture);
         var rows = Int(2); var cols = Int(3); var nnz = Int(4); var iterations = Int(5); var rtol = Number(6); var atol = Number(7); var limit = Int(8); var jacobi = Int(9); var capture = Int(10);
-        if (op is not ("spmv" or "dense" or "cg" or "gmres" or "ic0_factor" or "ic0_apply" or "ilu_setup" or "ilu_apply" or "rcm" or "amd" or "permute" or "permutation_check" or "rcm_solve" or "ilu_solve" or "chol_symbolic" or "chol_factor" or "chol_solve" or "chol_total" or "chol_rcm_total" or "chol_amd_total") || rows < 0 || cols < 0 || nnz < 0 || iterations < 0 || (jacobi < 0 || jacobi > (op is "cg" or "gmres" ? 3 : 1)) || capture is < 0 or > 1) throw new ArgumentException("Invalid sparse options.");
+        if (op is not ("mg_setup" or "mg_matrix" or "mg_apply" or "spmv" or "dense" or "cg" or "gmres" or "ic0_factor" or "ic0_apply" or "ilu_setup" or "ilu_apply" or "rcm" or "amd" or "permute" or "permutation_check" or "rcm_solve" or "ilu_solve" or "chol_symbolic" or "chol_factor" or "chol_solve" or "chol_total" or "chol_rcm_total" or "chol_amd_total") || rows < 0 || cols < 0 || nnz < 0 || iterations < 0 || (jacobi < 0 || jacobi > (op == "cg" ? 5 : op == "gmres" ? 3 : 1)) || capture is < 0 or > 1) throw new ArgumentException("Invalid sparse options.");
         var tokens = Console.In.ReadToEnd().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries); var count = op is "cg" or "gmres" ? rows : cols;
         if (tokens.Length != checked(rows + 1 + 2 * nnz + count)) throw new ArgumentException("Incorrect sparse input count.");
         var offset = 0; int[] Indices(int n) => Enumerable.Range(0, n).Select(_ => int.Parse(tokens[offset++], CultureInfo.InvariantCulture)).ToArray(); double[] Values(int n) => Enumerable.Range(0, n).Select(_ => double.Parse(tokens[offset++], CultureInfo.InvariantCulture)).ToArray();
         var rp = Indices(rows + 1); var ci = Indices(nnz); var v = Values(nnz); var b = Values(count); var a = new CSRMatrix(rows, cols, rp, ci, v);
+        GeometricMultigrid NewMG() { var w=(int)Math.Sqrt(rows); if(rows!=cols || w*w!=rows) throw new ArgumentException("Multigrid requires a square grid."); return new GeometricMultigrid(w); }
+        var mg=op is "mg_apply" or "mg_matrix" || (op=="cg" && jacobi==4) ? NewMG() : null;
         var factor = op == "ilu_apply" || (op == "gmres" && jacobi == 2) ? new ILU0(a) : null;
         var ic = op == "ic0_apply" || (op == "cg" && jacobi == 2) ? new IC0(a) : null;
         var plan = op is "chol_factor" or "chol_solve" ? new SparseCholeskySymbolic(a) : null;
@@ -22,6 +24,9 @@ internal static class SparseRunner
         if (op == "dense") { dense = new Matrix<double>(rows, cols); for (var i = 0; i < rows; i++) for (var p = rp[i]; p < rp[i + 1]; p++) dense[i, ci[p]] = v[p]; right = new Matrix<double>(cols, 1); for (var i = 0; i < cols; i++) right[i, 0] = b[i]; }
         double[] Compute()
         {
+            if(op=="mg_setup") { var m=NewMG(); return new double[]{m.Size,m.Levels}; }
+            if(op=="mg_matrix") { var m=mg!.Matrix; return m.RowOffsets.Concat(m.ColumnIndices).Select(x=>(double)x).Concat(m.Values).ToArray(); }
+            if(op=="mg_apply") return mg!.Apply(b);
             if (op == "ic0_factor") { var l = new IC0(a).Lower; return l.RowOffsets.Concat(l.ColumnIndices).Select(x => (double)x).Concat(l.Values).ToArray(); }
             if (op == "ic0_apply") return ic!.Apply(b);
             if (op == "chol_symbolic") { var s = new SparseCholeskySymbolic(a); return s.RowOffsets.Concat(s.ColumnIndices).Concat(s.FillSteps).Select(x => (double)x).ToArray(); }
@@ -54,7 +59,7 @@ internal static class SparseRunner
                 var packed = new List<double> { Array.IndexOf(new[] { "converged", "iteration_limit", "breakdown", "nonfinite", "stagnation" }, g.Reason), g.Iterations, g.Residuals.Length };
                 packed.AddRange(g.X); packed.AddRange(g.Residuals); packed.AddRange(g.EstimatedResiduals); packed.Add(g.Restarts.Length); packed.AddRange(g.Restarts.Select(v => (double)v)); foreach (var frame in g.Iterates) packed.AddRange(frame); return packed.ToArray();
             }
-            var r = a.ConjugateGradient(b, rtol, atol, limit, jacobi == 1, capture != 0, jacobi == 3 ? new IC0(a) : ic);
+            var r = a.ConjugateGradient(b, rtol, atol, limit, jacobi == 1, capture != 0, jacobi == 5 ? NewMG() : jacobi == 4 ? mg : jacobi == 3 ? new IC0(a) : ic);
             if (iterations > 0) { if (!r.Converged) throw new ArithmeticException("Benchmark CG did not converge: " + r.Reason); return r.X; }
             var result = new List<double> { Array.IndexOf(new[] { "converged", "iteration_limit", "breakdown", "nonfinite" }, r.Reason), r.Iterations, r.Residuals.Length };
             result.AddRange(r.X); result.AddRange(r.Residuals); foreach (var frame in r.Iterates) result.AddRange(frame); return result.ToArray();

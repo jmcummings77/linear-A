@@ -33,5 +33,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(chol.lower().nnz(),3);
     let ic=linear_a::IC0::new(&sparse)?;
     for rhs in [[6.,7.],[11.,13.]] {let pcg=sparse.conjugate_gradient_preconditioned(&rhs,Default::default(),Some(&ic))?;assert!(pcg.converged && pcg.iterations==1);}
+    let mg=linear_a::GeometricMultigrid::new(3)?;let grid=mg.matrix()?;let rhs_mg=grid.matvec(&[1.;9])?;
+    assert!(grid.conjugate_gradient_preconditioned(&rhs_mg,Default::default(),Some(&mg))?.converged);
+    assert_eq!(mg.apply(&rhs_mg)?.len(),9);assert_eq!(mg.levels(),2);
     println!("solution: 1, 2"); Ok(())
 }

@@ -193,8 +193,8 @@ async function main() {
   const options = process.env.LINEAR_A_WASM_MODULE
     ? { moduleUrl: pathToFileURL(resolve(process.env.LINEAR_A_WASM_MODULE)) }
     : {};
-  const { Matrix, CSRMatrix, ILU0, SparseCholeskySymbolic, IC0 } = await createMatrixAPI(options);
-  const result = command === "sparse" ? sparseRun(args,CSRMatrix,Matrix,ILU0,SparseCholeskySymbolic,IC0) : command === "check" ? check(args, Matrix) : bench(args, Matrix);
+  const { Matrix, CSRMatrix, ILU0, SparseCholeskySymbolic, IC0, GeometricMultigrid } = await createMatrixAPI(options);
+  const result = command === "sparse" ? sparseRun(args,CSRMatrix,Matrix,ILU0,SparseCholeskySymbolic,IC0,GeometricMultigrid) : command === "check" ? check(args, Matrix) : bench(args, Matrix);
   process.stdout.write(JSON.stringify(result) + "\n");
 }
 

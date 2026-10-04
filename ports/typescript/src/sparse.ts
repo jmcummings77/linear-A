@@ -1,8 +1,9 @@
+import {GeometricMultigrid} from './multigrid.js';
 import {IC0} from "./cholesky.js";
 import {gmres, type GMRESOptions} from "./gmres.js";
 /** Canonical CSR storage; zero-based, sorted unique column indices in each row. */
 export interface CGResult { x:number[]; converged:boolean; iterations:number; reason:string; residuals:number[]; iterates:number[][]; }
-export interface CGOptions { rtol?:number; atol?:number; maxIterations?:number; jacobi?:boolean; capture?:boolean; preconditioner?:IC0; }
+export interface CGOptions { rtol?:number; atol?:number; maxIterations?:number; jacobi?:boolean; capture?:boolean; preconditioner?:IC0|GeometricMultigrid; }
 export class CSRMatrix {
   readonly rows:number; readonly cols:number;
   private rp:number[];private ci:number[];private v:number[];
@@ -71,7 +72,7 @@ export class CSRMatrix {
     const b=Array.from(input),n=this.rows;
     if(this.cols!==n||b.length!==n||b.some(x=>!Number.isFinite(x)))throw new RangeError('CG requires square matrix and finite matching vector');
     if(!Number.isFinite(rtol)||rtol<0||rtol>=1||!Number.isFinite(atol)||atol<0||!Number.isInteger(maxIterations)||maxIterations<0||maxIterations>100000||typeof jacobi!=='boolean'||typeof capture!=='boolean')throw new RangeError('invalid CG options');
-    if(preconditioner!==undefined&&(!(preconditioner instanceof IC0)||preconditioner.size!==n||jacobi))throw new RangeError('invalid or conflicting CG preconditioner');
+    if(preconditioner!==undefined&&(!(preconditioner instanceof IC0)&&!(preconditioner instanceof GeometricMultigrid)||preconditioner.size!==n||jacobi))throw new RangeError('invalid or conflicting CG preconditioner');
     const diagonal=Array(n).fill(1);
     for(let i=0;i<n;i++){
       for(let p=this.rp[i];p<this.rp[i+1];p++){const j=this.ci[p],q=this.find(j,i),other=q<this.rp[j+1]&&this.ci[q]===i?this.v[q]:0;if(this.v[p]!==other)throw new RangeError('CG requires exact symmetry');}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "capture_method": "clean-checkout-v1",
+  "revision": "f2a7e1a7f019311b86302631533ec4f444ab817b",
+  "source_tree": "833a334c0120257c7c7ca99f98033b17cff7a6ee",
+  "command": [
+    "python3",
+    "benchmarks/multigrid_bench.py",
+    "--sizes",
+    "7",
+    "15",
+    "31",
+    "--samples",
+    "3",
+    "--output",
+    "<output>"
+  ],
+  "python_version": "3.9.6",
+  "artifacts": {
+    "results.json": "5cd159f58bd236f59d29711a7363be55b74652d8a2dd3a73b9c1dc190a3483a6"
+  }
+}

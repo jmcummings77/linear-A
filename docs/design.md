@@ -40,7 +40,7 @@ APIs. Rectangular matrices are supported wherever the operation permits them.
 | Dense matrices | Construction, identity, copies, row/column extraction, arithmetic, transpose, multiplication, trace, determinant, and triangular classification: [shared API](../ports/README.md#shapes-ownership-and-arithmetic). |
 | Dense systems and decompositions | Reusable pivoted LU and Cholesky factors, multiple right-hand sides, and column-pivoted Householder QR: [solving](../ports/SOLVING.md). Economy SVD, pseudoinverses, minimum-norm least squares, and ridge regularization: [SVD](../ports/SVD.md). |
 | Eigenpairs | Cyclic Jacobi for symmetric matrices; balanced Hessenberg reduction and double-shift QR for general real matrices, including complex right eigenpairs: [eigenvalues and eigenvectors](../ports/README.md#eigenvalues-and-eigenvectors). |
-| Sparse systems | Canonical CSR, matrix-vector products, CG, restarted GMRES, Jacobi, ILU(0), and RCM: [sparse guide](../ports/SPARSE.md). Specialized contracts cover [AMD ordering](../ports/AMD.md), [sparse Cholesky](../ports/CHOLESKY.md), and [IC(0)](../ports/IC0.md). |
+| Sparse systems | Canonical CSR, matrix-vector products, CG, restarted GMRES, Jacobi, ILU(0), and RCM: [sparse guide](../ports/SPARSE.md). Specialized contracts cover [AMD ordering](../ports/AMD.md), [sparse Cholesky](../ports/CHOLESKY.md), [IC(0)](../ports/IC0.md), and [structured geometric multigrid](../ports/MULTIGRID.md). |
 | Geometry | Right-handed 3D cross products and active column-vector rotations with finite radian angles: [cross products and rotations](../ports/README.md#cross-products-and-rotations). |
 
 ## Ownership and indexing

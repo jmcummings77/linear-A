@@ -152,4 +152,10 @@ void m_ic0_free(matrix_ic0 *f);
 matrix_status m_ic0_apply(const matrix_ic0 *f,const matrix *b,matrix *out);
 matrix_status m_csr_cg_preconditioned(const sparse_matrix *a,const double *b,size_t count,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_ic0 *f,matrix_cg_result *out);
 
+#include "multigrid_core.h"
+typedef la_multigrid matrix_multigrid;
+matrix_status m_multigrid_create(size_t width,matrix_multigrid *out);
+matrix_status m_multigrid_matrix(const matrix_multigrid *m,sparse_matrix *out);
+matrix_status m_multigrid_apply(const matrix_multigrid *m,const matrix *b,matrix *out);
+matrix_status m_csr_cg_multigrid(const sparse_matrix *a,const double *b,size_t count,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_multigrid *m,matrix_cg_result *out);
 #endif

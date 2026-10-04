@@ -14,7 +14,7 @@ from check_provenance import EXPERIMENT_RUNNERS, artifact_hashes, forbidden_opti
 ROOT = Path(__file__).resolve().parents[1]
 RUNNERS = (
     'run.py', 'determinants.py', 'sparse.py', 'gmres_bench.py', 'ilu_bench.py',
-    'ordering_bench.py', 'cholesky_bench.py', 'amd_bench.py', 'ic0_bench.py',
+    'ordering_bench.py', 'cholesky_bench.py', 'amd_bench.py', 'ic0_bench.py', 'multigrid_bench.py',
 ) + tuple(EXPERIMENT_RUNNERS)
 
 
@@ -34,9 +34,9 @@ def checked_arguments(runner, arguments):
         if option in ('--', '-h') or (option.startswith('--') and
                 any(flag.startswith(option) for flag in forbidden)):
             raise ValueError('Publication capture does not accept ' + option)
-    # IC(0) and the experiments already fail unless every selected
+    # IC(0), multigrid and the experiments already fail unless every selected
     # implementation passes; their parsers do not expose --require-all.
-    if runner not in ('ic0_bench.py', *EXPERIMENT_RUNNERS) and '--require-all' not in arguments:
+    if runner not in ('ic0_bench.py', 'multigrid_bench.py', *EXPERIMENT_RUNNERS) and '--require-all' not in arguments:
         arguments.append('--require-all')
     return arguments
 

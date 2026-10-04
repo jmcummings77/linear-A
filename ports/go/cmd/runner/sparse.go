@@ -38,7 +38,7 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
-	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ic0_factor" && op != "ic0_apply" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "amd" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve" && op != "chol_symbolic" && op != "chol_factor" && op != "chol_solve" && op != "chol_total" && op != "chol_rcm_total" && op != "chol_amd_total") || jacobi > 3 || (op != "gmres" && op != "cg" && jacobi > 1) || capture > 1 {
+	if (op != "mg_setup" && op != "mg_matrix" && op != "mg_apply" && op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ic0_factor" && op != "ic0_apply" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "amd" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve" && op != "chol_symbolic" && op != "chol_factor" && op != "chol_solve" && op != "chol_total" && op != "chol_rcm_total" && op != "chol_amd_total") || jacobi > 5 || (op != "cg" && jacobi > 3) || (op != "gmres" && op != "cg" && jacobi > 1) || capture > 1 {
 		return errors.New("invalid sparse operation/options")
 	}
 	raw, e := io.ReadAll(os.Stdin)
@@ -98,6 +98,20 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
+	newMG := func() (*matrix.GeometricMultigrid, error) {
+		w := int(math.Sqrt(float64(rows)))
+		if rows != cols || w*w != rows {
+			return nil, errors.New("multigrid requires a square grid")
+		}
+		return matrix.NewGeometricMultigrid(w)
+	}
+	var mg *matrix.GeometricMultigrid
+	if op == "mg_apply" || op == "mg_matrix" || (op == "cg" && jacobi == 4) {
+		mg, e = newMG()
+		if e != nil {
+			return e
+		}
+	}
 	var ic *matrix.IC0
 	if op == "ic0_apply" || (op == "cg" && jacobi == 2) {
 		ic, e = matrix.NewIC0(a)
@@ -144,6 +158,30 @@ func sparseRun(args []string) error {
 		}
 	}
 	compute := func() ([]float64, error) {
+		if op == "mg_setup" {
+			m, e := newMG()
+			if e != nil {
+				return nil, e
+			}
+			return []float64{float64(m.Size()), float64(m.Levels())}, nil
+		}
+		if op == "mg_apply" {
+			return mg.Apply(b)
+		}
+		if op == "mg_matrix" {
+			m, e := mg.Matrix()
+			if e != nil {
+				return nil, e
+			}
+			out := []float64{}
+			for _, v := range m.RowOffsets() {
+				out = append(out, float64(v))
+			}
+			for _, v := range m.ColumnIndices() {
+				out = append(out, float64(v))
+			}
+			return append(out, m.Values()...), nil
+		}
 		if op == "ic0_factor" {
 			f, e := matrix.NewIC0(a)
 			if e != nil {
@@ -400,7 +438,19 @@ func sparseRun(args []string) error {
 			}
 			return out, nil
 		}
-		currentIC := ic
+		var currentIC matrix.SymmetricPreconditioner
+		if ic != nil {
+			currentIC = ic
+		}
+		if jacobi == 4 {
+			currentIC = mg
+		}
+		if jacobi == 5 {
+			currentIC, e = newMG()
+			if e != nil {
+				return nil, e
+			}
+		}
 		if jacobi == 3 {
 			currentIC, e = matrix.NewIC0(a)
 			if e != nil {

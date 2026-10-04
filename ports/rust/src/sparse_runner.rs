@@ -1,4 +1,7 @@
-use linear_a::{CGOptions, CSRMatrix, GMRESOptions, Matrix, SparseCholeskySymbolic, IC0, ILU0};
+use linear_a::{
+    CGOptions, CSRMatrix, GMRESOptions, GeometricMultigrid, Matrix, SparseCholeskySymbolic, IC0,
+    ILU0,
+};
 use std::io::{self, Read};
 use std::time::Instant;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -23,6 +26,9 @@ pub fn run(args: &[String]) -> Result<()> {
     let jacobi: usize = args[9].parse()?;
     let capture: usize = args[10].parse()?;
     if ![
+        "mg_setup",
+        "mg_matrix",
+        "mg_apply",
         "spmv",
         "dense",
         "cg",
@@ -45,7 +51,8 @@ pub fn run(args: &[String]) -> Result<()> {
         "chol_amd_total",
     ]
     .contains(&op)
-        || jacobi > 3
+        || jacobi > 5
+        || (op != "cg" && jacobi > 3)
         || (op != "gmres" && op != "cg" && jacobi > 1)
         || capture > 1
     {
@@ -85,6 +92,18 @@ pub fn run(args: &[String]) -> Result<()> {
         .map(|s| s.parse())
         .collect::<std::result::Result<Vec<f64>, _>>()?;
     let a = CSRMatrix::new(rows, cols, &rp, &ci, &v)?;
+    let new_mg = || -> Result<GeometricMultigrid> {
+        let w = (rows as f64).sqrt() as usize;
+        if rows != cols || w * w != rows {
+            return Err("multigrid requires a square grid".into());
+        }
+        Ok(GeometricMultigrid::new(w)?)
+    };
+    let mg = if op == "mg_apply" || op == "mg_matrix" || (op == "cg" && jacobi == 4) {
+        Some(new_mg()?)
+    } else {
+        None
+    };
     let factor = if op == "ilu_apply" || (op == "gmres" && jacobi == 2) {
         Some(ILU0::new(&a)?)
     } else {
@@ -117,6 +136,24 @@ pub fn run(args: &[String]) -> Result<()> {
         None
     };
     let compute = || -> Result<Vec<f64>> {
+        if op == "mg_setup" {
+            let m = new_mg()?;
+            return Ok(vec![m.size() as f64, m.levels() as f64]);
+        }
+        if op == "mg_apply" {
+            return Ok(mg.as_ref().unwrap().apply(&b)?);
+        }
+        if op == "mg_matrix" {
+            let m = mg.as_ref().unwrap().matrix()?;
+            let mut out: Vec<f64> = m
+                .row_offsets()
+                .iter()
+                .chain(m.column_indices())
+                .map(|&v| v as f64)
+                .collect();
+            out.extend(m.values());
+            return Ok(out);
+        }
         if op == "ic0_factor" {
             let l = IC0::new(&a)?.lower();
             let mut out: Vec<f64> = l
@@ -314,6 +351,7 @@ pub fn run(args: &[String]) -> Result<()> {
             }
             return Ok(out);
         }
+        let current_mg = if jacobi == 5 { Some(new_mg()?) } else { None };
         let current_ic = if jacobi == 3 {
             Some(IC0::new(&a)?)
         } else {
@@ -328,7 +366,14 @@ pub fn run(args: &[String]) -> Result<()> {
                 jacobi: jacobi == 1,
                 capture: capture != 0,
             },
-            current_ic.as_ref().or(ic.as_ref()),
+            current_mg
+                .as_ref()
+                .or(mg.as_ref())
+                .map(|m| m as &dyn linear_a::SymmetricPreconditioner)
+                .or(current_ic
+                    .as_ref()
+                    .or(ic.as_ref())
+                    .map(|f| f as &dyn linear_a::SymmetricPreconditioner)),
         )?;
         if iterations > 0 {
             if !r.converged {

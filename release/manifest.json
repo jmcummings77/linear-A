@@ -1,5 +1,5 @@
 {
-  "version": "0.10.0",
+  "version": "0.11.0",
   "capabilities": [
     "arithmetic",
     "determinants",
@@ -17,7 +17,8 @@
     "rcm",
     "sparse-cholesky",
     "amd",
-    "ic0"
+    "ic0",
+    "multigrid"
   ],
   "ports": {
     "assembly": {
@@ -44,7 +45,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "c": {
@@ -70,7 +72,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "cpp": {
@@ -97,7 +100,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "csharp": {
@@ -123,7 +127,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "fsharp": {
@@ -149,7 +154,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "go": {
@@ -175,7 +181,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "julia": {
@@ -201,7 +208,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "python": {
@@ -227,7 +235,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "rust": {
@@ -253,7 +262,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "typescript": {
@@ -279,7 +289,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     },
     "wasm": {
@@ -306,7 +317,8 @@
         "rcm",
         "sparse-cholesky",
         "amd",
-        "ic0"
+        "ic0",
+        "multigrid"
       ]
     }
   }

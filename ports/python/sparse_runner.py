@@ -4,15 +4,21 @@ from sparse import CSRMatrix
 from ilu import ILU0
 from cholesky import SparseCholeskySymbolic,IC0
 from matrix import Matrix
+from multigrid import GeometricMultigrid
 
 def run(args):
     if len(args)!=(11 if args and args[0]=='gmres' else 10):raise ValueError('expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE')
     op=args[0];rows,cols,nnz,iters=map(int,args[1:5]);rtol,atol=map(float,args[5:7]);limit,jacobi,capture=map(int,args[7:10]);restart=int(args[10]) if op=='gmres' else 30
-    if op not in ('spmv','dense','cg','gmres','ic0_factor','ic0_apply','ilu_setup','ilu_apply','rcm','amd','permute','permutation_check','rcm_solve','ilu_solve','chol_symbolic','chol_factor','chol_solve','chol_total','chol_rcm_total','chol_amd_total') or min(rows,cols,nnz,iters)<0 or jacobi not in (range(4) if op in ('cg','gmres') else (0,1)) or capture not in (0,1):raise ValueError('invalid sparse protocol')
+    if op not in ('mg_setup','mg_matrix','mg_apply','spmv','dense','cg','gmres','ic0_factor','ic0_apply','ilu_setup','ilu_apply','rcm','amd','permute','permutation_check','rcm_solve','ilu_solve','chol_symbolic','chol_factor','chol_solve','chol_total','chol_rcm_total','chol_amd_total') or min(rows,cols,nnz,iters)<0 or jacobi not in (range(6) if op=='cg' else range(4) if op=='gmres' else (0,1)) or capture not in (0,1):raise ValueError('invalid sparse protocol')
     raw=sys.stdin.read().split();count=rows if op in ('cg','gmres') else cols
     if len(raw)!=rows+1+2*nnz+count:raise ValueError('incorrect sparse input count')
     rp=list(map(int,raw[:rows+1]));ci=list(map(int,raw[rows+1:rows+1+nnz]));v=list(map(float,raw[rows+1+nnz:rows+1+2*nnz]));b=list(map(float,raw[rows+1+2*nnz:]))
     a=CSRMatrix(rows,cols,rp,ci,v)
+    def new_mg():
+        w=math.isqrt(rows)
+        if rows!=cols or w*w!=rows:raise ValueError('multigrid requires a square grid')
+        return GeometricMultigrid(w)
+    mg=new_mg() if op in ('mg_apply','mg_matrix') or (op=='cg' and jacobi==4) else None
     factor=ILU0(a) if op=='ilu_apply' or (op=='gmres' and jacobi==2) else None
     ic=IC0(a) if op=='ic0_apply' or (op=='cg' and jacobi==2) else None
     plan=SparseCholeskySymbolic(a) if op in ('chol_factor','chol_solve') else None
@@ -24,6 +30,11 @@ def run(args):
             for p in range(rp[i],rp[i+1]):values[i*cols+ci[p]]=v[p]
         dense,right=Matrix(rows,cols,values),Matrix(cols,1,b)
     def compute():
+        if op=='mg_setup':
+            m=new_mg();return [m.size,m.levels]
+        if op=='mg_matrix':
+            m=mg.matrix;return m.row_offsets+m.column_indices+m.values
+        if op=='mg_apply':return mg.apply(b)
         if op=='ic0_factor':
             l=IC0(a).lower;return l.row_offsets+l.column_indices+l.values
         if op=='ic0_apply':return ic.apply(b)
@@ -58,7 +69,7 @@ def run(args):
         if op=='ilu_apply':return factor.apply(b)
         if op=='dense':return dense.multiply(right).values
         if op=='spmv':return a.matvec(b)
-        r=a.gmres(b,restart,rtol,atol,limit,jacobi==1,bool(capture),ILU0(a) if jacobi==3 else factor) if op=='gmres' else a.conjugate_gradient(b,rtol,atol,limit,jacobi==1,bool(capture),IC0(a) if jacobi==3 else ic)
+        r=a.gmres(b,restart,rtol,atol,limit,jacobi==1,bool(capture),ILU0(a) if jacobi==3 else factor) if op=='gmres' else a.conjugate_gradient(b,rtol,atol,limit,jacobi==1,bool(capture),new_mg() if jacobi==5 else mg if jacobi==4 else IC0(a) if jacobi==3 else ic)
         if iters:
             if not r.converged:raise ValueError('benchmark CG did not converge: '+r.reason)
             return r.x

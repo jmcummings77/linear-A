@@ -175,7 +175,7 @@ class ReportDirectoryTests(unittest.TestCase):
 
     def test_every_current_benchmark_card_has_metadata_from_its_own_measurements(self):
         expected_names = {'latest', 'determinants', 'eigen', 'vectors', 'sparse',
-                          'gmres', 'ilu', 'ordering', 'cholesky', 'amd', 'ic0'}
+                          'gmres', 'ilu', 'ordering', 'cholesky', 'amd', 'ic0', 'multigrid'}
         html, parsed = self.render()
         cards = {card['href'].rstrip('/'): card for card in parsed.cards if card['metadata']}
         self.assertEqual(set(cards), expected_names)
@@ -206,7 +206,7 @@ class ReportDirectoryTests(unittest.TestCase):
                     self.assertIn(href[1:], parsed.ids)
         solver_cards = [card['href'] for card in parsed.cards
                         if card['family'] == 'sparse-solvers']
-        self.assertEqual(solver_cards, ['sparse/', 'gmres/', 'ilu/', 'ic0/'])
+        self.assertEqual(solver_cards, ['sparse/', 'gmres/', 'ilu/', 'multigrid/', 'ic0/'])
         for target in ['ilu/#explore', 'ic0/#explore', 'amd/#explore']:
             self.assertIn(target, [link.get('href') for link in parsed.links])
 
