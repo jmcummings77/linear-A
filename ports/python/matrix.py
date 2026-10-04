@@ -465,4 +465,4 @@ from sparse import CSRMatrix, CGResult
 from gmres import GMRESResult
 from ilu import ILU0
 
-from cholesky import SparseCholeskySymbolic, SparseCholesky
+from cholesky import SparseCholeskySymbolic, SparseCholesky, IC0

@@ -1,4 +1,4 @@
-import {SparseCholeskySymbolic} from './cholesky.js';
+import {SparseCholeskySymbolic,IC0} from './cholesky.js';
 import {ILU0} from "./ilu.js";
 import type {GMRESResult} from "./gmres.js";
 import {CSRMatrix} from "./sparse.js";
@@ -8,7 +8,7 @@ export function sparseRun(args:string[]){
  if(args.length!==(args[0]==='gmres'?11:10))throw new Error('expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE');
  const [op]=args,[rows,cols,nnz,iters]=args.slice(1,5).map(Number),[rtol,atol]=args.slice(5,7).map(Number),[maxIterations,jacobi,capture]=args.slice(7,10).map(Number);
  const restart=op==='gmres'?Number(args[10]):30;
- if(!['spmv','dense','cg','gmres','ilu_setup','ilu_apply','rcm','amd','permute','permutation_check','rcm_solve','ilu_solve','chol_symbolic','chol_factor','chol_solve','chol_total','chol_rcm_total','chol_amd_total'].includes(op)||[rows,cols,nnz,iters].some(x=>!Number.isSafeInteger(x)||x<0)||!(op==='gmres'?[0,1,2,3]:[0,1]).includes(jacobi)||![0,1].includes(capture))throw new Error('invalid sparse protocol');
+ if(!['spmv','dense','cg','gmres','ic0_factor','ic0_apply','ilu_setup','ilu_apply','rcm','amd','permute','permutation_check','rcm_solve','ilu_solve','chol_symbolic','chol_factor','chol_solve','chol_total','chol_rcm_total','chol_amd_total'].includes(op)||[rows,cols,nnz,iters].some(x=>!Number.isSafeInteger(x)||x<0)||!((op==='gmres'||op==='cg')?[0,1,2,3]:[0,1]).includes(jacobi)||![0,1].includes(capture))throw new Error('invalid sparse protocol');
  const raw=readFileSync(0,'utf8').trim(),data=raw?raw.split(/\s+/).map(Number):[],count=['cg','gmres'].includes(op)?rows:cols;
  if(data.length!==rows+1+2*nnz+count)throw new Error('incorrect sparse input count');
  const rp=data.slice(0,rows+1),ci=data.slice(rows+1,rows+1+nnz),v=data.slice(rows+1+nnz,rows+1+2*nnz),b=data.slice(rows+1+2*nnz);
@@ -19,7 +19,10 @@ export function sparseRun(args:string[]){
   const factor=op==='ilu_apply'||(op==='gmres'&&jacobi===2)?new ILU0(a):undefined;
   const plan=['chol_factor','chol_solve'].includes(op)?new SparseCholeskySymbolic(a):undefined;
   const chol=op==='chol_solve'?plan!.factorize(a):undefined;
+  const ic=op==='ic0_apply'||(op==='cg'&&jacobi===2)?new IC0(a):undefined;
   const compute=()=>{
+   if(op==='ic0_factor'){const f=new IC0(a);let l;try{l=f.lower;return [...l.rowOffsets,...l.columnIndices,...l.values];}finally{}}
+   if(op==='ic0_apply')return Array.from(ic!.apply(b));
    if(op==='chol_symbolic'){const s=new SparseCholeskySymbolic(a);try{return [...s.rowOffsets,...s.columnIndices,...s.fillSteps];}finally{}}
    if(op==='chol_factor'){const f=plan!.factorize(a);let l;try{l=f.lower;return [...l.rowOffsets,...l.columnIndices,...l.values];}finally{}}
    if(op==='chol_solve')return chol!.solve(b);
@@ -46,8 +49,9 @@ export function sparseRun(args:string[]){
    if(op==='ilu_apply')return factor!.apply(b);
    if(op==='dense'){const out=dense!.multiply(right!);return Array.from(out.values);}
    if(op==='spmv')return Array.from(a.matvec(b));
+   const currentIC=op==='cg'&&jacobi===3?new IC0(a):ic;
    const current=op==='gmres'&&jacobi===3?new ILU0(a):factor;
-   const r=op==='gmres'?a.gmres(b,{restart,rtol,atol,maxIterations,jacobi:jacobi===1,capture:!!capture,preconditioner:current}):a.conjugateGradient(b,{rtol,atol,maxIterations,jacobi:!!jacobi,capture:!!capture});
+   const r=op==='gmres'?a.gmres(b,{restart,rtol,atol,maxIterations,jacobi:jacobi===1,capture:!!capture,preconditioner:current}):a.conjugateGradient(b,{rtol,atol,maxIterations,jacobi:jacobi===1,capture:!!capture,preconditioner:currentIC});
    if(iters){if(!r.converged)throw new Error('benchmark CG did not converge: '+r.reason);return r.x;}
    const extra=op==='gmres'?r as GMRESResult:undefined;
    return [['converged','iteration_limit','breakdown','nonfinite','stagnation'].indexOf(r.reason),r.iterations,r.residuals.length,...r.x,...r.residuals,...(extra?[...extra.estimatedResiduals,extra.restarts.length,...extra.restarts]:[]),...r.iterates.flat()];

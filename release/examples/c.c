@@ -50,6 +50,8 @@ int main(void) {
     if(!failed)failed=fabs(cx.values[0]-1)>1e-12;m_free(&cx);
     if(!failed){vector.values[0]=11;vector.values[1]=13;failed=m_cholesky_solve(&chol,&vector,&cx);}
     if(!failed)failed=fabs(cx.values[0]-20.0/11)>1e-12;m_free(&cx);m_cholesky_free(&chol);m_cholesky_symbolic_free(&plan);
+    matrix_ic0 ic={0};if(!failed)failed=m_ic0_create(&sparse,&ic);
+    for(int k=0;k<2&&!failed;k++){double right[]={k?11:6,k?13:7};matrix_cg_result pcg={0};failed=m_csr_cg_preconditioned(&sparse,right,2,1e-10,0,1000,false,false,&ic,&pcg);if(!failed)failed=pcg.reason!=0||pcg.iterations!=1;m_cg_free(&pcg);}m_ic0_free(&ic);
     m_free(&vector);m_free(&product);m_cg_free(&cg);m_csr_free(&sparse);
     if (!failed) puts("solution: 1, 2");
     return failed;

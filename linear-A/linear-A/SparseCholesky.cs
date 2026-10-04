@@ -15,7 +15,8 @@ public sealed class SparseCholeskySymbolic
     public int[] RowOffsets => (int[])rp.Clone();
     public int[] ColumnIndices => (int[])ci.Clone();
     public int[] FillSteps => (int[])steps.Clone();
-    public SparseCholeskySymbolic(CSRMatrix a)
+    public SparseCholeskySymbolic(CSRMatrix a) : this(a, false) { }
+    internal SparseCholeskySymbolic(CSRMatrix a, bool incomplete)
     {
         ArgumentNullException.ThrowIfNull(a);
         if (a.Rows != a.Cols) throw new ArgumentException("Cholesky requires square matrix.");
@@ -23,7 +24,7 @@ public sealed class SparseCholeskySymbolic
         var g = Enumerable.Range(0, Size).Select(_ => new SortedDictionary<int, int>()).ToArray();
         for (int i = 0; i < Size; i++) for (int p = sourceRP[i]; p < sourceRP[i + 1]; p++)
             { int j = sourceCI[p]; if (i != j) { g[i][j] = -1; g[j][i] = -1; } }
-        for (int k = 0; k < Size; k++)
+        for (int k = 0; !incomplete && k < Size; k++)
         {
             var ns = g[k].Keys.Where(j => j > k).ToArray();
             for (int u = 0; u < ns.Length; u++) for (int w = 0; w < u; w++)
@@ -83,5 +84,15 @@ public sealed class SparseCholesky
         }
         return x;
     }
+}
+/// <summary>Owned zero-fill incomplete Cholesky; no shifts or pivoting.</summary>
+public sealed class IC0
+{
+    private readonly SparseCholesky factor;
+    public IC0(CSRMatrix a) { factor = new SparseCholeskySymbolic(a, true).Factorize(a); }
+    public int Size => factor.Size;
+    public int NNZ => factor.NNZ;
+    public CSRMatrix Lower => factor.Lower;
+    public double[] Apply(double[] b) => factor.Solve(b);
 }
 #endif

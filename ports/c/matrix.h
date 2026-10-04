@@ -145,4 +145,11 @@ void m_cholesky_symbolic_free(matrix_cholesky_symbolic *s);
 matrix_status m_cholesky_factorize(const matrix_cholesky_symbolic *s,const sparse_matrix *a,matrix_cholesky *out);
 void m_cholesky_free(matrix_cholesky *f);
 matrix_status m_cholesky_solve(const matrix_cholesky *f,const matrix *b,matrix *out);
+/* IC(0) retains the original lower pattern; nonpositive pivots fail without shifts. */
+typedef la_ic0 matrix_ic0;
+matrix_status m_ic0_create(const sparse_matrix *a,matrix_ic0 *out);
+void m_ic0_free(matrix_ic0 *f);
+matrix_status m_ic0_apply(const matrix_ic0 *f,const matrix *b,matrix *out);
+matrix_status m_csr_cg_preconditioned(const sparse_matrix *a,const double *b,size_t count,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_ic0 *f,matrix_cg_result *out);
+
 #endif

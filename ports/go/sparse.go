@@ -16,6 +16,7 @@ type CGOptions struct {
 	RelativeTolerance, AbsoluteTolerance float64
 	MaxIterations                        int
 	Jacobi, Capture                      bool
+	Preconditioner                       *IC0
 }
 
 func DefaultCGOptions() CGOptions { return CGOptions{RelativeTolerance: 1e-10, MaxIterations: 1000} }
@@ -110,6 +111,9 @@ func (a *CSRMatrix) ConjugateGradient(b []float64, o CGOptions) (*CGResult, erro
 	if !isFinite(o.RelativeTolerance) || o.RelativeTolerance < 0 || o.RelativeTolerance >= 1 || !isFinite(o.AbsoluteTolerance) || o.AbsoluteTolerance < 0 || o.MaxIterations < 0 || o.MaxIterations > 100000 {
 		return nil, errors.New("invalid CG options")
 	}
+	if o.Preconditioner != nil && (o.Preconditioner.Size() != n || o.Jacobi) {
+		return nil, errors.New("invalid or conflicting CG preconditioner")
+	}
 	diag := make([]float64, n)
 	for i := 0; i < n; i++ {
 		diag[i] = 1
@@ -167,6 +171,13 @@ func (a *CSRMatrix) ConjugateGradient(b []float64, o CGOptions) (*CGResult, erro
 	for i := range z {
 		z[i] = r[i] / diag[i]
 	}
+	if o.Preconditioner != nil {
+		var err error
+		z, err = o.Preconditioner.Apply(r)
+		if err != nil {
+			return result("nonfinite")
+		}
+	}
 	p := append([]float64{}, z...)
 	rho := dot(r, z)
 	for step := 0; step < o.MaxIterations; step++ {
@@ -208,6 +219,13 @@ func (a *CSRMatrix) ConjugateGradient(b []float64, o CGOptions) (*CGResult, erro
 		}
 		for i := range z {
 			z[i] = r[i] / diag[i]
+		}
+		if o.Preconditioner != nil {
+			var err error
+			z, err = o.Preconditioner.Apply(r)
+			if err != nil {
+				return result("nonfinite")
+			}
 		}
 		next := dot(r, z)
 		if !isFinite(next) {

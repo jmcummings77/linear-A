@@ -16,6 +16,9 @@ pub struct SparseCholesky {
 }
 impl SparseCholeskySymbolic {
     pub fn new(a: &CSRMatrix) -> Result<Self, MatrixError> {
+        Self::analyze(a, false)
+    }
+    fn analyze(a: &CSRMatrix, incomplete: bool) -> Result<Self, MatrixError> {
         if a.rows() != a.cols() {
             return Err(MatrixError::new("Cholesky requires square matrix"));
         }
@@ -30,7 +33,7 @@ impl SparseCholeskySymbolic {
                 }
             }
         }
-        for k in 0..n {
+        for k in 0..if incomplete { 0 } else { n } {
             let ns: Vec<usize> = g[k].keys().copied().filter(|&j| j > k).collect();
             for (u, &i) in ns.iter().enumerate() {
                 for &j in &ns[..u] {
@@ -182,5 +185,30 @@ impl SparseCholesky {
             }
         }
         Ok(x)
+    }
+}
+
+/// Owned zero-fill incomplete Cholesky, without shifts or pivoting.
+#[derive(Clone, Debug)]
+pub struct IC0 {
+    factor: SparseCholesky,
+}
+impl IC0 {
+    pub fn new(a: &CSRMatrix) -> Result<Self, MatrixError> {
+        Ok(Self {
+            factor: SparseCholeskySymbolic::analyze(a, true)?.factorize(a)?,
+        })
+    }
+    pub fn size(&self) -> usize {
+        self.factor.size()
+    }
+    pub fn nnz(&self) -> usize {
+        self.factor.nnz()
+    }
+    pub fn lower(&self) -> CSRMatrix {
+        self.factor.lower()
+    }
+    pub fn apply(&self, b: &[f64]) -> Result<Vec<f64>, MatrixError> {
+        self.factor.solve(b)
     }
 }

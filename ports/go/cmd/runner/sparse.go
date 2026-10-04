@@ -38,7 +38,7 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
-	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "amd" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve" && op != "chol_symbolic" && op != "chol_factor" && op != "chol_solve" && op != "chol_total" && op != "chol_rcm_total" && op != "chol_amd_total") || jacobi > 3 || (op != "gmres" && jacobi > 1) || capture > 1 {
+	if (op != "spmv" && op != "dense" && op != "cg" && op != "gmres" && op != "ic0_factor" && op != "ic0_apply" && op != "ilu_setup" && op != "ilu_apply" && op != "rcm" && op != "amd" && op != "permute" && op != "permutation_check" && op != "rcm_solve" && op != "ilu_solve" && op != "chol_symbolic" && op != "chol_factor" && op != "chol_solve" && op != "chol_total" && op != "chol_rcm_total" && op != "chol_amd_total") || jacobi > 3 || (op != "gmres" && op != "cg" && jacobi > 1) || capture > 1 {
 		return errors.New("invalid sparse operation/options")
 	}
 	raw, e := io.ReadAll(os.Stdin)
@@ -98,6 +98,13 @@ func sparseRun(args []string) error {
 	if e != nil {
 		return e
 	}
+	var ic *matrix.IC0
+	if op == "ic0_apply" || (op == "cg" && jacobi == 2) {
+		ic, e = matrix.NewIC0(a)
+		if e != nil {
+			return e
+		}
+	}
 	var factor *matrix.ILU0
 	if op == "ilu_apply" || (op == "gmres" && jacobi == 2) {
 		factor, e = matrix.NewILU0(a)
@@ -137,6 +144,24 @@ func sparseRun(args []string) error {
 		}
 	}
 	compute := func() ([]float64, error) {
+		if op == "ic0_factor" {
+			f, e := matrix.NewIC0(a)
+			if e != nil {
+				return nil, e
+			}
+			l := f.Lower()
+			out := []float64{}
+			for _, v := range l.RowOffsets() {
+				out = append(out, float64(v))
+			}
+			for _, v := range l.ColumnIndices() {
+				out = append(out, float64(v))
+			}
+			return append(out, l.Values()...), nil
+		}
+		if op == "ic0_apply" {
+			return ic.Apply(b)
+		}
 		if op == "chol_symbolic" {
 			s, e := matrix.NewSparseCholeskySymbolic(a)
 			if e != nil {
@@ -375,7 +400,14 @@ func sparseRun(args []string) error {
 			}
 			return out, nil
 		}
-		r, e := a.ConjugateGradient(b, matrix.CGOptions{RelativeTolerance: rtol, AbsoluteTolerance: atol, MaxIterations: limit, Jacobi: jacobi != 0, Capture: capture != 0})
+		currentIC := ic
+		if jacobi == 3 {
+			currentIC, e = matrix.NewIC0(a)
+			if e != nil {
+				return nil, e
+			}
+		}
+		r, e := a.ConjugateGradient(b, matrix.CGOptions{RelativeTolerance: rtol, AbsoluteTolerance: atol, MaxIterations: limit, Jacobi: jacobi == 1, Capture: capture != 0, Preconditioner: currentIC})
 		if e != nil {
 			return nil, e
 		}

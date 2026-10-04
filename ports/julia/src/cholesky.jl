@@ -6,7 +6,7 @@ struct SparseCholeskySymbolic
     offsets::Vector{Int}
     indices::Vector{Int}
     fill_steps::Vector{Int}
-    function SparseCholeskySymbolic(a::CSRMatrix)
+    function SparseCholeskySymbolic(a::CSRMatrix, _incomplete::Bool=false)
         validate_csr(a.rows,a.cols,a.offsets,a.indices,a.values)
         a.rows==a.cols || throw(ArgumentError("Cholesky requires square matrix"))
         n=a.rows;g=[Dict{Int,Int}() for _ in 1:n]
@@ -14,7 +14,7 @@ struct SparseCholeskySymbolic
             j=a.indices[p]+1
             if i!=j;g[i][j]=-1;g[j][i]=-1;end
         end
-        for k in 1:n
+        for k in 1:(_incomplete ? 0 : n)
             ns=sort([j for j in keys(g[k]) if j>k])
             for u in eachindex(ns), w in 1:u-1
                 i,j=ns[u],ns[w]
@@ -96,3 +96,14 @@ function cholesky_solve(f::SparseCholesky,b)
     end
     x
 end
+
+"""Owned zero-fill incomplete Cholesky; no shifts or pivoting."""
+struct IC0
+    factor::SparseCholesky
+    IC0(a::CSRMatrix)=new(cholesky_factorize(SparseCholeskySymbolic(a,true),a))
+end
+ic0_apply(f::IC0,b)=cholesky_solve(f.factor,b)
+ic0_lower(f::IC0)=CSRMatrix(f.factor.lower.rows,f.factor.lower.cols,f.factor.lower.offsets,f.factor.lower.indices,f.factor.lower.values)
+ic0_size(f::IC0)=f.factor.lower.rows
+ic0_nnz(f::IC0)=length(f.factor.lower.values)
+export IC0,ic0_apply,ic0_lower,ic0_size,ic0_nnz

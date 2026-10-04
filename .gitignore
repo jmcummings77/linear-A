@@ -299,3 +299,5 @@ benchmarks/reports/*
 !benchmarks/reports/cholesky/
 
 !benchmarks/reports/amd/
+
+!benchmarks/reports/ic0/

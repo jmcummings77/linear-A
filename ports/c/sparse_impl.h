@@ -50,3 +50,8 @@ matrix_status m_cholesky_solve(const matrix_cholesky *f,const matrix *b,matrix *
  matrix result={0};matrix_status code=m_create(b->rows,1,&result);if(code)return code;
  code=sparse_status(la_cholesky_solve(f,b->values,b->rows,result.values));if(code)m_free(&result);else *out=result;return code;
 }
+
+matrix_status m_ic0_create(const sparse_matrix *a,matrix_ic0 *out){return sparse_status(la_ic0_create(a,out));}
+void m_ic0_free(matrix_ic0 *f){la_cholesky_free(f);}
+matrix_status m_ic0_apply(const matrix_ic0 *f,const matrix *b,matrix *out){return m_cholesky_solve(f,b,out);}
+matrix_status m_csr_cg_preconditioned(const sparse_matrix *a,const double *b,size_t count,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_ic0 *f,matrix_cg_result *out){return sparse_status(la_csr_cg_ic0(a,b,count,rtol,atol,limit,jacobi,capture,f,out));}

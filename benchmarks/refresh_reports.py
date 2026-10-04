@@ -14,6 +14,7 @@ import sparse
 import ordering_bench
 import cholesky_bench
 import amd_bench
+import ic0_bench
 from report_design import render_directory
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,7 +47,11 @@ def refresh():
     count = 0
     for path in sorted((ROOT / 'benchmarks/reports').glob('*/index.html')):
         data = embedded(path, 'data')
-        if path.parent.name == 'amd':
+        if path.parent.name == 'ic0':
+            live = embedded(path, 'live')
+            ic0_bench.render(data, path, live_override=live)
+            assert embedded(path, 'live') == live
+        elif path.parent.name == 'amd':
             live = embedded(path, 'live')
             amd_bench.render(data, path, live_override=live)
             assert embedded(path, 'live') == live

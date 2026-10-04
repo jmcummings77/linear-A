@@ -14,6 +14,9 @@ type SparseCholeskySymbolic struct {
 type SparseCholesky struct{ lower *CSRMatrix }
 
 func NewSparseCholeskySymbolic(a *CSRMatrix) (*SparseCholeskySymbolic, error) {
+	return analyzeCholesky(a, false)
+}
+func analyzeCholesky(a *CSRMatrix, incomplete bool) (*SparseCholeskySymbolic, error) {
 	if a == nil || a.rows != a.cols {
 		return nil, errors.New("Cholesky requires square matrix")
 	}
@@ -31,7 +34,7 @@ func NewSparseCholeskySymbolic(a *CSRMatrix) (*SparseCholeskySymbolic, error) {
 			}
 		}
 	}
-	for k := 0; k < s.n; k++ {
+	for k := 0; !incomplete && k < s.n; k++ {
 		ns := []int{}
 		for j := range g[k] {
 			if j > k {
@@ -190,3 +193,22 @@ func (f *SparseCholesky) Solve(b []float64) ([]float64, error) {
 	}
 	return x, nil
 }
+
+// IC0 owns a zero-fill incomplete Cholesky factor without shifts or pivoting.
+type IC0 struct{ factor *SparseCholesky }
+
+func NewIC0(a *CSRMatrix) (*IC0, error) {
+	s, e := analyzeCholesky(a, true)
+	if e != nil {
+		return nil, e
+	}
+	f, e := s.Factorize(a)
+	if e != nil {
+		return nil, e
+	}
+	return &IC0{f}, nil
+}
+func (f *IC0) Size() int                            { return f.factor.Size() }
+func (f *IC0) NNZ() int                             { return f.factor.NNZ() }
+func (f *IC0) Lower() *CSRMatrix                    { return f.factor.Lower() }
+func (f *IC0) Apply(b []float64) ([]float64, error) { return f.factor.Solve(b) }

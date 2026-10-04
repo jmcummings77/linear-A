@@ -51,11 +51,12 @@ function csr_find(a,row,col)
     end
     lo
 end
-function conjugate_gradient(a::CSRMatrix,b;rtol=1e-10,atol=0.0,max_iterations=1000,jacobi=false,capture=false)
+function conjugate_gradient(a::CSRMatrix,b;rtol=1e-10,atol=0.0,max_iterations=1000,jacobi=false,capture=false,preconditioner=nothing)
     validate_csr(a.rows,a.cols,a.offsets,a.indices,a.values)
     n=a.rows
     a.cols==n && length(b)==n && all(isfinite,b) || throw(ArgumentError("CG requires square matrix and finite matching vector"))
     isfinite(rtol) && 0<=rtol<1 && isfinite(atol) && atol>=0 && max_iterations isa Integer && 0<=max_iterations<=100000 && jacobi isa Bool && capture isa Bool || throw(ArgumentError("invalid CG options"))
+    (preconditioner===nothing || (preconditioner isa IC0 && ic0_size(preconditioner)==n && !jacobi)) || throw(ArgumentError("invalid or conflicting CG preconditioner"))
     diagonal=ones(n)
     for i in 1:n
         for p in a.offsets[i]+1:a.offsets[i+1]
@@ -76,7 +77,9 @@ function conjugate_gradient(a::CSRMatrix,b;rtol=1e-10,atol=0.0,max_iterations=10
     result(reason)=(x=copy(x),converged=reason=="converged",iterations=length(history)-1,reason=reason,residuals=copy(history),iterates=copy(frames))
     !isfinite(history[1]) && return result("nonfinite")
     history[1]<=threshold && return result("converged")
-    z=r./diagonal;p=copy(z);rho=dot(r,z)
+    apply(r)=preconditioner===nothing ? r./diagonal : ic0_apply(preconditioner,r)
+    z=try apply(r) catch e;e isa OverflowError || rethrow();return result("nonfinite");end
+    p=copy(z);rho=dot(r,z)
     for _ in 1:max_iterations
         q=try matvec(a,p) catch;return result("nonfinite");end
         curvature=dot(p,q)
@@ -89,7 +92,8 @@ function conjugate_gradient(a::CSRMatrix,b;rtol=1e-10,atol=0.0,max_iterations=10
         x,r=candidate,residual;push!(history,length_residual)
         capture && push!(frames,copy(x))
         length_residual<=threshold && return result("converged")
-        z=r./diagonal;next=dot(r,z)
+        z=try apply(r) catch e;e isa OverflowError || rethrow();return result("nonfinite");end
+        next=dot(r,z)
         !isfinite(next) && return result("nonfinite")
         next<=0 && return result("breakdown")
         beta=next/rho;p=z.+beta.*p;rho=next

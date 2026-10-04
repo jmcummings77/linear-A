@@ -306,3 +306,14 @@ sparse protocol, with Jacobi and capture set to zero for ordering benchmarks.
 ## Sparse Cholesky
 
 For direct SPD solves, all ports provide reusable symbolic analysis, numerical Cholesky factors and triangular solves. See [Sparse Cholesky](CHOLESKY.md) for fill semantics, APIs and numerical limits.
+
+## Reusable IC(0) for conjugate gradient
+
+Every port also supports a fixed incomplete Cholesky preconditioner for CG.
+See [IC(0)](IC0.md) for its zero-fill pattern, positive-pivot failures, ownership,
+API names and ordering semantics. Jacobi and IC(0) are mutually exclusive.
+
+For `cg`, the benchmark protocol's `JACOBI` field accepts 0 (none), 1 (Jacobi),
+2 (prepared IC(0)) and 3 (IC(0) built for each solve). `ic0_factor` returns packed
+lower CSR offsets, indices and values; `ic0_apply` reuses a prepared factor.
+The original CG flags and entry points retain their behavior.

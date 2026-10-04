@@ -37,3 +37,9 @@ plan=SparseCholeskySymbolic(sparse)
 chol=cholesky_factorize(plan,sparse)
 @assert abs(cholesky_solve(chol,[6.,7.])[1]-1)<1e-12 && abs(cholesky_solve(chol,[11.,13.])[1]-20/11)<1e-12
 @assert length(chol.lower.values)==3
+
+ic=IC0(sparse)
+for rhs in ([6.,7.],[11.,13.])
+    pcg=conjugate_gradient(sparse,rhs;preconditioner=ic)
+    @assert pcg.converged && pcg.iterations==1
+end

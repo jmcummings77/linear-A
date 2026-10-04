@@ -31,5 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let plan=linear_a::SparseCholeskySymbolic::new(&sparse)?;let chol=plan.factorize(&sparse)?;
     assert!((chol.solve(&[6.,7.])?[0]-1.).abs()<1e-12&&(chol.solve(&[11.,13.])?[0]-20./11.).abs()<1e-12);
     assert_eq!(chol.lower().nnz(),3);
+    let ic=linear_a::IC0::new(&sparse)?;
+    for rhs in [[6.,7.],[11.,13.]] {let pcg=sparse.conjugate_gradient_preconditioned(&rhs,Default::default(),Some(&ic))?;assert!(pcg.converged && pcg.iterations==1);}
     println!("solution: 1, 2"); Ok(())
 }

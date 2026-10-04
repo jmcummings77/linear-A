@@ -40,5 +40,7 @@ func main() {
  chol,err:=plan.Factorize(sparse);if err!=nil{panic(err)}
  cx,err:=chol.Solve([]float64{6,7});if err!=nil||math.Abs(cx[0]-1)>1e-12{panic("incorrect Cholesky")}
  cy,err:=chol.Solve([]float64{11,13});if err!=nil||math.Abs(cy[0]-20.0/11)>1e-12||chol.Lower().NNZ()!=3{panic("incorrect Cholesky reuse")}
+ ic,err:=matrix.NewIC0(sparse);if err!=nil{panic(err)}
+ for _,rhs:=range [][]float64{{6,7},{11,13}}{o:=matrix.DefaultCGOptions();o.Preconditioner=ic;pcg,e:=sparse.ConjugateGradient(rhs,o);if e!=nil||!pcg.Converged||pcg.Iterations!=1{panic("incorrect IC0 reuse")}}
  fmt.Println("solution: 1, 2")
 }

@@ -6,9 +6,9 @@ static double sparse_token(void){double x;if(scanf("%lf",&x)!=1||!isfinite(x))fa
 static size_t sparse_index(void){double x=sparse_token();if(x<0||x>=(double)SIZE_MAX||floor(x)!=x)fail("invalid CSR index");return (size_t)x;}
 static int sparse_cli(int argc,char **argv){
     if(argc!=(argc>2&&!strcmp(argv[2],"gmres")?13:12))fail("expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE");
-    const char *op=argv[2];if(strcmp(op,"spmv")&&strcmp(op,"dense")&&strcmp(op,"cg")&&strcmp(op,"gmres")&&strcmp(op,"ilu_setup")&&strcmp(op,"ilu_apply")&&strcmp(op,"rcm")&&strcmp(op,"amd")&&strcmp(op,"permute")&&strcmp(op,"permutation_check")&&strcmp(op,"rcm_solve")&&strcmp(op,"ilu_solve")&&strcmp(op,"chol_symbolic")&&strcmp(op,"chol_factor")&&strcmp(op,"chol_solve")&&strcmp(op,"chol_total")&&strcmp(op,"chol_rcm_total")&&strcmp(op,"chol_amd_total"))fail("invalid sparse operation");
+    const char *op=argv[2];if(strcmp(op,"spmv")&&strcmp(op,"dense")&&strcmp(op,"cg")&&strcmp(op,"gmres")&&strcmp(op,"ic0_factor")&&strcmp(op,"ic0_apply")&&strcmp(op,"ilu_setup")&&strcmp(op,"ilu_apply")&&strcmp(op,"rcm")&&strcmp(op,"amd")&&strcmp(op,"permute")&&strcmp(op,"permutation_check")&&strcmp(op,"rcm_solve")&&strcmp(op,"ilu_solve")&&strcmp(op,"chol_symbolic")&&strcmp(op,"chol_factor")&&strcmp(op,"chol_solve")&&strcmp(op,"chol_total")&&strcmp(op,"chol_rcm_total")&&strcmp(op,"chol_amd_total"))fail("invalid sparse operation");
     size_t rows=integer(argv[3]),cols=integer(argv[4]),nnz=integer(argv[5]),iterations=integer(argv[6]),limit=integer(argv[9]),jacobi=integer(argv[10]),capture=integer(argv[11]);
-    double rtol=number(argv[7]),atol=number(argv[8]);if(jacobi>3||(strcmp(op,"gmres")&&jacobi>1)||capture>1||rows==SIZE_MAX||rows>SIZE_MAX/sizeof(size_t)-1||nnz>SIZE_MAX/sizeof(double))fail("invalid sparse dimensions/options");
+    double rtol=number(argv[7]),atol=number(argv[8]);if(jacobi>3||(strcmp(op,"gmres")&&strcmp(op,"cg")&&jacobi>1)||capture>1||rows==SIZE_MAX||rows>SIZE_MAX/sizeof(size_t)-1||nnz>SIZE_MAX/sizeof(double))fail("invalid sparse dimensions/options");
     size_t *rp=(size_t*)calloc(rows+1,sizeof(size_t)),*ci=(size_t*)calloc(nnz?nnz:1,sizeof(size_t));double *v=(double*)calloc(nnz?nnz:1,sizeof(double));
     if(!rp||!ci||!v)fail("sparse allocation failed");
     for(size_t i=0;i<=rows;i++)rp[i]=sparse_index();for(size_t i=0;i<nnz;i++)ci[i]=sparse_index();for(size_t i=0;i<nnz;i++)v[i]=sparse_token();
@@ -20,9 +20,11 @@ static int sparse_cli(int argc,char **argv){
     sparse_matrix sparse={0};require(m_csr_create(rows,cols,nnz,rp,ci,v,&sparse));
 #endif
 #ifdef __cplusplus
+    std::unique_ptr<linear_a::IC0> ic;if(!strcmp(op,"ic0_apply")||(!strcmp(op,"cg")&&jacobi==2))ic.reset(new linear_a::IC0(sparse));
     std::unique_ptr<linear_a::ILU0> factor;
     if(!strcmp(op,"ilu_apply")||(!strcmp(op,"gmres")&&jacobi==2))factor.reset(new linear_a::ILU0(sparse));
 #else
+    matrix_ic0 ic={0};if(!strcmp(op,"ic0_apply")||(!strcmp(op,"cg")&&jacobi==2))require(m_ic0_create(&sparse,&ic));
     matrix_ilu0 factor={0};
     if(!strcmp(op,"ilu_apply")||(!strcmp(op,"gmres")&&jacobi==2))require(m_ilu0_create(&sparse,&factor));
 #endif
@@ -42,7 +44,19 @@ static int sparse_cli(int argc,char **argv){
     for(size_t run=0;run<runs;run++){
         if(iterations&&run==3)start=now_ns();
         matrix out={0};
-        if(!strcmp(op,"chol_symbolic")){
+        if(!strcmp(op,"ic0_factor")){
+#ifdef __cplusplus
+            linear_a::IC0 f(sparse);auto l=f.lower();size_t m=l.nnz();require(m_create(1,rows+1+2*m,&out));size_t k=0;for(auto v:l.row_offsets())out.values[k++]=(double)v;for(auto v:l.column_indices())out.values[k++]=(double)v;for(auto v:l.values())out.values[k++]=v;
+#else
+            matrix_ic0 f={0};require(m_ic0_create(&sparse,&f));size_t m=f.lower.nnz;require(m_create(1,rows+1+2*m,&out));size_t k=0;for(size_t i=0;i<=rows;i++)out.values[k++]=(double)f.lower.offsets[i];for(size_t p=0;p<m;p++)out.values[k++]=(double)f.lower.indices[p];for(size_t p=0;p<m;p++)out.values[k++]=f.lower.values[p];m_ic0_free(&f);
+#endif
+        }else if(!strcmp(op,"ic0_apply")){
+#ifdef __cplusplus
+            auto x=ic->apply(std::vector<double>(b.values,b.values+count));require(m_create(1,x.size(),&out));if(x.size())memcpy(out.values,x.data(),x.size()*sizeof(double));
+#else
+            require(m_ic0_apply(&ic,&b,&out));
+#endif
+        }else if(!strcmp(op,"chol_symbolic")){
 #ifdef __cplusplus
             linear_a::SparseCholeskySymbolic s(sparse);auto rp=s.row_offsets(),ci=s.column_indices();auto steps=s.fill_steps();size_t m=s.nnz();require(m_create(1,rows+1+2*m,&out));size_t k=0;for(auto x:rp)out.values[k++]=(double)x;for(auto x:ci)out.values[k++]=(double)x;for(auto x:steps)out.values[k++]=(double)x;
 #else
@@ -159,12 +173,14 @@ static int sparse_cli(int argc,char **argv){
 #endif
         }else{
 #ifdef __cplusplus
-            auto result=sparse.conjugate_gradient(std::vector<double>(b.values,b.values+count),rtol,atol,limit,jacobi!=0,capture!=0);
+            std::unique_ptr<linear_a::IC0> current;if(jacobi==3)current.reset(new linear_a::IC0(sparse));
+            auto result=sparse.conjugate_gradient(std::vector<double>(b.values,b.values+count),rtol,atol,limit,jacobi==1,capture!=0,jacobi==3?current.get():ic.get());
             int reason=result.reason=="converged"?0:result.reason=="iteration_limit"?1:result.reason=="breakdown"?2:3;
             size_t steps=result.iterations;const double *x=result.x.data(),*history=result.residuals.data();
             std::vector<double> flat;for(const auto& f:result.iterates)flat.insert(flat.end(),f.begin(),f.end());const double *frames=flat.data();
 #else
-            matrix_cg_result result={0};require(m_csr_cg(&sparse,b.values,count,rtol,atol,limit,jacobi!=0,capture!=0,&result));
+            matrix_ic0 current={0};if(jacobi==3)require(m_ic0_create(&sparse,&current));
+            matrix_cg_result result={0};require(m_csr_cg_preconditioned(&sparse,b.values,count,rtol,atol,limit,jacobi==1,capture!=0,jacobi==3?&current:jacobi==2?&ic:NULL,&result));m_ic0_free(&current);
             int reason=result.reason;size_t steps=result.iterations;const double *x=result.x,*history=result.residuals,*frames=result.iterates;
 #endif
             if(iterations){if(reason)fail("benchmark CG did not converge");require(m_create(rows,1,&out));if(rows)memcpy(out.values,x,rows*sizeof(double));}
@@ -182,7 +198,7 @@ static int sparse_cli(int argc,char **argv){
     }
     if(iterations){elapsed=now_ns()-start;if(!isfinite(checksum))fail("nonfinite checksum");printf("{\"elapsed_ns\":%" PRIu64 ",\"iterations\":%zu,\"checksum\":%.17g}\n",elapsed,iterations,checksum);}
 #ifndef __cplusplus
-    m_cholesky_free(&chol);m_cholesky_symbolic_free(&plan);m_ilu0_free(&factor);m_csr_free(&sparse);
+    m_ic0_free(&ic);m_cholesky_free(&chol);m_cholesky_symbolic_free(&plan);m_ilu0_free(&factor);m_csr_free(&sparse);
 #endif
     m_free(&b);m_free(&dense);return 0;
 }

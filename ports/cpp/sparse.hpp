@@ -9,6 +9,17 @@ namespace linear_a {
 struct CGResult {std::vector<double> x,residuals;std::vector<std::vector<double>> iterates;std::size_t iterations;std::string reason;bool converged;};
 struct GMRESResult {std::vector<double> x,residuals,estimated_residuals;std::vector<std::vector<double>> iterates;std::vector<std::size_t> restarts;std::size_t iterations;std::string reason;bool converged;};
 class CSRMatrix;
+class IC0 {
+ friend class CSRMatrix;
+ la_ic0 factor_{};
+public:
+ explicit IC0(const CSRMatrix& a);
+ ~IC0(){la_cholesky_free(&factor_);}
+ IC0(const IC0&)=delete;IC0& operator=(const IC0&)=delete;
+ std::size_t size()const{return factor_.lower.rows;}std::size_t nnz()const{return factor_.lower.nnz;}
+ CSRMatrix lower()const;
+ std::vector<double> apply(const std::vector<double>& b)const{std::vector<double>x(size());if(la_ic0_apply(&factor_,b.data(),b.size(),x.data()))throw std::runtime_error("invalid or nonfinite IC0 apply");return x;}
+};
 class ILU0 {
  friend class CSRMatrix;
  la_ilu0 factor_{};
@@ -21,6 +32,7 @@ public:
 };
 class CSRMatrix {
  friend class ILU0;
+ friend class IC0;
  friend class SparseCholeskySymbolic;
     std::size_t rows_,cols_;std::vector<std::size_t> rp_,ci_;std::vector<double> v_;
     la_csr view() const {return {rows_,cols_,v_.size(),const_cast<std::size_t*>(rp_.data()),const_cast<std::size_t*>(ci_.data()),const_cast<double*>(v_.data())};}
@@ -45,8 +57,8 @@ public:
         auto a=view();std::vector<double> out(rows_);
         if(la_csr_mv(&a,x.data(),out.data()))throw std::overflow_error("sparse multiplication outside float64 range");return out;
     }
-    CGResult conjugate_gradient(const std::vector<double>& b,double rtol=1e-10,double atol=0,std::size_t limit=1000,bool jacobi=false,bool capture=false)const{
-        auto a=view();la_cg_result r={};int code=la_csr_cg(&a,b.data(),b.size(),rtol,atol,limit,jacobi,capture,&r);
+    CGResult conjugate_gradient(const std::vector<double>& b,double rtol=1e-10,double atol=0,std::size_t limit=1000,bool jacobi=false,bool capture=false,const IC0 *preconditioner=nullptr)const{
+        auto a=view();la_cg_result r={};int code=la_csr_cg_ic0(&a,b.data(),b.size(),rtol,atol,limit,jacobi,capture,preconditioner?&preconditioner->factor_:nullptr,&r);
         if(code==2)throw std::bad_alloc();if(code)throw std::invalid_argument("invalid CG input, options, symmetry or Jacobi diagonal");
         const char *reasons[]={"converged","iteration_limit","breakdown","nonfinite"};
         try{
@@ -66,6 +78,8 @@ public:
     }
 
 };
+inline IC0::IC0(const CSRMatrix& a){auto v=a.view();int c=la_ic0_create(&v,&factor_);if(c==2)throw std::bad_alloc();if(c)throw std::runtime_error("invalid IC0 matrix or nonpositive pivot");}
+inline CSRMatrix IC0::lower()const{const auto& a=factor_.lower;return CSRMatrix(a.rows,a.cols,{a.offsets,a.offsets+a.rows+1},{a.indices,a.indices+a.nnz},{a.values,a.values+a.nnz});}
 inline ILU0::ILU0(const CSRMatrix& a){auto view=a.view();int c=la_ilu0_create(&view,&factor_);if(c==2)throw std::bad_alloc();if(c)throw std::runtime_error("invalid ILU0 matrix, zero pivot or nonfinite factor");}
 class SparseCholesky {
  friend class SparseCholeskySymbolic;

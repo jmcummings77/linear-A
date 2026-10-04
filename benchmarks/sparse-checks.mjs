@@ -29,9 +29,11 @@ export function checkSparse(api,cases) {
         else{const x=Array.from({length:m.rows},(_,i)=>i+1),y=api.CSRMatrix.permuteVector(p,x);output=[...y,...api.CSRMatrix.permuteVector(p,y,true),...api.CSRMatrix.permuteVector(p,q.matvec(y),true)];}}
         finally{q.dispose?.();}
       }
+      else if(test.op==='ic0_factor'){factor=new api.IC0(a);const l=factor.lower;try{output=[...l.rowOffsets,...l.columnIndices,...l.values];}finally{l.dispose?.();}}
+      else if(test.op==='ic0_apply'){factor=new api.IC0(a);output=Array.from(factor.apply(test.b));}
       else if(test.op==='ilu_setup'){factor=new api.ILU0(a);output=[factor.size,factor.nnz];}
       else if(test.op==='ilu_apply'){factor=new api.ILU0(a);output=Array.from(factor.apply(test.b));}
-      else if(test.op==='cg'||test.op==='gmres') {const o=test.options,options={restart:o.restart,rtol:o.rtol,atol:o.atol,maxIterations:o.limit,jacobi:o.jacobi===1,capture:!!o.capture};if(test.op==='gmres'&&o.jacobi>=2){factor=new api.ILU0(a);options.preconditioner=factor;}output=test.op==='gmres'?a.gmres(test.b,options):a.conjugateGradient(test.b,options);}
+      else if(test.op==='cg'||test.op==='gmres') {const o=test.options,options={restart:o.restart,rtol:o.rtol,atol:o.atol,maxIterations:o.limit,jacobi:o.jacobi===1,capture:!!o.capture};if(o.jacobi>=2){factor=test.op==='cg'?new api.IC0(a):new api.ILU0(a);options.preconditioner=factor;}output=test.op==='gmres'?a.gmres(test.b,options):a.conjugateGradient(test.b,options);}
       else if(test.op==='spmv') output=Array.from(a.matvec(test.b));
       else {
         const v=Array(m.rows*m.cols).fill(0);for(let i=0;i<m.rows;i++)for(let p=m.offsets[i];p<m.offsets[i+1];p++)v[i*m.cols+m.indices[p]]=m.values[p];

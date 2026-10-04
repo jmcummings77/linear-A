@@ -44,7 +44,9 @@ static inline int la_csr_mv(const la_csr *a,const double *x,double *out){
 }
 static inline double la_sparse_norm(size_t n,const double *x){double s=0;for(size_t i=0;i<n;i++)s=hypot(s,x[i]);return s;}
 static inline double la_sparse_dot(size_t n,const double *x,const double *y){double s=0;for(size_t i=0;i<n;i++)s+=x[i]*y[i];return s;}
-static inline int la_csr_cg(const la_csr *a,const double *b,size_t count,double rtol,double atol,size_t limit,int jacobi,int capture,la_cg_result *out){
+typedef int (*la_cg_apply)(const void*,const double*,size_t,double*);
+static inline int la_csr_cg_with_apply(const la_csr *a,const double *b,size_t count,double rtol,double atol,size_t limit,int jacobi,int capture,la_cg_apply apply,const void *context,la_cg_result *out){
+    if(apply&&jacobi)return 1;
     if(!out||out->x||out->residuals||out->iterates||out->size||out->iterations||out->reason)return 1;
     int code=la_csr_validate(a);if(code)return code;
     size_t n=a->rows;
@@ -72,8 +74,9 @@ static inline int la_csr_cg(const la_csr *a,const double *b,size_t count,double 
     if(!isfinite(result.residuals[0]))result.reason=3;
     else if(result.residuals[0]<=threshold)result.reason=0;
     else {
-        for(size_t i=0;i<n;i++)p[i]=z[i]=r[i]/diag[i];rho=la_sparse_dot(n,r,z);
-        for(size_t step=0;step<limit;step++){
+        for(size_t i=0;i<n;i++)z[i]=r[i]/diag[i];if(apply&&apply(context,r,n,z))result.reason=3;
+        if(n)memcpy(p,z,n*sizeof(double));rho=la_sparse_dot(n,r,z);
+        for(size_t step=0;step<limit&&result.reason==1;step++){
             if(la_csr_mv(a,p,q)){result.reason=3;break;}
             double curvature=la_sparse_dot(n,p,q);
             if(!isfinite(rho)||!isfinite(curvature)){result.reason=3;break;}
@@ -86,11 +89,12 @@ static inline int la_csr_cg(const la_csr *a,const double *b,size_t count,double 
             result.iterations++;result.residuals[result.iterations]=length;
             if(capture&&n)memcpy(result.iterates+result.iterations*n,result.x,n*sizeof(double));
             if(length<=threshold){result.reason=0;break;}
-            for(size_t i=0;i<n;i++)z[i]=r[i]/diag[i];double next=la_sparse_dot(n,r,z);
+            for(size_t i=0;i<n;i++)z[i]=r[i]/diag[i];if(apply&&apply(context,r,n,z)){result.reason=3;break;}double next=la_sparse_dot(n,r,z);
             if(!isfinite(next)){result.reason=3;break;}if(next<=0){result.reason=2;break;}
             double beta=next/rho;for(size_t i=0;i<n;i++)p[i]=z[i]+beta*p[i];rho=next;
         }
     }
     free(work);*out=result;return 0;
 }
+static inline int la_csr_cg(const la_csr *a,const double *b,size_t count,double rtol,double atol,size_t limit,int jacobi,int capture,la_cg_result *out){return la_csr_cg_with_apply(a,b,count,rtol,atol,limit,jacobi,capture,NULL,NULL,out);}
 #endif

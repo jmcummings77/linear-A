@@ -15,12 +15,12 @@ static inline int la_cholesky_insert(la_cholesky_row *r,size_t j,size_t step){
  la_cholesky_edge *p=(la_cholesky_edge*)realloc(r->edges,(r->count+1)*sizeof(*p));if(!p)return 2;r->edges=p;
  memmove(p+k+1,p+k,(r->count-k)*sizeof(*p));p[k]=(la_cholesky_edge){j,step};r->count++;return 0;
 }
-static inline int la_cholesky_analyze(const la_csr *a,la_cholesky_symbolic *out){
+static inline int la_cholesky_analyze_mode(const la_csr *a,la_cholesky_symbolic *out,int incomplete){
  if(!out||out->source.offsets||out->source.indices||out->source.values||out->source.rows||out->source.cols||out->source.nnz||out->pattern.offsets||out->pattern.indices||out->pattern.values||out->pattern.rows||out->pattern.cols||out->pattern.nnz||out->steps||out->fill_count||la_csr_validate(a)||a->rows!=a->cols)return 1;
  size_t n=a->rows;la_cholesky_symbolic s={0};int code=0;
  la_cholesky_row *g=(la_cholesky_row*)calloc(n?n:1,sizeof(*g));if(!g)return 2;
  for(size_t i=0;i<n&&!code;i++)for(size_t p=a->offsets[i];p<a->offsets[i+1]&&!code;p++){size_t j=a->indices[p];if(i!=j){code=la_cholesky_insert(&g[i],j,SIZE_MAX);if(!code)code=la_cholesky_insert(&g[j],i,SIZE_MAX);}}
- for(size_t k=0;k<n&&!code;k++)for(size_t u=0;u<g[k].count&&!code;u++){size_t i=g[k].edges[u].column;if(i<=k)continue;for(size_t w=0;w<u&&!code;w++){size_t j=g[k].edges[w].column;if(j<=k)continue;code=la_cholesky_insert(&g[i],j,k);if(!code)code=la_cholesky_insert(&g[j],i,k);}}
+ for(size_t k=0;!incomplete&&k<n&&!code;k++)for(size_t u=0;u<g[k].count&&!code;u++){size_t i=g[k].edges[u].column;if(i<=k)continue;for(size_t w=0;w<u&&!code;w++){size_t j=g[k].edges[w].column;if(j<=k)continue;code=la_cholesky_insert(&g[i],j,k);if(!code)code=la_cholesky_insert(&g[j],i,k);}}
  size_t count=n;
  for(size_t i=0;i<n&&!code;i++)for(size_t k=0;k<g[i].count;k++)if(g[i].edges[k].column<i){if(count==SIZE_MAX){code=2;break;}count++;}
  size_t *rp=NULL,*ci=NULL;double *v=NULL;
@@ -32,6 +32,7 @@ static inline int la_cholesky_analyze(const la_csr *a,la_cholesky_symbolic *out)
  for(size_t i=0;i<n;i++)free(g[i].edges);free(g);free(rp);free(ci);free(v);
  if(code)la_cholesky_symbolic_free(&s);else *out=s;return code;
 }
+static inline int la_cholesky_analyze(const la_csr *a,la_cholesky_symbolic *out){return la_cholesky_analyze_mode(a,out,0);}
 static inline int la_cholesky_factorize(const la_cholesky_symbolic *s,const la_csr *a,la_cholesky *out){
  if(!out||out->lower.offsets||out->lower.indices||out->lower.values||out->lower.rows||out->lower.cols||out->lower.nnz||!s||!s->steps||la_csr_validate(&s->source)||la_csr_validate(&s->pattern)||la_csr_validate(a)||a->rows!=a->cols||a->rows!=s->source.rows||a->nnz!=s->source.nnz||s->pattern.rows!=a->rows||s->pattern.cols!=a->rows)return 1;
  if(memcmp(a->offsets,s->source.offsets,(a->rows+1)*sizeof(size_t))||(a->nnz&&memcmp(a->indices,s->source.indices,a->nnz*sizeof(size_t))))return 1;
@@ -51,5 +52,14 @@ static inline int la_cholesky_solve(const la_cholesky *f,const double *b,size_t 
  for(size_t i=0;i<count;i++){size_t d=l->offsets[i+1]-1;for(size_t p=l->offsets[i];p<d;p++)x[i]-=l->values[p]*x[l->indices[p]];x[i]/=l->values[d];if(!isfinite(x[i]))return 3;}
  for(size_t ii=count;ii>0;ii--){size_t i=ii-1,d=l->offsets[i+1]-1;x[i]/=l->values[d];if(!isfinite(x[i]))return 3;for(size_t p=l->offsets[i];p<d;p++){x[l->indices[p]]-=l->values[p]*x[i];if(!isfinite(x[l->indices[p]]))return 3;}}
  return 0;
+}
+typedef la_cholesky la_ic0;
+static inline int la_ic0_create(const la_csr *a,la_ic0 *out){la_cholesky_symbolic s={0};int code=la_cholesky_analyze_mode(a,&s,1);if(!code)code=la_cholesky_factorize(&s,a,out);la_cholesky_symbolic_free(&s);return code;}
+static inline int la_ic0_apply(const la_ic0 *f,const double *b,size_t n,double *x){return la_cholesky_solve(f,b,n,x);}
+static inline int la_ic0_callback(const void *f,const double *b,size_t n,double *x){return la_ic0_apply((const la_ic0*)f,b,n,x);}
+static inline int la_csr_cg_ic0(const la_csr *a,const double *b,size_t count,double rtol,double atol,size_t limit,int jacobi,int capture,const la_ic0 *f,la_cg_result *out){
+ if(f){if(!a||jacobi||la_csr_validate(&f->lower)||f->lower.rows!=a->rows||f->lower.cols!=a->rows)return 1;
+ for(size_t i=0;i<f->lower.rows;i++){size_t end=f->lower.offsets[i+1];if(end==f->lower.offsets[i]||f->lower.indices[end-1]!=i||f->lower.values[end-1]<=0)return 1;}}
+ return la_csr_cg_with_apply(a,b,count,rtol,atol,limit,jacobi,capture,f?la_ic0_callback:NULL,f,out);
 }
 #endif

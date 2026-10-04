@@ -41,3 +41,9 @@ plan=SparseCholeskySymbolic(sparse)
 chol=plan.factorize(sparse)
 assert abs(chol.solve([6,7])[0]-1)<1e-12 and abs(chol.solve([11,13])[0]-20/11)<1e-12
 assert plan.fill_count==0 and chol.lower.nnz==3
+
+from matrix import IC0
+ic=IC0(sparse)
+for rhs in ([6,7],[11,13]):
+    pcg=sparse.conjugate_gradient(rhs,preconditioner=ic)
+    assert pcg.converged and pcg.iterations==1

@@ -340,7 +340,7 @@ export async function createMatrixAPI({
     dispose(){if(this.#pointer)runtime._wm_factor_destroy(this.#pointer);this.#pointer=0;}
   }
 
-  let csrPointer,iluPointer;
+  let csrPointer,iluPointer,icPointer;
   class SparseCholeskySymbolic {
     #pointer;#size;#rp;#ci;#steps;
     constructor(a){
@@ -359,6 +359,16 @@ export async function createMatrixAPI({
     #alive(){if(!this.#pointer)throw new Error('Cholesky factor has been disposed');return this.#pointer;}
     get lower(){let out;try{out=new Matrix(runtime._wm_cholesky_lower(this.#alive()),0,undefined,ownedHandle);const v=out.toArray(),n=this.size,m=this.nnz;return new CSRMatrix(n,n,v.slice(0,n+1),v.slice(n+1,n+1+m),v.slice(n+1+m));}finally{out?.dispose();}}
     solve(values){let b,out;try{b=new Matrix(values.length,1,values);out=new Matrix(runtime._wm_cholesky_solve(this.#alive(),matrixPointer(b)),0,undefined,ownedHandle);return Array.from(out.toArray());}finally{b?.dispose();out?.dispose();}}
+    dispose(){if(this.#pointer){runtime._wm_cholesky_destroy(this.#pointer);this.#pointer=0;}}
+  }
+  class IC0 {
+    #pointer=0;#size;#nnz;
+    static {icPointer=f=>f.#alive();}
+    constructor(a){this.#size=a.rows;this.#pointer=checkedHandle(runtime._wm_ic0_create(csrPointer(a)));let l;try{l=this.lower;this.#nnz=l.nnz;}catch(e){this.dispose();throw e;}finally{l?.dispose();}}
+    get size(){return this.#size;}get nnz(){return this.#nnz;}
+    #alive(){if(!this.#pointer)throw new Error('IC0 has been disposed');return this.#pointer;}
+    get lower(){let out;try{out=new Matrix(runtime._wm_cholesky_lower(this.#alive()),0,undefined,ownedHandle);const v=out.toArray(),n=this.size,m=(v.length-n-1)/2;return new CSRMatrix(n,n,v.slice(0,n+1),v.slice(n+1,n+1+m),v.slice(n+1+m));}finally{out?.dispose();}}
+    apply(values){let b,out;try{b=new Matrix(values.length,1,values);out=new Matrix(runtime._wm_cholesky_solve(this.#alive(),matrixPointer(b)),0,undefined,ownedHandle);return Array.from(out.toArray());}finally{b?.dispose();out?.dispose();}}
     dispose(){if(this.#pointer){runtime._wm_cholesky_destroy(this.#pointer);this.#pointer=0;}}
   }
   class ILU0 {
@@ -405,13 +415,13 @@ export async function createMatrixAPI({
       try{x=new Matrix(values.length,1,values);out=new Matrix(runtime._wm_csr_matvec(this.#alive(),matrixPointer(x)),0,undefined,ownedHandle);return out.toArray();}
       finally{x?.dispose();out?.dispose();}
     }
-    conjugateGradient(values,{rtol=1e-10,atol=0,maxIterations=1000,jacobi=false,capture=false}={}){
+    conjugateGradient(values,{rtol=1e-10,atol=0,maxIterations=1000,jacobi=false,capture=false,preconditioner}={}){
       if(!Number.isInteger(maxIterations)||maxIterations<0||maxIterations>100000||typeof jacobi!=='boolean'||typeof capture!=='boolean')throw new RangeError('invalid CG options');
       finite(rtol);finite(atol);
       let b,handle;
       try{
         b=new Matrix(values.length,1,values);
-        handle=checkedHandle(runtime._wm_csr_cg(this.#alive(),matrixPointer(b),rtol,atol,maxIterations,+jacobi,+capture));
+        handle=checkedHandle(runtime._wm_csr_cg_preconditioned(this.#alive(),matrixPointer(b),rtol,atol,maxIterations,+jacobi,+capture,preconditioner===undefined?0:icPointer(preconditioner)));
         const iterations=runtime._wm_cg_iterations(handle),reason=['converged','iteration_limit','breakdown','nonfinite'][runtime._wm_cg_reason(handle)];
         const copy=(field,count)=>{const offset=runtime._wm_cg_data(handle,field)>>>3;return Array.from(runtime.HEAPF64.subarray(offset,offset+count));};
         const x=copy(0,this.rows),residuals=copy(1,iterations+1),flat=capture?copy(2,(iterations+1)*this.rows):[];
@@ -439,5 +449,5 @@ export async function createMatrixAPI({
     Object.defineProperty(Matrix.prototype, Symbol.dispose, { value: Matrix.prototype.dispose });
     Object.defineProperty(Factorization.prototype, Symbol.dispose, { value: Factorization.prototype.dispose });
   }
-  return { Matrix, Factorization, CSRMatrix, ILU0, SparseCholeskySymbolic, SparseCholesky };
+  return { Matrix, Factorization, CSRMatrix, IC0, ILU0, SparseCholeskySymbolic, SparseCholesky };
 }

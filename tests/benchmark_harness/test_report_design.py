@@ -175,11 +175,11 @@ class ReportDirectoryTests(unittest.TestCase):
 
     def test_every_current_benchmark_card_has_metadata_from_its_own_measurements(self):
         expected_names = {'latest', 'determinants', 'eigen', 'vectors', 'sparse',
-                          'gmres', 'ilu', 'ordering', 'cholesky', 'amd'}
+                          'gmres', 'ilu', 'ordering', 'cholesky', 'amd', 'ic0'}
         html, parsed = self.render()
         cards = {card['href'].rstrip('/'): card for card in parsed.cards if card['metadata']}
         self.assertEqual(set(cards), expected_names)
-        self.assertNotRegex(html, r'__[A-Z_]+_META__')
+        self.assertNotRegex(html, r'__[A-Z0-9_]+_META__')
         for name in expected_names:
             with self.subTest(report=name):
                 data = json.loads((report_design.HERE / 'reports' / name / 'results.json').read_text())
@@ -206,23 +206,23 @@ class ReportDirectoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'pages').mkdir()
-            (root / 'reports/future-solver').mkdir(parents=True)
+            (root / 'reports/future-solver2').mkdir(parents=True)
             (root / 'reports/empty').mkdir()
             (root / 'pages/template.html').write_text(
                 '<html><head><style></style></head><body>'
-                '<a class="report" href="future-solver/"><span class="run-meta">__FUTURE_SOLVER_META__</span></a>'
+                '<a class="report" href="future-solver2/"><span class="run-meta">__FUTURE_SOLVER2_META__</span></a>'
                 '<a class="report" href="empty/"><span class="run-meta">__EMPTY_META__</span></a>'
                 '</body></html>')
             data = {'created_at': '2031-04-05T23:59:00+00:00',
                     'implementations': [{'status': status} for status in ['passed', 'failed', 'passed', 'unavailable']],
                     'results': [{'status': status} for status in ['failed', 'passed', 'unavailable', 'passed', 'failed']]}
-            source = root / 'reports/future-solver/results.json'
+            source = root / 'reports/future-solver2/results.json'
             source.write_text(json.dumps(data))
             (root / 'reports/empty/results.json').write_text('{}')
             # Styling is independently tested; this fixture exercises discovery and metadata.
             with patch.object(report_design, 'HERE', root), patch.object(report_design, 'apply_report_design', side_effect=lambda html: html):
                 html, parsed = self.render()
-            self.assertNotRegex(html, r'__[A-Z_]+_META__')
+            self.assertNotRegex(html, r'__[A-Z0-9_]+_META__')
             self.assertEqual(parsed.cards[0]['metadata'], '2031-04-05 · 2 verified implementations · 2 timing results')
             self.assertEqual(parsed.cards[1]['metadata'], 'Undated run · 0 verified implementations · 0 timing results')
             self.assertEqual(json.loads(source.read_text()), data)

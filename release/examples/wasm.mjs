@@ -1,5 +1,5 @@
 import { createMatrixAPI } from "linear-a-wasm";
-const { Matrix, CSRMatrix, ILU0, SparseCholeskySymbolic } = await createMatrixAPI();
+const { Matrix, CSRMatrix, ILU0, IC0, SparseCholeskySymbolic } = await createMatrixAPI();
 const a = new Matrix(2, 2, [4, 1, 2, 3]);
 const b = new Matrix(2, 1, [6, 8]);
 const x = a.solve(b);
@@ -25,6 +25,7 @@ try{const y=CSRMatrix.permuteVector(order,[1,2]);if(CSRMatrix.permuteVector(orde
 if(JSON.stringify(sparse.approximateMinimumDegree())!=="[0,1]")throw Error("incorrect AMD ordering");
 try{const plan=new SparseCholeskySymbolic(sparse);let chol,lower;
 try{chol=plan.factorize(sparse);lower=chol.lower;if(Math.abs(chol.solve([6,7])[0]-1)>1e-12||Math.abs(chol.solve([11,13])[0]-20/11)>1e-12||lower.nnz!==3)throw Error("incorrect Cholesky reuse");}finally{lower?.dispose();chol?.dispose();plan.dispose();}
+const ic=new IC0(sparse);try{for(const rhs of [[6,7],[11,13]]){const pcg=sparse.conjugateGradient(rhs,{preconditioner:ic});if(!pcg.converged||pcg.iterations!==1)throw Error("incorrect IC0 reuse");}}finally{ic.dispose();}
 const ilu=new ILU0(sparse);
 try{if(Math.abs(ilu.apply([6,7])[0]-1)>1e-12||Math.abs(ilu.apply([11,13])[0]-20/11)>1e-12||!sparse.gmres([11,13],{preconditioner:ilu}).converged)throw Error("incorrect ILU reuse");}finally{ilu.dispose();}
 const gm=sparse.gmres([6,7],{restart:2,jacobi:true,capture:true});

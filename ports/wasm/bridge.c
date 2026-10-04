@@ -350,3 +350,10 @@ matrix *wm_cholesky_lower(const matrix_cholesky *f){
  if(last_status){m_free(out);free(out);return NULL;}return out;
 }
 matrix *wm_cholesky_solve(const matrix_cholesky *f,const matrix *b){matrix *out=allocate_handle();if(!out)return NULL;last_status=m_cholesky_solve(f,b,out);if(last_status){free(out);return NULL;}return out;}
+
+matrix_ic0 *wm_ic0_create(const sparse_matrix *a){matrix_ic0 *f=calloc(1,sizeof(*f));if(!f){last_status=M_MEMORY;return NULL;}last_status=m_ic0_create(a,f);if(last_status){free(f);return NULL;}return f;}
+matrix_cg_result *wm_csr_cg_preconditioned(const sparse_matrix *a,const matrix *b,double rtol,double atol,size_t limit,int jacobi,int capture,const matrix_ic0 *f){
+ if(!b||b->cols!=1||(jacobi!=0&&jacobi!=1)||(capture!=0&&capture!=1)){last_status=M_ARGUMENT;return NULL;}
+ matrix_cg_result *out=calloc(1,sizeof(*out));if(!out){last_status=M_MEMORY;return NULL;}
+ last_status=m_csr_cg_preconditioned(a,b->values,b->rows,rtol,atol,limit,jacobi!=0,capture!=0,f,out);if(last_status){free(out);return NULL;}return out;
+}

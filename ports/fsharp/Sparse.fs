@@ -3,6 +3,11 @@ open System
 
 type CGResult = { X: double[]; Converged: bool; Iterations: int; Reason: string; Residuals: double[]; Iterates: double[][] }
 
+/// Fixed symmetric positive-definite preconditioner for conjugate gradient.
+type ISymmetricPreconditioner =
+    abstract Size: int
+    abstract Apply: double[] -> double[]
+
 /// Canonical, owned CSR with zero-based sorted unique column indices.
 type CSRMatrix(rows: int, cols: int, offsets: int[], indices: int[], values: double[]) =
     let rp,ci,v = Array.copy offsets,Array.copy indices,Array.copy values
@@ -127,11 +132,14 @@ type CSRMatrix(rows: int, cols: int, offsets: int[], indices: int[], values: dou
             for p in rp[i]..rp[i+1]-1 do sum <- sum+v[p]*x[ci[p]]
             if not (Double.IsFinite sum) then raise (ArithmeticException("Sparse multiplication outside float64 range."))
             sum)
-    member this.ConjugateGradient(b: double[], ?relativeTolerance: double, ?absoluteTolerance: double, ?maxIterations: int, ?jacobi: bool, ?capture: bool) =
+    member this.ConjugateGradient(b: double[], ?relativeTolerance: double, ?absoluteTolerance: double, ?maxIterations: int, ?jacobi: bool, ?capture: bool, ?preconditioner: ISymmetricPreconditioner) =
         let rtol,atol,limit,jacobi,capture = defaultArg relativeTolerance 1e-10,defaultArg absoluteTolerance 0.0,defaultArg maxIterations 1000,defaultArg jacobi false,defaultArg capture false
         let n = rows
         if cols<>n || b.Length<>n || Array.exists (Double.IsFinite >> not) b then invalidArg "b" "CG requires square matrix and finite matching vector."
         if not (Double.IsFinite rtol) || rtol<0.0 || rtol>=1.0 || not (Double.IsFinite atol) || atol<0.0 || limit<0 || limit>100000 then invalidArg "maxIterations" "Invalid CG options."
+        match preconditioner with
+        | Some f when f.Size<>n || jacobi -> invalidArg "preconditioner" "Invalid or conflicting CG preconditioner."
+        | _ -> ()
         let diagonal = Array.create n 1.0
         for i in 0..n-1 do
             for p in rp[i]..rp[i+1]-1 do
@@ -152,7 +160,10 @@ type CSRMatrix(rows: int, cols: int, offsets: int[], indices: int[], values: dou
         if capture then frames.Add(Array.copy x)
         let threshold = max atol (rtol*history[0])
         let mutable reason = if not (Double.IsFinite history[0]) then "nonfinite" elif history[0]<=threshold then "converged" else "iteration_limit"
-        let mutable z = Array.mapi (fun i a -> a/diagonal[i]) r
+        let apply r = match preconditioner with Some f -> f.Apply(r) | None -> Array.mapi (fun i a -> a/diagonal[i]) r
+        let mutable z = Array.zeroCreate<double> n
+        if reason="iteration_limit" then
+            try z <- apply r with :? ArithmeticException -> reason <- "nonfinite"
         let mutable p = Array.copy z
         let mutable rho = dot r z
         let mutable step = 0
@@ -176,7 +187,7 @@ type CSRMatrix(rows: int, cols: int, offsets: int[], indices: int[], values: dou
                         if capture then frames.Add(Array.copy x)
                         if length<=threshold then reason <- "converged"
                         else
-                            z <- Array.mapi (fun i a -> a/diagonal[i]) r
+                            z <- apply r
                             let next = dot r z
                             if not (Double.IsFinite next) then reason <- "nonfinite"
                             elif next<=0.0 then reason <- "breakdown"

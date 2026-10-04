@@ -226,3 +226,5 @@ All eleven implementations also provide [ridge regularization](SVD.md#ridge-regu
 All eleven ports provide canonical CSR construction, sparse matrix-vector multiplication, and conjugate gradient with optional Jacobi preconditioning. Results include the accepted solution, stop reason, iteration count, true residual history, and optional iteration snapshots. See [the sparse contract](SPARSE.md).
 
 All ports support [approximate minimum degree ordering](AMD.md), with deterministic new-to-old permutations and shared conformance fixtures.
+
+Compare [IC(0), plain CG, Jacobi-CG and full Cholesky](https://jmcummings77.github.io/linear-A/ic0/) with reusable factors, three orderings, and live solution/residual fields. See the [IC(0) contract](IC0.md).

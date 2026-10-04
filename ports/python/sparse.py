@@ -127,11 +127,14 @@ class CSRMatrix:
         if any(not math.isfinite(v) for v in out):raise ArithmeticError('sparse multiplication outside float64 range')
         return out
 
-    def conjugate_gradient(self,b,rtol=1e-10,atol=0.0,max_iterations=1000,jacobi=False,capture=False):
+    def conjugate_gradient(self,b,rtol=1e-10,atol=0.0,max_iterations=1000,jacobi=False,capture=False,preconditioner=None):
         b=list(b);n=self.rows
         if self.cols!=n or len(b)!=n or any(not math.isfinite(v) for v in b):raise ValueError('CG requires square matrix and finite matching vector')
         if not math.isfinite(rtol) or not 0<=rtol<1 or not math.isfinite(atol) or atol<0 or type(max_iterations) is not int or not 0<=max_iterations<=100000:
             raise ValueError('invalid CG options')
+        if preconditioner is not None:
+            from cholesky import IC0
+            if not isinstance(preconditioner,IC0) or preconditioner.size!=n or jacobi:raise ValueError('invalid or conflicting CG preconditioner')
         # Validate symmetry without creating a dense copy. Explicit zero entries are allowed.
         from bisect import bisect_left
         diagonal=[1.0]*n
@@ -154,7 +157,10 @@ class CSRMatrix:
         def result(reason):return CGResult(x.copy(),reason=='converged',len(history)-1,reason,history.copy(),frames.copy())
         if not math.isfinite(history[0]):return result('nonfinite')
         if history[0]<=threshold:return result('converged')
-        z=[r[i]/diagonal[i] for i in range(n)];p=z.copy();rho=dot(r,z)
+        def apply(r):return preconditioner.apply(r) if preconditioner is not None else [r[i]/diagonal[i] for i in range(n)]
+        try:z=apply(r)
+        except ArithmeticError:return result('nonfinite')
+        p=z.copy();rho=dot(r,z)
         for _ in range(max_iterations):
             try:q=self.matvec(p)
             except (ArithmeticError,ValueError):return result('nonfinite')
@@ -170,7 +176,9 @@ class CSRMatrix:
             x,r=candidate,residual;history.append(length)
             if capture:frames.append(x.copy())
             if length<=threshold:return result('converged')
-            z=[r[i]/diagonal[i] for i in range(n)];next_rho=dot(r,z)
+            try:z=apply(r)
+            except ArithmeticError:return result('nonfinite')
+            next_rho=dot(r,z)
             if not math.isfinite(next_rho):return result('nonfinite')
             if next_rho<=0:return result('breakdown')
             beta=next_rho/rho;p=[z[i]+beta*p[i] for i in range(n)];rho=next_rho

@@ -25,7 +25,7 @@ type SparseCholesky internal (lower:CSRMatrix) =
         x
 
 /// Reusable symbolic pattern. FillSteps uses -1 for original entries.
-type SparseCholeskySymbolic(a:CSRMatrix) =
+type SparseCholeskySymbolic internal (a:CSRMatrix,incomplete:bool) =
     let n,sourceRP,sourceCI=a.Rows,a.RowOffsets,a.ColumnIndices
     let rp=Array.zeroCreate<int> (n+1)
     let columns,births=ResizeArray<int>(),ResizeArray<int>()
@@ -38,7 +38,7 @@ type SparseCholeskySymbolic(a:CSRMatrix) =
                 if i<>j then
                     g[i][j]<- -1
                     g[j][i]<- -1
-        for k in 0..n-1 do
+        for k in 0..(if incomplete then -1 else n-1) do
             let ns=g[k].Keys |> Seq.filter(fun j -> j>k) |> Seq.toArray
             for u in 0..ns.Length-1 do
                 for w in 0..u-1 do
@@ -55,6 +55,7 @@ type SparseCholeskySymbolic(a:CSRMatrix) =
             births.Add(-1)
             rp[i+1]<-columns.Count
     let ci,steps=columns.ToArray(),births.ToArray()
+    new(a:CSRMatrix)=SparseCholeskySymbolic(a,false)
     member _.Size=n
     member _.NNZ=ci.Length
     member _.FillCount=steps |> Array.filter(fun k -> k>=0) |> Array.length
@@ -92,3 +93,14 @@ type SparseCholeskySymbolic(a:CSRMatrix) =
                 else v[p]<-s/v[rp[j+1]-1]
                 if not(Double.IsFinite v[p]) then raise(ArithmeticException("Nonfinite Cholesky factor."))
         SparseCholesky(CSRMatrix(n,n,rp,ci,v))
+
+/// Owned zero-fill incomplete Cholesky, without shifts or pivoting.
+type IC0(a:CSRMatrix) =
+    let factor=SparseCholeskySymbolic(a,true).Factorize(a)
+    member _.Size=factor.Size
+    member _.NNZ=factor.NNZ
+    member _.Lower=factor.Lower
+    member _.Apply(b:double[])=factor.Solve(b)
+    interface ISymmetricPreconditioner with
+        member _.Size=factor.Size
+        member _.Apply(b)=factor.Solve(b)

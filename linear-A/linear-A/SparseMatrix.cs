@@ -124,11 +124,12 @@ public sealed partial class CSRMatrix
         while (lo < hi) { var mid = lo + (hi - lo) / 2; if (indices[mid] < col) lo = mid + 1; else hi = mid; }
         return lo;
     }
-    public CGResult ConjugateGradient(double[] b, double relativeTolerance = 1e-10, double absoluteTolerance = 0, int maxIterations = 1000, bool jacobi = false, bool capture = false)
+    public CGResult ConjugateGradient(double[] b, double relativeTolerance = 1e-10, double absoluteTolerance = 0, int maxIterations = 1000, bool jacobi = false, bool capture = false, IC0? preconditioner = null)
     {
         ArgumentNullException.ThrowIfNull(b); var n = Rows;
         if (Cols != n || b.Length != n || b.Any(x => !double.IsFinite(x))) throw new ArgumentException("CG requires square matrix and finite matching vector.");
         if (!double.IsFinite(relativeTolerance) || relativeTolerance < 0 || relativeTolerance >= 1 || !double.IsFinite(absoluteTolerance) || absoluteTolerance < 0 || maxIterations < 0 || maxIterations > 100000) throw new ArgumentException("Invalid CG options.");
+        if (preconditioner is not null && (preconditioner.Size != n || jacobi)) throw new ArgumentException("Invalid or conflicting CG preconditioner.");
         var diagonal = Enumerable.Repeat(1.0, n).ToArray();
         for (var i = 0; i < n; i++)
         {
@@ -145,7 +146,8 @@ public sealed partial class CSRMatrix
         if (capture) frames.Add((double[])x.Clone()); var threshold = Math.Max(absoluteTolerance, relativeTolerance * history[0]);
         CGResult Result(string reason) => new((double[])x.Clone(), reason == "converged", history.Count - 1, reason, history.ToArray(), frames.ToArray());
         if (!double.IsFinite(history[0])) return Result("nonfinite"); if (history[0] <= threshold) return Result("converged");
-        var z = r.Select((v, i) => v / diagonal[i]).ToArray(); var direction = (double[])z.Clone(); var rho = Dot(r, z);
+        double[] Apply(double[] residual) => preconditioner?.Apply(residual) ?? residual.Select((v, i) => v / diagonal[i]).ToArray();
+        double[] z; try { z = Apply(r); } catch (ArithmeticException) { return Result("nonfinite"); } var direction = (double[])z.Clone(); var rho = Dot(r, z);
         for (var step = 0; step < maxIterations; step++)
         {
             double[] q; try { q = Matvec(direction); } catch (Exception e) when (e is ArithmeticException or ArgumentException) { return Result("nonfinite"); }
@@ -154,7 +156,7 @@ public sealed partial class CSRMatrix
             try { ax = Matvec(candidate); } catch (Exception e) when (e is ArithmeticException or ArgumentException) { return Result("nonfinite"); }
             var residual = b.Select((v, i) => v - ax[i]).ToArray(); var length = Norm(residual); if (!double.IsFinite(length)) return Result("nonfinite");
             x = candidate; r = residual; history.Add(length); if (capture) frames.Add((double[])x.Clone()); if (length <= threshold) return Result("converged");
-            z = r.Select((v, i) => v / diagonal[i]).ToArray(); var next = Dot(r, z); if (!double.IsFinite(next)) return Result("nonfinite"); if (next <= 0) return Result("breakdown");
+            try { z = Apply(r); } catch (ArithmeticException) { return Result("nonfinite"); } var next = Dot(r, z); if (!double.IsFinite(next)) return Result("nonfinite"); if (next <= 0) return Result("breakdown");
             var beta = next / rho; direction = z.Select((v, i) => v + beta * direction[i]).ToArray(); rho = next;
         }
         return Result("iteration_limit");

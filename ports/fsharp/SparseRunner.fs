@@ -9,7 +9,7 @@ let run (args: string[]) =
     let integer i = Int32.Parse(args[i],CultureInfo.InvariantCulture)
     let number i = Double.Parse(args[i],CultureInfo.InvariantCulture)
     let op,rows,cols,nnz,iterations,rtol,atol,limit,jacobi,capture = args[1],integer 2,integer 3,integer 4,integer 5,number 6,number 7,integer 8,integer 9,integer 10
-    if not (List.contains op ["spmv";"dense";"cg";"gmres";"ilu_setup";"ilu_apply";"rcm";"amd";"permute";"permutation_check";"rcm_solve";"ilu_solve";"chol_symbolic";"chol_factor";"chol_solve";"chol_total";"chol_rcm_total";"chol_amd_total"]) || min rows (min cols (min nnz iterations))<0 || jacobi<0 || jacobi>(if op="gmres" then 3 else 1) || capture<0 || capture>1 then invalidArg "args" "Invalid sparse options."
+    if not (List.contains op ["spmv";"dense";"cg";"gmres";"ic0_factor";"ic0_apply";"ilu_setup";"ilu_apply";"rcm";"amd";"permute";"permutation_check";"rcm_solve";"ilu_solve";"chol_symbolic";"chol_factor";"chol_solve";"chol_total";"chol_rcm_total";"chol_amd_total"]) || min rows (min cols (min nnz iterations))<0 || jacobi<0 || jacobi>(if op="gmres" || op="cg" then 3 else 1) || capture<0 || capture>1 then invalidArg "args" "Invalid sparse options."
     let raw = Console.In.ReadToEnd().Split(Array.empty<char>,StringSplitOptions.RemoveEmptyEntries)
     let count = if op="cg" || op="gmres" then rows else cols
     if raw.Length<>rows+1+2*nnz+count then invalidArg "args" "Incorrect sparse input count."
@@ -26,10 +26,15 @@ let run (args: string[]) =
     if op="dense" then
         for i in 0..rows-1 do
             for p in rp[i]..rp[i+1]-1 do dense[i,ci[p]] <- v[p]
+    let ic=if op="ic0_apply" || (op="cg" && jacobi=2) then Some(IC0(a)) else None
     let plan=if op="chol_factor" || op="chol_solve" then Some(SparseCholeskySymbolic(a)) else None
     let chol=if op="chol_solve" then Some(plan.Value.Factorize(a)) else None
     let compute () =
-        if op="chol_symbolic" then
+        if op="ic0_factor" then
+            let l=IC0(a).Lower
+            Array.concat [Array.map float l.RowOffsets;Array.map float l.ColumnIndices;l.Values]
+        elif op="ic0_apply" then ic.Value.Apply(b)
+        elif op="chol_symbolic" then
             let s=SparseCholeskySymbolic(a)
             Array.concat [s.RowOffsets;s.ColumnIndices;s.FillSteps] |> Array.map float
         elif op="chol_factor" then
@@ -76,7 +81,7 @@ let run (args: string[]) =
                 let reason = [|"converged";"iteration_limit";"breakdown";"nonfinite";"stagnation"|] |> Array.findIndex ((=) r.Reason)
                 Array.concat [[|float reason;float r.Iterations;float r.Residuals.Length|];r.X;r.Residuals;r.EstimatedResiduals;[|float r.Restarts.Length|];Array.map float r.Restarts;Array.concat r.Iterates]
         else
-            let r = a.ConjugateGradient(b,relativeTolerance=rtol,absoluteTolerance=atol,maxIterations=limit,jacobi=(jacobi<>0),capture=(capture<>0))
+            let r = a.ConjugateGradient(b,relativeTolerance=rtol,absoluteTolerance=atol,maxIterations=limit,jacobi=(jacobi=1),capture=(capture<>0),?preconditioner=((if jacobi=3 then Some(IC0(a)) else ic) |> Option.map (fun f -> f :> ISymmetricPreconditioner)))
             if iterations>0 then
                 if not r.Converged then failwith ("Benchmark CG did not converge: "+r.Reason)
                 r.X

@@ -5,7 +5,7 @@ from sparse import CSRMatrix
 
 class SparseCholeskySymbolic:
     """Analyze stored structure, including zeros; order the input before analysis."""
-    def __init__(self, a):
+    def __init__(self, a, *, _incomplete=False):
         if a.rows != a.cols:
             raise ValueError('Cholesky requires a square matrix')
         self._n = a.rows
@@ -19,7 +19,7 @@ class SparseCholeskySymbolic:
                     graph[i].add(j)
                     graph[j].add(i)
                     birth[max(i, j), min(i, j)] = -1
-        for k in range(self._n):
+        for k in range(0 if _incomplete else self._n):
             neighbors = sorted(j for j in graph[k] if j > k)
             for pos, i in enumerate(neighbors):
                 for j in neighbors[:pos]:
@@ -118,3 +118,16 @@ class SparseCholesky:
                 x[ci[p]] -= v[p]*x[i]
                 if not math.isfinite(x[ci[p]]): raise ArithmeticError('nonfinite Cholesky solve')
         return x
+
+
+class IC0:
+    """Owned zero-fill incomplete Cholesky, with no shifts or pivoting."""
+    def __init__(self, a):
+        self._factor = SparseCholeskySymbolic(a, _incomplete=True).factorize(a)
+    @property
+    def size(self): return self._factor.size
+    @property
+    def nnz(self): return self._factor.nnz
+    @property
+    def lower(self): return self._factor.lower
+    def apply(self, b): return self._factor.solve(b)

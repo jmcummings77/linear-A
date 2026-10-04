@@ -135,7 +135,18 @@ impl CSRMatrix {
         lo
     }
     pub fn conjugate_gradient(&self, b: &[f64], o: CGOptions) -> Result<CGResult, MatrixError> {
+        self.conjugate_gradient_preconditioned(b, o, None)
+    }
+    pub fn conjugate_gradient_preconditioned(
+        &self,
+        b: &[f64],
+        o: CGOptions,
+        preconditioner: Option<&crate::IC0>,
+    ) -> Result<CGResult, MatrixError> {
         let n = self.rows;
+        if preconditioner.map_or(false, |f| f.size() != n || o.jacobi) {
+            return Err(MatrixError::new("invalid or conflicting CG preconditioner"));
+        }
         if self.cols != n || b.len() != n || b.iter().any(|x| !x.is_finite()) {
             return Err(MatrixError::new(
                 "CG requires square matrix and finite matching vector",
@@ -187,6 +198,14 @@ impl CSRMatrix {
             "iteration_limit"
         };
         let mut z: Vec<f64> = r.iter().enumerate().map(|(i, v)| v / diagonal[i]).collect();
+        if reason == "iteration_limit" {
+            if let Some(f) = preconditioner {
+                match f.apply(&r) {
+                    Ok(v) => z = v,
+                    Err(_) => reason = "nonfinite",
+                }
+            }
+        }
         let mut p = z.clone();
         let mut rho = dot(&r, &z);
         if reason == "iteration_limit" {
@@ -237,6 +256,15 @@ impl CSRMatrix {
                     break;
                 }
                 z = r.iter().enumerate().map(|(i, v)| v / diagonal[i]).collect();
+                if let Some(f) = preconditioner {
+                    match f.apply(&r) {
+                        Ok(v) => z = v,
+                        Err(_) => {
+                            reason = "nonfinite";
+                            break;
+                        }
+                    }
+                }
                 let next = dot(&r, &z);
                 if !next.is_finite() {
                     reason = "nonfinite";

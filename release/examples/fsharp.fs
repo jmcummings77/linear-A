@@ -39,3 +39,8 @@ if sparse.ApproximateMinimumDegree() <> [|0;1|] then failwith "incorrect AMD ord
 let plan=SparseCholeskySymbolic(sparse)
 let chol=plan.Factorize(sparse)
 if abs(chol.Solve([|6.;7.|])[0]-1.)>1e-12 || abs(chol.Solve([|11.;13.|])[0]-20./11.)>1e-12 || chol.Lower.NNZ<>3 then failwith "incorrect Cholesky reuse"
+
+let ic=IC0(sparse)
+for rhs in [[|6.;7.|];[|11.;13.|]] do
+    let pcg=sparse.ConjugateGradient(rhs,preconditioner=ic)
+    if not pcg.Converged || pcg.Iterations<>1 then failwith "incorrect IC0 reuse"

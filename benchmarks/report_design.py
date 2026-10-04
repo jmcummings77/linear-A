@@ -29,7 +29,7 @@ def render_directory(destination=None):
     """Render the report directory with dates and counts from saved measurements."""
     template = (HERE / 'pages/template.html').read_text(encoding='utf-8')
     replacements = {}
-    for marker in set(re.findall(r'__([A-Z_]+)_META__', template)):
+    for marker in set(re.findall(r'__([A-Z0-9_]+)_META__', template)):
         name = marker.lower().replace('_', '-')
         data = json.loads((HERE / 'reports' / name / 'results.json').read_text())
         date = str(data.get('created_at', 'Undated run')).split('T')[0]
@@ -37,5 +37,5 @@ def render_directory(destination=None):
         count = sum(row.get('status') == 'passed' for row in data.get('results', []))
         label = f'{date} · {ports} verified implementations · {count} timing results'
         replacements['__' + marker + '_META__'] = markup.escape(label)
-    html = re.sub(r'__[A-Z_]+_META__', lambda match: replacements[match[0]], template)
+    html = re.sub(r'__[A-Z0-9_]+_META__', lambda match: replacements[match[0]], template)
     Path(destination or HERE / 'pages/index.html').write_text(apply_report_design(html))

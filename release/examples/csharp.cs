@@ -37,3 +37,6 @@ if(!CSRMatrix.PermuteVector(order,reordered.Matvec(permuted),true).SequenceEqual
 if(!System.Linq.Enumerable.SequenceEqual(sparse.ApproximateMinimumDegree(),new[]{0,1}))throw new Exception("incorrect AMD ordering");
 var plan=new SparseCholeskySymbolic(sparse);var chol=plan.Factorize(sparse);
 if(Math.Abs(chol.Solve(new[]{6.0,7})[0]-1)>1e-12||Math.Abs(chol.Solve(new[]{11.0,13})[0]-20.0/11)>1e-12||chol.Lower.NNZ!=3)throw new Exception("incorrect Cholesky reuse");
+
+var ic=new IC0(sparse);
+foreach(var rhs in new[]{new[]{6.0,7},new[]{11.0,13}}){var pcg=sparse.ConjugateGradient(rhs,preconditioner:ic);if(!pcg.Converged||pcg.Iterations!=1)throw new Exception("incorrect IC0 reuse");}

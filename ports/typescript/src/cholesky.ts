@@ -1,18 +1,19 @@
 import {CSRMatrix} from './sparse.js';
+const incompletePattern=Symbol('incomplete pattern');
 /** Symbolic lower structure, including stored zeros. Fill steps are zero-based;
  * -1 marks original edges and diagonals. Apply an ordering before analysis. */
 export class SparseCholeskySymbolic {
  readonly size:number;
  private sourceRP:number[];private sourceCI:number[];
  private rp:number[]=[0];private ci:number[]=[];private steps:number[]=[];
- constructor(a:CSRMatrix){
+ constructor(a:CSRMatrix,token?:typeof incompletePattern){
   if(a.rows!==a.cols)throw new RangeError('Cholesky requires square matrix');
   this.size=a.rows;this.sourceRP=a.rowOffsets;this.sourceCI=a.columnIndices;
   const g=Array.from({length:this.size},()=>new Map<number,number>());
   for(let i=0;i<this.size;i++)for(let p=this.sourceRP[i];p<this.sourceRP[i+1];p++){
    const j=this.sourceCI[p];if(i!==j){g[i].set(j,-1);g[j].set(i,-1);}
   }
-  for(let k=0;k<this.size;k++){
+  for(let k=0;token!==incompletePattern&&k<this.size;k++){
    const ns=[...g[k].keys()].filter(j=>j>k).sort((a,b)=>a-b);
    for(let u=0;u<ns.length;u++)for(let w=0;w<u;w++){
     const i=ns[u],j=ns[w];if(!g[i].has(j)){g[i].set(j,k);g[j].set(i,k);}
@@ -59,4 +60,12 @@ export class SparseCholesky {
   for(let i=this.size-1;i>=0;i--){x[i]/=v[rp[i+1]-1];if(!Number.isFinite(x[i]))throw new RangeError('nonfinite Cholesky solve');for(let p=rp[i];p<rp[i+1]-1;p++){x[ci[p]]-=v[p]*x[i];if(!Number.isFinite(x[ci[p]]))throw new RangeError('nonfinite Cholesky solve');}}
   return x;
  }
+}
+
+/** Owned zero-fill incomplete Cholesky; no shifts or pivoting. */
+export class IC0 {
+ private factor:SparseCholesky;
+ constructor(a:CSRMatrix){this.factor=new SparseCholeskySymbolic(a,incompletePattern).factorize(a);}
+ get size(){return this.factor.size;}get nnz(){return this.factor.nnz;}get lower(){return this.factor.lower;}
+ apply(b:ArrayLike<number>){return this.factor.solve(b);}
 }

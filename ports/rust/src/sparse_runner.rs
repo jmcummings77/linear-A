@@ -1,4 +1,4 @@
-use linear_a::{CGOptions, CSRMatrix, GMRESOptions, Matrix, SparseCholeskySymbolic, ILU0};
+use linear_a::{CGOptions, CSRMatrix, GMRESOptions, Matrix, SparseCholeskySymbolic, IC0, ILU0};
 use std::io::{self, Read};
 use std::time::Instant;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -27,6 +27,8 @@ pub fn run(args: &[String]) -> Result<()> {
         "dense",
         "cg",
         "gmres",
+        "ic0_factor",
+        "ic0_apply",
         "ilu_setup",
         "ilu_apply",
         "rcm",
@@ -44,7 +46,7 @@ pub fn run(args: &[String]) -> Result<()> {
     ]
     .contains(&op)
         || jacobi > 3
-        || (op != "gmres" && jacobi > 1)
+        || (op != "gmres" && op != "cg" && jacobi > 1)
         || capture > 1
     {
         return Err("invalid sparse options".into());
@@ -99,6 +101,11 @@ pub fn run(args: &[String]) -> Result<()> {
     } else {
         None
     };
+    let ic = if op == "ic0_apply" || (op == "cg" && jacobi == 2) {
+        Some(IC0::new(&a)?)
+    } else {
+        None
+    };
     let plan = if op == "chol_factor" || op == "chol_solve" {
         Some(SparseCholeskySymbolic::new(&a)?)
     } else {
@@ -110,6 +117,20 @@ pub fn run(args: &[String]) -> Result<()> {
         None
     };
     let compute = || -> Result<Vec<f64>> {
+        if op == "ic0_factor" {
+            let l = IC0::new(&a)?.lower();
+            let mut out: Vec<f64> = l
+                .row_offsets()
+                .iter()
+                .chain(l.column_indices())
+                .map(|&v| v as f64)
+                .collect();
+            out.extend(l.values());
+            return Ok(out);
+        }
+        if op == "ic0_apply" {
+            return Ok(ic.as_ref().unwrap().apply(&b)?);
+        }
         if op == "chol_symbolic" {
             let s = SparseCholeskySymbolic::new(&a)?;
             return Ok(s
@@ -293,15 +314,21 @@ pub fn run(args: &[String]) -> Result<()> {
             }
             return Ok(out);
         }
-        let r = a.conjugate_gradient(
+        let current_ic = if jacobi == 3 {
+            Some(IC0::new(&a)?)
+        } else {
+            None
+        };
+        let r = a.conjugate_gradient_preconditioned(
             &b,
             CGOptions {
                 relative_tolerance: rtol,
                 absolute_tolerance: atol,
                 max_iterations: limit,
-                jacobi: jacobi != 0,
+                jacobi: jacobi == 1,
                 capture: capture != 0,
             },
+            current_ic.as_ref().or(ic.as_ref()),
         )?;
         if iterations > 0 {
             if !r.converged {

@@ -1,5 +1,5 @@
 {
-  "version": "0.9.0",
+  "version": "0.10.0",
   "capabilities": [
     "arithmetic",
     "determinants",
@@ -16,7 +16,8 @@
     "ilu0",
     "rcm",
     "sparse-cholesky",
-    "amd"
+    "amd",
+    "ic0"
   ],
   "ports": {
     "assembly": {
@@ -42,7 +43,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "c": {
@@ -67,7 +69,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "cpp": {
@@ -93,7 +96,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "csharp": {
@@ -118,7 +122,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "fsharp": {
@@ -143,7 +148,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "go": {
@@ -168,7 +174,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "julia": {
@@ -193,7 +200,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "python": {
@@ -218,7 +226,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "rust": {
@@ -243,7 +252,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "typescript": {
@@ -268,7 +278,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     },
     "wasm": {
@@ -294,7 +305,8 @@
         "ilu0",
         "rcm",
         "sparse-cholesky",
-        "amd"
+        "amd",
+        "ic0"
       ]
     }
   }
