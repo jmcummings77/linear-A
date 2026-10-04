@@ -15,7 +15,7 @@ def select_public(data, *, published=False):
         raise ValueError("Expected a schema-version-1 benchmark report")
     # Published inputs have already removed host identity. Reinterpreting their
     # public paths using this machine's username can corrupt names like runner.
-    sanitizer=(PublicSanitizer(root=".", home="") if published
+    sanitizer=(PublicSanitizer.for_published() if published
                else PublicSanitizer(root=ROOT))
     # Explicit schema: no environment, profile payload, runner command or diagnostics.
     report={key:data.get(key) for key in ('schema_version','revision','source_sha256','dirty','created_at','suite','seed','machine','methodology','implementations','results')}
@@ -35,7 +35,7 @@ def git_snapshot(ref,path):
 
 def render(snapshots,destination, *, published=False):
     if not 2<=len(snapshots)<=30:raise ValueError('Need 2–30 snapshots')
-    sanitizer=(PublicSanitizer(root=".", home="") if published
+    sanitizer=(PublicSanitizer.for_published() if published
                else PublicSanitizer(root=ROOT))
     data=[{'label':sanitizer.text(label),'data':select_public(report, published=published)} for label,report in snapshots]
     encoded=json.dumps(data,allow_nan=False).replace('<','\\u003c').replace('&','\\u0026')

@@ -34,10 +34,11 @@ VARIANTS = {
 SANITIZER = PublicSanitizer(root=ROOT)
 
 
-def public(value):
-    if isinstance(value, dict): return {key: public(item) for key,item in value.items()}
-    if isinstance(value, (list,tuple)): return [public(item) for item in value]
-    return SANITIZER.text(value) if isinstance(value,str) else value
+def public(value, sanitizer=None):
+    sanitizer = SANITIZER if sanitizer is None else sanitizer
+    if isinstance(value, dict): return {key: public(item, sanitizer) for key,item in value.items()}
+    if isinstance(value, (list,tuple)): return [public(item, sanitizer) for item in value]
+    return sanitizer.text(value) if isinstance(value,str) else value
 
 
 def execute(command, stdin=None, timeout=120):
@@ -165,9 +166,10 @@ def collect_profile(runner,variant,iterations,output):
     return public(profile)
 
 
-def render(data,output):
+def render(data,output,*,published=False):
     template=(HERE/'report.html').read_text()
-    encoded=json.dumps(public(data),allow_nan=False).replace('<','\\u003c')
+    sanitizer = PublicSanitizer.for_published() if published else SANITIZER
+    encoded=json.dumps(public(data, sanitizer),allow_nan=False).replace('<','\\u003c')
     (output/'index.html').write_text(apply_report_design(template.replace('__DATA__',encoded)))
 
 

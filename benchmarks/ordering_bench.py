@@ -63,8 +63,8 @@ def benchmark(implementations,sizes,samples):
             rows.append(row);print(row['implementation'],problem,size,operation,ordering,row['status'],row.get('error',''),flush=True)
     return rows
 
-def render(data,destination,*,live_override=None):
-    data=PublicSanitizer().report(data);live=sparse.live_bundle(data,{'ordering_source':(HERE/'ordering-live.mjs').read_text()}) if live_override is None else live_override
+def render(data,destination,*,live_override=None, published=False):
+    data = (PublicSanitizer.for_published() if published else PublicSanitizer()).report(data);live=sparse.live_bundle(data,{'ordering_source':(HERE/'ordering-live.mjs').read_text()}) if live_override is None else live_override
     template=(HERE/'ordering-report.html').read_text()
     replacements={'DATA':json_for_html(data),'LIVE':json_for_html(live),'SCRIPT':(HERE/'ordering-report.mjs').read_text()}
     html=re.sub(r'@@(DATA|LIVE|SCRIPT)@@',lambda m:replacements[m[1]],template)

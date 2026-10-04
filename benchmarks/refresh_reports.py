@@ -50,31 +50,31 @@ def refresh():
         data = embedded(path, 'data')
         if path.parent.name == 'multigrid':
             live = embedded(path, 'live')
-            multigrid_bench.render(data, path, live_override=live)
+            multigrid_bench.render(data, path, live_override=live, published=True)
             assert embedded(path, 'live') == live
         elif path.parent.name == 'ic0':
             live = embedded(path, 'live')
-            ic0_bench.render(data, path, live_override=live)
+            ic0_bench.render(data, path, live_override=live, published=True)
             assert embedded(path, 'live') == live
         elif path.parent.name == 'amd':
             live = embedded(path, 'live')
-            amd_bench.render(data, path, live_override=live)
+            amd_bench.render(data, path, live_override=live, published=True)
             assert embedded(path, 'live') == live
         elif path.parent.name == 'cholesky':
             live = embedded(path, 'live')
-            cholesky_bench.render(data, path, live_override=live)
+            cholesky_bench.render(data, path, live_override=live, published=True)
             assert embedded(path, 'live') == live
         elif path.parent.name == 'ordering':
             live = embedded(path, 'live')
-            ordering_bench.render(data, path, live_override=live)
+            ordering_bench.render(data, path, live_override=live, published=True)
             assert embedded(path, 'live') == live
         elif path.parent.name in ('sparse', 'gmres', 'ilu'):
             live = embedded(path, 'live')
-            sparse.render(data, path, live_override=live)
+            sparse.render(data, path, live_override=live, published=True)
             assert embedded(path, 'live') == live
         else:
             live = embedded(path, 'live-data')
-            report.render(data, path, live_override=live)
+            report.render(data, path, live_override=live, published=True)
             assert embedded(path, 'live-data') == live
         assert embedded(path, 'data') == data, f'Recorded data changed in {path}'
         count += 1
@@ -84,13 +84,16 @@ def refresh():
     assert embedded(path, 'bundle') == bundle
     path = ROOT / 'benchmarks/comparison/index.html'
     snapshots = embedded(path, 'snapshots')
-    compare.render([(item['label'], item['data']) for item in snapshots], path)
+    compare.render([(item['label'], item['data']) for item in snapshots], path, published=True)
     assert embedded(path, 'snapshots') == snapshots
     for name in ('matmul-locality', 'machine-code-dot'):
         directory = ROOT / 'experiments' / name / 'results'
         study = module(name.replace('-', '_'), f'experiments/{name}/run.py')
         data = json.loads((directory / 'results.json').read_text())
-        study.render(data, directory if name == 'matmul-locality' else directory / 'index.html')
+        if name == 'matmul-locality':
+            study.render(data, directory, published=True)
+        else:
+            study.render(data, directory / 'index.html')
         assert embedded(directory / 'index.html', 'data') == data
     render_directory()
     if before != measurements():
