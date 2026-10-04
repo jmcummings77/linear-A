@@ -50,7 +50,8 @@ test('SVD controls show the cutoff, debounce edits, and restore LU visibility',(
  assert.equal(h.get('accuracy-cutoff-control').hidden,false);
  h.get('accuracy-cutoff').value='-5';h.get('accuracy-cutoff').dispatch('input');
  h.advance(299);assert.equal(h.workers.length,0);h.advance(1);
- assert.equal(h.workers[0].sent[0].config.cutoff,1e-5);
+ assert.ok(Math.abs(h.workers[0].sent[0].config.cutoff-1e-5)<=Number.EPSILON*1e-5,
+  "logarithmic cutoff conversion agrees within floating-point rounding");
  h.get('accuracy-algorithm').value='lu';h.get('accuracy-algorithm').dispatch('change');
  assert.equal(h.get('accuracy-cutoff-control').hidden,false);
  assert.equal(h.get('accuracy-cutoff').disabled,false);
@@ -61,6 +62,8 @@ test('ridge and noise changes share the debounce and clear stale comparisons',()
  h.get('accuracy-lambda').value='-4';h.get('accuracy-lambda').dispatch('input');h.advance(200);
  h.get('accuracy-noise').value='0.0001';h.get('accuracy-noise').dispatch('input');h.advance(299);
  assert.equal(worker.sent.length,1);h.advance(1);assert.equal(worker.sent.length,2);
- assert.equal(worker.sent[1].config.lambda,1e-4);assert.equal(worker.sent[1].config.noise,1e-4);
+ assert.ok(Math.abs(worker.sent[1].config.lambda-1e-4)<=Number.EPSILON*1e-4,
+  "logarithmic ridge conversion agrees within floating-point rounding");
+ assert.equal(worker.sent[1].config.noise,1e-4);
  assert.equal(h.get('accuracy-comparison').textContent,'');
 });

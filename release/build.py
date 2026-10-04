@@ -84,6 +84,15 @@ def check_manifest(manifest):
     version = manifest['version']
     if not re.fullmatch(r'\d+\.\d+\.\d+', version):
         raise ValueError('expected a numeric release version')
+    api_readme = ROOT / 'docs/api' / version / 'README.md'
+    if not api_readme.is_file():
+        raise ValueError('missing API contract for release version ' + version)
+    api_lines = api_readme.read_text().splitlines()
+    if not api_lines or api_lines[0] != '# linear-A ' + version + ' API contract':
+        raise ValueError('API contract title differs from release manifest')
+    api_link = re.search(r'\[Versioned API contract\]\(([^)]+)\)', (ROOT / 'README.md').read_text())
+    if not api_link or api_link.group(1) != 'docs/api/' + version + '/README.md':
+        raise ValueError('root README API contract link differs from release manifest')
     for name in ('python', 'rust', 'julia'):
         path = ROOT / 'ports' / name / {'python':'pyproject.toml','rust':'Cargo.toml','julia':'Project.toml'}[name]
         if not re.search(r'^version\s*=\s*"' + re.escape(version) + '"', path.read_text(), re.M):

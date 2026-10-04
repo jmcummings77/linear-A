@@ -8,88 +8,289 @@ namespace linear_A;
 /// <summary>Reusable symbolic lower pattern. FillSteps uses -1 for original entries.</summary>
 public sealed class SparseCholeskySymbolic
 {
-    private readonly int[] sourceRP, sourceCI, rp, ci, steps;
+    private readonly int[] sourceRowOffsets;
+    private readonly int[] sourceColumnIndices;
+    private readonly int[] rowOffsets;
+    private readonly int[] columnIndices;
+    private readonly int[] fillSteps;
+
     public int Size { get; }
-    public int NNZ => ci.Length;
-    public int FillCount => steps.Count(k => k >= 0);
-    public int[] RowOffsets => (int[])rp.Clone();
-    public int[] ColumnIndices => (int[])ci.Clone();
-    public int[] FillSteps => (int[])steps.Clone();
-    public SparseCholeskySymbolic(CSRMatrix a) : this(a, false) { }
+    public int NNZ => columnIndices.Length;
+    public int FillCount => fillSteps.Count(step => step >= 0);
+    public int[] RowOffsets => (int[])rowOffsets.Clone();
+    public int[] ColumnIndices => (int[])columnIndices.Clone();
+    public int[] FillSteps => (int[])fillSteps.Clone();
+
+    public SparseCholeskySymbolic(CSRMatrix a) : this(a, false)
+    {
+    }
+
     internal SparseCholeskySymbolic(CSRMatrix a, bool incomplete)
     {
         ArgumentNullException.ThrowIfNull(a);
-        if (a.Rows != a.Cols) throw new ArgumentException("Cholesky requires square matrix.");
-        Size = a.Rows; sourceRP = a.RowOffsets; sourceCI = a.ColumnIndices;
-        var g = Enumerable.Range(0, Size).Select(_ => new SortedDictionary<int, int>()).ToArray();
-        for (int i = 0; i < Size; i++) for (int p = sourceRP[i]; p < sourceRP[i + 1]; p++)
-            { int j = sourceCI[p]; if (i != j) { g[i][j] = -1; g[j][i] = -1; } }
-        for (int k = 0; !incomplete && k < Size; k++)
+        if (a.Rows != a.Cols)
         {
-            var ns = g[k].Keys.Where(j => j > k).ToArray();
-            for (int u = 0; u < ns.Length; u++) for (int w = 0; w < u; w++)
-                { int i = ns[u], j = ns[w]; if (!g[i].ContainsKey(j)) { g[i][j] = k; g[j][i] = k; } }
+            throw new ArgumentException("Cholesky requires square matrix.");
         }
-        rp = new int[Size + 1]; var columns = new List<int>(); var births = new List<int>();
-        for (int i = 0; i < Size; i++)
+        Size = a.Rows;
+        sourceRowOffsets = a.RowOffsets;
+        sourceColumnIndices = a.ColumnIndices;
+
+        // Symbolic analysis uses the symmetric union of the stored pattern.
+        // Numeric symmetry is checked separately when values are factorized.
+        var adjacency = CreateSymmetricAdjacency();
+        if (!incomplete)
         {
-            foreach (var pair in g[i]) if (pair.Key < i) { columns.Add(pair.Key); births.Add(pair.Value); }
-            columns.Add(i); births.Add(-1); rp[i + 1] = columns.Count;
+            AddEliminationFill(adjacency);
         }
-        ci = columns.ToArray(); steps = births.ToArray();
+
+        // IC(0) skips elimination fill. Both variants store sorted lower rows
+        // ending in a diagonal, even if the source has no stored diagonal.
+        rowOffsets = new int[Size + 1];
+        var columns = new List<int>();
+        var entryFillSteps = new List<int>();
+        for (int row = 0; row < Size; row++)
+        {
+            foreach (var neighbor in adjacency[row])
+            {
+                if (neighbor.Key < row)
+                {
+                    columns.Add(neighbor.Key);
+                    entryFillSteps.Add(neighbor.Value);
+                }
+            }
+            columns.Add(row);
+            entryFillSteps.Add(-1);
+            rowOffsets[row + 1] = columns.Count;
+        }
+        columnIndices = columns.ToArray();
+        fillSteps = entryFillSteps.ToArray();
     }
+
+    private SortedDictionary<int, int>[] CreateSymmetricAdjacency()
+    {
+        var adjacency = Enumerable.Range(0, Size)
+            .Select(_ => new SortedDictionary<int, int>()).ToArray();
+        for (int row = 0; row < Size; row++)
+        {
+            for (int entry = sourceRowOffsets[row]; entry < sourceRowOffsets[row + 1]; entry++)
+            {
+                int column = sourceColumnIndices[entry];
+                if (row != column)
+                {
+                    adjacency[row][column] = -1;
+                    adjacency[column][row] = -1;
+                }
+            }
+        }
+        return adjacency;
+    }
+
+    private static void AddEliminationFill(SortedDictionary<int, int>[] adjacency)
+    {
+        for (int pivot = 0; pivot < adjacency.Length; pivot++)
+        {
+            // Eliminating a vertex connects its remaining neighbors. Record
+            // only the first pivot that creates each edge for FillSteps.
+            var neighbors = adjacency[pivot].Keys.Where(column => column > pivot).ToArray();
+            for (int right = 0; right < neighbors.Length; right++)
+            {
+                for (int left = 0; left < right; left++)
+                {
+                    int row = neighbors[right];
+                    int column = neighbors[left];
+                    if (!adjacency[row].ContainsKey(column))
+                    {
+                        adjacency[row][column] = pivot;
+                        adjacency[column][row] = pivot;
+                    }
+                }
+            }
+        }
+    }
+
     public SparseCholesky Factorize(CSRMatrix a)
     {
         ArgumentNullException.ThrowIfNull(a);
-        if (a.Rows != Size || a.Cols != Size || !a.RowOffsets.SequenceEqual(sourceRP) || !a.ColumnIndices.SequenceEqual(sourceCI)) throw new ArgumentException("Cholesky symbolic pattern mismatch.");
-        var av = a.Values;
-        var rows = Enumerable.Range(0, Size).Select(_ => new Dictionary<int, double>()).ToArray();
-        for (int i = 0; i < Size; i++) for (int p = sourceRP[i]; p < sourceRP[i + 1]; p++) rows[i][sourceCI[p]] = av[p];
-        for (int i = 0; i < Size; i++) foreach (var pair in rows[i]) if (pair.Value != rows[pair.Key].GetValueOrDefault(i)) throw new ArgumentException("Cholesky requires symmetric values.");
-        var v = new double[ci.Length];
-        for (int i = 0; i < Size; i++) for (int p = rp[i]; p < rp[i + 1]; p++)
+        if (a.Rows != Size || a.Cols != Size ||
+            !a.RowOffsets.SequenceEqual(sourceRowOffsets) ||
+            !a.ColumnIndices.SequenceEqual(sourceColumnIndices))
         {
-            int j = ci[p], u = rp[i], w = rp[j]; double s = rows[i].GetValueOrDefault(j);
-            while (u < p && w < rp[j + 1] - 1) { if (ci[u] == ci[w]) { s -= v[u] * v[w]; u++; w++; } else if (ci[u] < ci[w]) u++; else w++; }
-            if (!double.IsFinite(s)) throw new ArithmeticException("Nonfinite Cholesky factor.");
-            if (i == j) { if (s <= 0) throw new ArithmeticException("Nonpositive Cholesky pivot."); v[p] = Math.Sqrt(s); }
-            else v[p] = s / v[rp[j + 1] - 1];
-            if (!double.IsFinite(v[p])) throw new ArithmeticException("Nonfinite Cholesky factor.");
+            throw new ArgumentException("Cholesky symbolic pattern mismatch.");
         }
-        return new SparseCholesky(new CSRMatrix(Size, Size, rp, ci, v));
+
+        var sourceRows = ReadSymmetricValues(a.Values);
+        var factorValues = new double[columnIndices.Length];
+        for (int row = 0; row < Size; row++)
+        {
+            for (int entry = rowOffsets[row]; entry < rowOffsets[row + 1]; entry++)
+            {
+                int column = columnIndices[entry];
+                double updatedValue = SubtractKnownProducts(
+                    row, entry, sourceRows[row].GetValueOrDefault(column), factorValues);
+                RequireFiniteFactor(updatedValue);
+
+                if (row == column)
+                {
+                    // No pivoting, shifts, or tolerance repair is applied. IC(0)
+                    // can fail this test even for SPD input because it drops fill.
+                    if (updatedValue <= 0)
+                    {
+                        throw new ArithmeticException("Nonpositive Cholesky pivot.");
+                    }
+                    factorValues[entry] = Math.Sqrt(updatedValue);
+                }
+                else
+                {
+                    int pivotEntry = rowOffsets[column + 1] - 1;
+                    factorValues[entry] = updatedValue / factorValues[pivotEntry];
+                }
+                RequireFiniteFactor(factorValues[entry]);
+            }
+        }
+        return new SparseCholesky(new CSRMatrix(Size, Size, rowOffsets, columnIndices, factorValues));
+    }
+
+    private Dictionary<int, double>[] ReadSymmetricValues(double[] sourceValues)
+    {
+        var sourceRows = Enumerable.Range(0, Size)
+            .Select(_ => new Dictionary<int, double>()).ToArray();
+        for (int row = 0; row < Size; row++)
+        {
+            for (int entry = sourceRowOffsets[row]; entry < sourceRowOffsets[row + 1]; entry++)
+            {
+                sourceRows[row][sourceColumnIndices[entry]] = sourceValues[entry];
+            }
+        }
+
+        // Require exact numeric symmetry, treating absent entries as zero.
+        // A stored zero does not require a matching stored transpose entry.
+        for (int row = 0; row < Size; row++)
+        {
+            foreach (var entry in sourceRows[row])
+            {
+                if (entry.Value != sourceRows[entry.Key].GetValueOrDefault(row))
+                {
+                    throw new ArgumentException("Cholesky requires symmetric values.");
+                }
+            }
+        }
+        return sourceRows;
+    }
+
+    private double SubtractKnownProducts(int row, int entry, double value, double[] factorValues)
+    {
+        int column = columnIndices[entry];
+        int rowEntry = rowOffsets[row];
+        int columnEntry = rowOffsets[column];
+        int columnDiagonal = rowOffsets[column + 1] - 1;
+
+        // Intersect the sorted prefixes to subtract L[row,k] * L[column,k].
+        // Absent entries contribute zero, preserving the chosen fill policy.
+        while (rowEntry < entry && columnEntry < columnDiagonal)
+        {
+            if (columnIndices[rowEntry] == columnIndices[columnEntry])
+            {
+                value -= factorValues[rowEntry] * factorValues[columnEntry];
+                rowEntry++;
+                columnEntry++;
+            }
+            else if (columnIndices[rowEntry] < columnIndices[columnEntry])
+            {
+                rowEntry++;
+            }
+            else
+            {
+                columnEntry++;
+            }
+        }
+        return value;
+    }
+
+    private static void RequireFiniteFactor(double value)
+    {
+        // Keep finite-range failure distinct from a nonpositive finite pivot.
+        if (!double.IsFinite(value))
+        {
+            throw new ArithmeticException("Nonfinite Cholesky factor.");
+        }
     }
 }
+
 /// <summary>Owned lower factor supporting repeated right-hand sides.</summary>
 public sealed class SparseCholesky
 {
     private readonly CSRMatrix lower;
-    internal SparseCholesky(CSRMatrix lower) { this.lower = lower; }
+
+    internal SparseCholesky(CSRMatrix lower)
+    {
+        this.lower = lower;
+    }
+
     public int Size => lower.Rows;
     public int NNZ => lower.NNZ;
     public CSRMatrix Lower => new(Size, Size, lower.RowOffsets, lower.ColumnIndices, lower.Values);
+
     public double[] Solve(double[] b)
     {
         ArgumentNullException.ThrowIfNull(b);
-        if (b.Length != Size || b.Any(z => !double.IsFinite(z))) throw new ArgumentException("Invalid Cholesky right-hand side.");
-        var x = (double[])b.Clone(); var rp = lower.RowOffsets; var ci = lower.ColumnIndices; var v = lower.Values;
-        for (int i = 0; i < Size; i++)
+        if (b.Length != Size || b.Any(value => !double.IsFinite(value)))
         {
-            for (int p = rp[i]; p < rp[i + 1] - 1; p++) x[i] -= v[p] * x[ci[p]];
-            x[i] /= v[rp[i + 1] - 1]; if (!double.IsFinite(x[i])) throw new ArithmeticException("Nonfinite Cholesky solve.");
+            throw new ArgumentException("Invalid Cholesky right-hand side.");
         }
-        for (int i = Size - 1; i >= 0; i--)
+        var x = (double[])b.Clone();
+        var rowOffsets = lower.RowOffsets;
+        var columnIndices = lower.ColumnIndices;
+        var values = lower.Values;
+
+        // Forward substitution: L y = b. Each sorted lower row ends in its diagonal.
+        for (int row = 0; row < Size; row++)
         {
-            x[i] /= v[rp[i + 1] - 1]; if (!double.IsFinite(x[i])) throw new ArithmeticException("Nonfinite Cholesky solve.");
-            for (int p = rp[i]; p < rp[i + 1] - 1; p++) { x[ci[p]] -= v[p] * x[i]; if (!double.IsFinite(x[ci[p]])) throw new ArithmeticException("Nonfinite Cholesky solve."); }
+            int diagonal = rowOffsets[row + 1] - 1;
+            for (int entry = rowOffsets[row]; entry < diagonal; entry++)
+            {
+                x[row] -= values[entry] * x[columnIndices[entry]];
+            }
+            x[row] /= values[diagonal];
+            RequireFiniteSolution(x[row]);
+        }
+
+        // Back substitution: L^T x = y. Scatter each solved row through L's
+        // lower entries, avoiding a separate transposed factor and its storage.
+        for (int row = Size - 1; row >= 0; row--)
+        {
+            int diagonal = rowOffsets[row + 1] - 1;
+            x[row] /= values[diagonal];
+            RequireFiniteSolution(x[row]);
+            for (int entry = rowOffsets[row]; entry < diagonal; entry++)
+            {
+                int column = columnIndices[entry];
+                x[column] -= values[entry] * x[row];
+                RequireFiniteSolution(x[column]);
+            }
         }
         return x;
     }
+
+    private static void RequireFiniteSolution(double value)
+    {
+        if (!double.IsFinite(value))
+        {
+            throw new ArithmeticException("Nonfinite Cholesky solve.");
+        }
+    }
 }
+
 /// <summary>Owned zero-fill incomplete Cholesky; no shifts or pivoting.</summary>
 public sealed class IC0
 {
     private readonly SparseCholesky factor;
-    public IC0(CSRMatrix a) { factor = new SparseCholeskySymbolic(a, true).Factorize(a); }
+
+    public IC0(CSRMatrix a)
+    {
+        factor = new SparseCholeskySymbolic(a, incomplete: true).Factorize(a);
+    }
+
     public int Size => factor.Size;
     public int NNZ => factor.NNZ;
     public CSRMatrix Lower => factor.Lower;

@@ -25,6 +25,19 @@ matrices can hide indexing mistakes. For floating-point assertions, choose a
 tolerance suitable for the values under test and explain it when it is not
 obvious. Keep overflow, rounding, shape errors, and solver nonconvergence distinct.
 
+Write numerical kernels as named phases: input validation, preparation,
+factorization or iteration, and result acceptance. Give nested loops and failure
+branches their own blocks, and name intermediate quantities by their role.
+Explain choices such as reorthogonalization, pivot acceptance, scaling, dropped
+fill, and true-residual stopping where they occur. State the numerical reason for
+a threshold and distinguish machine epsilon from the smallest representable
+positive value. The C# [GMRES implementation](linear-A/linear-A/Gmres.cs) is one
+example of this structure.
+
+For readability refactors, preserve arithmetic order, tolerances, ownership,
+exceptions, and stopping precedence. Verify residuals and failure cases against
+the existing contract; do not silently change numerical policy during cleanup.
+
 Shared correctness references live in `benchmarks/*reference.py`; standalone
 unit tests live beside each implementation or its test project. Verification
 compares results with those independent references. No implementation is the
@@ -69,6 +82,19 @@ belong in the corresponding language guide. The
 [C# guide](linear-A/README.md#development-checks) covers its SDK, analyzers,
 formatting, generic numeric types, and legacy .NET APIs.
 
+## Release documentation
+
+Treat [release/manifest.json](release/manifest.json) as the release-version and
+capability source of truth; `python3 release/build.py --version` prints its
+version. When preparing a release, update the package versions, current
+`docs/api/<version>/README.md`, root README's API link, and affected shared
+contracts together. Regenerate the compatibility table with
+`python3 release/build.py --write-table`, then run
+`python3 -m unittest discover -s tests/release -v`. Keep older API documents
+versioned and distinguish capability introduction dates from the current release.
+Use the manifest version in installation examples instead of copying a literal
+version into the general release guide.
+
 ## Benchmarks and public reports
 
 Use a separate output directory for new measurements and verification runs so
@@ -83,3 +109,16 @@ JSON without rerunning benchmarks or changing measurements. Check the interactiv
 controls in a browser. Selected report snapshots are tracked in Git and publish
 to Pages when their committed files change; build outputs, caches, and new run
 directories remain ignored.
+
+Capture new measurements for publication with `benchmarks/reproduce.py` after
+committing the source. It builds in a fresh clone of the recorded commit and
+records the Git tree, invocation, and artifact hashes in `provenance.json`.
+Publish that file with the complete report and keep the source commit in the
+published branch's history. Run `python3 benchmarks/check_provenance.py` before
+submitting report changes; this also covers the separately published experiments.
+See [the capture commands](benchmarks/README.md#publishing-reproducible-source-records).
+
+Historical measurements whose dirty source was not archived cannot be made
+recoverable by adding a hash or labeling them clean. Preserve their disclosed
+limitations and fixed artifact digests until replacing them with a new capture.
+Do not expand the historical exceptions to admit new measurements.

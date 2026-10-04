@@ -36,6 +36,29 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(len(manifest['ports']),11)
         build.check_manifest(manifest)
 
+    def test_manifest_rejects_missing_or_stale_release_documentation(self):
+        manifest = {'version': '9.8.7', 'ports': {}, 'capabilities': []}
+        current_title = '# linear-A 9.8.7 API contract\n'
+        current_link = '[Versioned API contract](docs/api/9.8.7/README.md)'
+        cases = [
+            (None, current_link, 'missing API contract'),
+            ('# linear-A 9.8.6 API contract\n', current_link, 'API contract title differs'),
+            ('', current_link, 'API contract title differs'),
+            (current_title, '[Versioned API contract](docs/api/9.8.6/README.md)',
+             'root README API contract link differs'),
+            (current_title, '# linear-A\n', 'root README API contract link differs'),
+        ]
+        for api_text, root_text, error in cases:
+            with self.subTest(api_text=api_text, root_text=root_text), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                api = root / 'docs/api/9.8.7'
+                api.mkdir(parents=True)
+                if api_text is not None:
+                    (api / 'README.md').write_text(api_text)
+                (root / 'README.md').write_text(root_text)
+                with mock.patch.object(build, 'ROOT', root), self.assertRaisesRegex(ValueError, error):
+                    build.check_manifest(manifest)
+
     def test_archive_is_reproducible_and_has_no_host_metadata(self):
         with tempfile.TemporaryDirectory() as d:
             a,b=Path(d)/'a.tar.gz',Path(d)/'b.tar.gz'

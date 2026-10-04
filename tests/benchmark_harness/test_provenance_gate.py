@@ -1,6 +1,5 @@
 """Published measurements retain a recoverable commit and unchanged artifacts."""
 import copy
-import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -10,6 +9,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "benchmarks"))
 from check_provenance import artifact_hashes, check_reports, validate_report
+from compare import select_public
 
 
 class ProvenanceGateTests(unittest.TestCase):
@@ -56,9 +56,11 @@ class ProvenanceGateTests(unittest.TestCase):
         (self.report / "provenance.json").unlink()
         self.data["dirty"] = True
         self.write_results()
-        registry = {"schema_version": 1, "reason": "Original dirty source is unrecoverable.",
-                    "reports": {"benchmarks/reports/test/results.json": hashlib.sha256(
-                        (self.report / "results.json").read_bytes()).hexdigest()}}
+        relative = (self.report / "results.json").relative_to(self.root).as_posix()
+        hashes = artifact_hashes(self.report)
+        registry = {"schema_version": 2, "reason": "Original measured source is unrecoverable.",
+                    "reports": {relative: hashes["results.json"]},
+                    "artifacts": {relative: hashes}}
         (self.root / "benchmarks/legacy-results.json").write_text(json.dumps(registry))
 
     def assert_rejected(self, message):
@@ -69,6 +71,28 @@ class ProvenanceGateTests(unittest.TestCase):
     def test_clean_report_validates_from_an_available_commit(self):
         validate_report(self.report, repo_root=self.root)
         self.assertEqual(check_reports(self.root), ([], []))
+
+    def test_default_gate_checks_embedded_comparison_measurements(self):
+        self.data.update(schema_version=1, machine={}, methodology={}, implementations=[])
+        self.write_results()
+        self.provenance["artifacts"] = artifact_hashes(self.report)
+        self.write_provenance()
+        catalog = self.root / "benchmarks/comparison/index.html"
+        catalog.parent.mkdir(parents=True)
+        snapshots = [{"label": label, "data": select_public(self.data)}
+                     for label in ("Baseline", "Candidate")]
+
+        def write_catalog():
+            catalog.write_text('<script id="snapshots" type="application/json">' +
+                               json.dumps(snapshots) + '</script>')
+
+        write_catalog()
+        self.assertEqual(check_reports(self.root), ([], []))
+        snapshots[1]["data"]["revision"] = "b" * 40
+        write_catalog()
+        self.assert_rejected("comparison snapshot 2 does not match a recorded report")
+        # Checking an individual capture should not require updating the public catalog.
+        self.assertEqual(check_reports(self.root, [self.report]), ([], []))
 
     def test_dirty_or_mismatched_revision_is_rejected_even_with_matching_hashes(self):
         for field, value in (("dirty", True), ("dirty", 0), ("revision", "a" * 40)):
@@ -133,6 +157,47 @@ class ProvenanceGateTests(unittest.TestCase):
             '<script id="data" type="application/json">{}</script>')
         self.assert_rejected("embedded measurements differ")
 
+    def test_legacy_profiles_cannot_change_or_disappear(self):
+        self.make_legacy()
+        profile = self.report / "profiles/raw.json"
+        original = profile.read_bytes()
+        profile.write_bytes(original + b" ")
+        self.assert_rejected("missing valid provenance")
+        profile.write_bytes(original)
+        profile.unlink()
+        self.assert_rejected("missing valid provenance")
+
+    def test_experiment_publication_is_checked_with_the_same_gate(self):
+        for name in ("machine-code-dot", "matmul-locality"):
+            with self.subTest(experiment=name):
+                previous = self.report
+                experiment = self.root / "experiments" / name / "results"
+                experiment.parent.mkdir(parents=True)
+                previous.rename(experiment)
+                self.report = experiment
+                self.provenance["command"] = ["python3", "experiments/" + name + "/run.py",
+                                              "--output", "<output>"]
+                self.write_provenance()
+                self.assertEqual(check_reports(self.root), ([], []))
+                (experiment / "provenance.json").unlink()
+                self.assert_rejected("missing valid provenance")
+                self.write_provenance()
+                experiment.rename(previous)
+                self.report = previous
+
+    def test_legacy_experiment_disassembly_is_frozen(self):
+        experiment = self.root / "experiments/machine-code-dot/results"
+        experiment.parent.mkdir(parents=True)
+        self.report.rename(experiment)
+        self.report = experiment
+        (experiment / "disassembly.txt").write_text("measured instructions\n")
+        self.make_legacy()
+        errors, warnings = check_reports(self.root)
+        self.assertEqual(errors, [])
+        self.assertEqual(len(warnings), 1)
+        (experiment / "disassembly.txt").write_text("other instructions\n")
+        self.assert_rejected("missing valid provenance")
+
     def test_invalid_new_sidecar_cannot_fall_back_to_legacy(self):
         self.make_legacy()
         self.write_provenance()
@@ -176,6 +241,17 @@ class ProvenanceGateTests(unittest.TestCase):
         self.provenance["artifacts"]["../elsewhere"] = "0" * 64
         self.write_provenance()
         self.assert_rejected("relative measurement paths")
+
+    def test_experiment_commands_reject_private_paths_and_nonmeasurement_modes(self):
+        for experiment, options in (
+                ("machine-code-dot", ("--dotnet=/private/tools/dotnet", "--dot", "--julia", "--jul")),
+                ("matmul-locality", ("--verify-only", "--ver", "--sanitize", "--san"))):
+            for option in options:
+                with self.subTest(experiment=experiment, option=option):
+                    self.provenance["command"] = ["python3", "experiments/" + experiment + "/run.py",
+                                                  option, "--output", "<output>"]
+                    self.write_provenance()
+                    self.assert_rejected("forbidden or abbreviated option")
 
     def test_symlink_artifacts_are_rejected(self):
         (self.report / "profiles/link.json").symlink_to(self.root / "source.py")
