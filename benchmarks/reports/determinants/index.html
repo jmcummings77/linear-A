@@ -174,6 +174,75 @@ footer { font-size: 13px; color: var(--muted); }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
+/* Shared controls: text carries the meaning; SVG masks are decorative and offline. */
+button, select, .link-button { min-height: 44px; }
+button:not(:disabled):not([aria-disabled="true"]):hover { border-color: var(--green); background-color: var(--tint); color: var(--ink); }
+button:not(:disabled):not([aria-disabled="true"]):active,
+button[aria-pressed="true"] { border-color: var(--green); background-color: var(--tint); color: var(--ink); box-shadow: inset 0 0 0 1px var(--green); }
+button:disabled, button[aria-disabled="true"], select:disabled, input:disabled {
+  color: var(--muted); opacity: .55; cursor: default; border-color: var(--line); box-shadow: none;
+}
+button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible {
+  outline: 3px solid var(--focus); outline-offset: 3px;
+}
+[data-report-icon]::before {
+  content: ""; display: inline-block; width: 1em; height: 1em; flex: 0 0 1em;
+  margin-inline-end: .45em; vertical-align: -.12em; background-color: currentColor;
+  -webkit-mask: var(--report-icon) center / contain no-repeat;
+  mask: var(--report-icon) center / contain no-repeat;
+}
+button[data-report-icon] { display: inline-flex; align-items: center; justify-content: center; gap: .45em; }
+button[data-report-icon]::before { margin-inline-end: 0; }
+[data-report-icon="none"]::before { display: none; }
+[data-report-icon="play"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m8%205%2011%207-11%207Z%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="pause"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%205v14M16%205v14%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="stop"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%226%22%20y%3D%226%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%221%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="previous"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%205v14m13-14L8%2012l10%207Z%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="next"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M19%205v14M6%205l10%207-10%207Z%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="reset"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2010a9%209%200%201%201%202%208M3%204v6h6%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="download"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203v12m-5-5%205%205%205-5M4%2016v5h16v-5%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="check"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m5%2012%204%204L19%206%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="clear"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%206l12%2012M6%2018%2018%206%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="swap"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%207h17m-4-4%204%204-4%204M21%2017H4m4-4-4%204%204%204%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="settings"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h7m4%200h5M4%2017h3m4%200h9%22%2F%3E%3Ccircle%20cx%3D%2213%22%20cy%3D%227%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2217%22%20r%3D%222%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="add"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%204v16M4%2012h16%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="remove"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%207h14M9%207V4h6v3M7%207l1%2013h8l1-13M10%2010v7M14%2010v7%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="shuffle"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%206h3c4%200%208%2012%2012%2012h3m-4-4%204%204-4%204M3%2018h3c1.5%200%203-1.7%204.5-4M14%208c1.5-1.3%202.5-2%204-2h3m-4-4%204%204-4%204%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="search"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2210.5%22%20cy%3D%2210.5%22%20r%3D%226.5%22%2F%3E%3Cpath%20d%3D%22m16%2016%205%205%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="more"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m5%209%207%207%207-7%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="home"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m3%2011%209-8%209%208M5%2010v11h5v-7h4v7h5V10%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="back"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20%2012H4m7-7-7%207%207%207%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="chart"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%203v17h17M8%2015v-3m5%203V6m5%209V9%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="info"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%2011v6M12%207h.01%22%2F%3E%3C%2Fsvg%3E"); }
+@media (forced-colors: active) {
+  [data-report-icon]::before { background-color: ButtonText; forced-color-adjust: none; }
+  a[data-report-icon]::before { background-color: LinkText; }
+}
+
+/* Playback is the primary action; stepping and reset remain secondary. */
+#play:not(:disabled), #geometry-play:not(:disabled) { background:var(--green);color:var(--card);border-color:var(--green); }
+#play:not(:disabled):hover, #geometry-play:not(:disabled):hover { background:var(--tint);color:var(--ink); }
+
+/* Only enhanced pages hide views; without JavaScript the original document is complete. */
+main.report-modes-enabled .report-view-redundant-nav { display:none; }
+main.report-modes-enabled > .report-mode-inactive { display: none !important; }
+.report-view-nav { display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:5;margin:18px 0 12px;padding:10px 0;border-block:1px solid var(--line);background:var(--paper); }
+.report-view-nav a { display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border-radius:6px;color:var(--muted);font-size:14px;font-weight:650;text-decoration:none; }
+.report-view-nav a:hover { color:var(--ink);background:var(--tint); }
+.report-view-nav a[aria-current="page"] { color:var(--card);background:var(--green); }
+.report-view-scope { max-width:86ch;margin:10px 0 12px;font-size:14px; }
+.report-view-sections,.report-view-utilities { display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:10px 0 18px;font-size:13px; }
+.report-view-sections>span { color:var(--muted); }
+.report-view-sections a[aria-current="location"],.report-nav a[aria-current="location"] { text-decoration-thickness:2px;font-weight:700; }
+.report-view-utilities { justify-content:flex-end; }
+.report-view-related { margin:0;font-size:13px; }
+.report-view-related>summary { padding:6px 0;font-weight:600; }
+.report-view-related .related-reports,.report-view-related .ic0-related { display:flex;flex-wrap:wrap;gap:8px 18px;margin:8px 0;align-items:center;font-size:13px; }
+.report-view-related nav>span { display:none; }
+.report-view-related nav a[aria-current="page"] { color:var(--ink);font-weight:700;text-decoration:none; }
+@media(max-width:600px) { .report-view-nav{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px}.report-view-nav a{min-width:0;padding:8px 4px;font-size:12px;line-height:1.3;text-align:center}.report-view-nav a::before{margin-inline-end:5px}.report-view-scope{font-size:13px}.report-view-utilities{justify-content:flex-start} }
+@media print { main.report-modes-enabled>.report-mode-inactive:not([hidden]){display:block!important}.report-view-nav,.report-view-sections,.report-view-scope{display:none} }
+
 </style>
 </head>
 <body>
@@ -1129,7 +1198,7 @@ footer { font-size: 13px; color: var(--muted); }
 <nav class="report-nav" aria-label="Report sections"><a href="#overview">Overview</a><a href="#timings-panel" >Timings</a><a href="#profiles-panel" hidden>Profiles</a><a href="#correctness-panel">Correctness</a><a href="#method-panel">Method</a><a href="#explore" >Explore live</a></nav>
 <div class="stats" id="stats"></div>
 <div class="report-context" id="saved-context"></div>
-<p class="availability-note">Stack profiles were not collected or are unavailable for this snapshot.</p>
+<p class="availability-note">Source reconstruction unavailable: this run included uncommitted changes. The recorded commit and source hash cannot reconstruct the measured source. These measurements are retained as historical evidence.</p><p class="availability-note">Stack profiles were not collected or are unavailable for this snapshot.</p>
 <section class="panel panel-art timings-art" id="timings-panel" ><div class="panel-head"><div class="section-title"><span class="section-symbol"><svg class="shape-icon" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#report-art-flow" width="100" height="100"></use></svg></span><div><div class="eyebrow">Saved / recorded measurements</div><h2>Operation timings</h2><p class="small">Median time per operation. Lower is faster. Only verified implementations are timed.</p></div></div><div class="controls"><label>Operation<select id="operation"></select></label><label>Matrix size<select id="size"></select></label><label>Compare with<select id="baseline"></select></label><label>Chart scale<select id="timing-scale"><option value="auto">Auto · adapt to data</option><option value="linear">Linear bars</option><option value="log">Logarithmic dots</option></select></label><details class="timing-filter" id="timing-languages"><summary id="timing-language-summary">Languages</summary><div class="timing-language-panel"><div class="timing-language-actions"><button type="button" id="timing-language-all">Select all</button><button type="button" id="timing-language-none">Clear all</button></div><fieldset id="timing-language-options"><legend>Languages shown</legend></fieldset></div></details></div></div><p id="timing-workload" class="small"></p><div id="chart" class="chart"></div><div id="timing-axis" class="timing-axis" aria-hidden="true"></div><p class="small" id="chart-note"></p><details><summary>Samples and variation</summary><div class="scroll"><table id="samples"></table></div></details></section>
 <section class="panel panel-art profiles-art" id="profiles-panel" hidden><div class="panel-head"><div class="section-title"><span class="section-symbol"><svg class="shape-icon" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#report-art-woven" width="100" height="100"></use></svg></span><div><h2>Where the sampled time went</h2><p class="small">Real stack profiles, collected in separate runs. Click a frame to zoom, or search the frame table below. Sample weight is not an individual call duration.</p></div></div><div class="controls"><label>Implementation<select id="profile"></select></label><label>View<select id="view"><option value="flame">Flame graph</option><option value="timeline">Sample timeline</option></select></label><button id="reset">Reset zoom</button></div></div><details id="profile-table-details"><summary>Search and inspect profile frames</summary><label class="profile-search">Find a function or source file<input id="profile-search" type="search" placeholder="e.g. multiply" aria-controls="profile-frames"></label><p class="small" id="profile-frame-count" role="status"></p><p class="small">Weights include child frames. Shares refer to the current zoom; parent and child rows overlap and should not be added.</p><div class="scroll profile-table-scroll"><table><thead><tr><th scope="col">Frame / call path</th><th scope="col">Sample weight</th><th scope="col">Share</th><th scope="col">Inspect</th></tr></thead><tbody id="profile-frames"></tbody></table></div><button id="profile-more" type="button" hidden>Show more frames</button></details><p class="small" id="profile-scroll-hint">Scroll within the graph to inspect deep stacks, or open the frame table above.</p><div class="profile-wrap" id="profile-viewport" tabindex="0" role="region" aria-label="Stack profile graph" aria-describedby="profile-scroll-hint"><canvas id="flames" role="img" aria-label="Stack profile; use the searchable frame table to inspect and zoom with a keyboard"></canvas><div id="profile-empty" class="empty" hidden></div></div><p class="small" id="profile-note"></p><details><summary>Profiling availability</summary><div id="profile-status"></div></details></section>
 <section class="panel panel-art correctness-art" id="correctness-panel"><div class="panel-head"><div class="section-title"><span class="section-symbol"><svg class="shape-icon" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#report-art-mesh" width="100" height="100"></use></svg></span><div><h2>Correctness &amp; toolchains</h2></div></div></div><p class="small">Implementations are verified against independent references, including shape errors and exact small determinants. Algorithm-specific checks also verify their input requirements.</p><div class="scroll"><table><thead><tr><th>Implementation</th><th>Checks</th><th>Toolchain</th><th>Implementation notes</th></tr></thead><tbody id="checks"></tbody></table></div><div id="failures"></div></section>
@@ -2142,5 +2211,215 @@ if(typeof IntersectionObserver==='function'){
   new MutationObserver(()=>{draw();drawTradeoff();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   preset();
 })();
+</script>
+<script id="report-controls">
+/** Decorative action icons; native controls and visible labels remain authoritative. */
+(() => {
+  const actionIcons = {
+    csv: "download", download: "download", "live-export": "download",
+    previous: "previous", "geometry-prev": "previous",
+    next: "next", "geometry-next": "next",
+    reset: "reset", "geometry-reset": "reset", "pca-reset": "reset", "fit-reset": "reset",
+    "live-check": "check", "live-run": "play", "live-stop": "stop",
+    swap: "swap", "profile-more": "more",
+    "timing-language-all": "check", "timing-language-none": "clear",
+    "geometry-settings-open": "settings", "geometry-settings-close": "check",
+    "geometry-randomize": "shuffle", "geometry-profile-link": "search",
+    "pca-add": "add", "fit-add": "add", "pca-remove": "remove", "fit-remove": "remove",
+  };
+  const playbackIds = new Set(["play", "geometry-play"]);
+
+  function decorate() {
+    const playback = [];
+    for (const control of document.querySelectorAll("button[id], a[download], [data-report-icon]")) {
+      // An explicit icon is an opt-in for new controls; "none" opts out.
+      const explicit = control.getAttribute("data-report-icon");
+      if (explicit === "none") continue;
+      const isPlayback = playbackIds.has(control.id) ||
+        (control.tagName === "BUTTON" && (explicit === "play" || explicit === "pause"));
+      const icon = explicit || (isPlayback ? "play" : actionIcons[control.id]) ||
+        (control.tagName === "A" && control.hasAttribute("download") ? "download" : null);
+      if (!icon) continue;
+      // The existing settings button has only an SVG. Give it a visible label too.
+      if (control.id === "geometry-settings-open" && !control.textContent.trim()) {
+        control.textContent = "Settings";
+        control.removeAttribute("title");
+      }
+      control.setAttribute("data-report-icon", icon);
+      if (isPlayback) playback.push(control);
+    }
+
+    function sync(control) {
+      const icon = /^\s*pause\b/i.test(control.textContent) ? "pause" : "play";
+      if (control.getAttribute("data-report-icon") !== icon) control.setAttribute("data-report-icon", icon);
+    }
+    playback.forEach(sync);
+    // Observe just the playback labels, not plots or continuously updated frame data.
+    // The CSS pseudo-element survives all existing textContent replacements.
+    if (typeof MutationObserver === "function" && playback.length) {
+      const observer = new MutationObserver(records => {
+        for (const control of playback) {
+          if (records.some(record => record.target === control || control.contains(record.target))) sync(control);
+        }
+      });
+      for (const control of playback) observer.observe(control, { childList: true, characterData: true, subtree: true });
+      window.addEventListener("pagehide", event => { if (!event.persisted) observer.disconnect(); });
+    }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", decorate, { once: true });
+  else decorate();
+})();
+
+</script>
+<script id="report-navigation">
+/* Progressive report views: all original content remains available without JavaScript. */
+(() => {
+  'use strict';
+  const boot = () => {
+    const main = document.querySelector('main'), originalNav = main?.querySelector('.report-nav');
+    if (!main || !originalNav || main.classList.contains('report-modes-enabled')) return;
+    const win = window, find = id => document.getElementById(id);
+    const decode = hash => { try { return decodeURIComponent(hash.replace(/^#/, '')); } catch { return hash.replace(/^#/, ''); } };
+    const targetFor = hash => find(decode(hash));
+    const internalTarget = link => {
+      if (!link) return null;
+      try {
+        const url = new URL(link.getAttribute('href'), win.location.href);
+        return url.origin === win.location.origin && url.pathname === win.location.pathname && url.search === win.location.search ? targetFor(url.hash) : null;
+      } catch { return null; }
+    };
+    const originalLinks = [...originalNav.querySelectorAll('a[href]')];
+    const labels = new Map(originalLinks.map(link => [internalTarget(link)?.id, link.textContent.trim()]));
+    const topLevel = node => {
+      while (node && node.parentElement !== main) node = node.parentElement;
+      return node && node.tagName !== 'HEADER' ? node : null;
+    };
+    const available = node => !!node && !node.closest('[hidden]');
+    let definitions;
+    if (find('timings-panel') && find('method-panel')) definitions = {results:['timings-panel','profiles-panel'], demo:['live-panel','accuracy-panel','geometry-panel'], evidence:['correctness-panel','method-panel']};
+    else if (find('runtime') && find('storage-section') && find('explore')) definitions = {results:['runtime','reuse-section','storage-section'], demo:['explore'], evidence:['method-section']};
+    else if (find('results') && find('explore') && find('method-section')) definitions = {results:['results'], demo:['explore'], evidence:['method-section']};
+    const back = main.querySelector('.report-topbar a');
+    if (back && !find('report-library')) { back.textContent = 'Report library'; back.setAttribute('data-report-icon','back'); }
+    // Playgrounds, comparisons, studies and the directory retain the complete reading order.
+    if (!definitions || find('report-library')) {
+      const links = originalLinks.filter(link => internalTarget(link));
+      const mark = target => {
+        const active = links.find(link => { const section = internalTarget(link); return section === target || section?.contains(target); }) || links[0];
+        for (const link of links) link === active ? link.setAttribute('aria-current','location') : link.removeAttribute('aria-current');
+      };
+      mark(targetFor(win.location.hash));
+      win.addEventListener('hashchange', () => mark(targetFor(win.location.hash)));
+      if (typeof IntersectionObserver === 'function') {
+        const visible = new Set();
+        const observer = new IntersectionObserver(entries => {
+          for (const entry of entries) entry.isIntersecting ? visible.add(entry.target) : visible.delete(entry.target);
+          const first = links.map(internalTarget).find(target => visible.has(target));
+          if (first) mark(first);
+        }, {rootMargin:'-80px 0px -55% 0px'});
+        links.map(internalTarget).forEach(target => observer.observe(target));
+      }
+      return;
+    }
+    const names = {results:'Results', demo:'Interactive demo', evidence:'Method & data'};
+    const scopes = {
+      results:'Saved measurements from the recorded run. These results do not change when you use the interactive demo.',
+      demo:'Interactive calculations on your device. They are separate from the saved benchmark measurements.',
+      evidence:'Correctness checks, measurement methods and run details for interpreting the saved results.'
+    };
+    const sections = Object.fromEntries(Object.entries(definitions).map(([mode, ids]) => [mode, ids.map(find).filter(node => topLevel(node) === node)]));
+    const assignments = new Map();
+    for (const [mode, nodes] of Object.entries(sections)) for (const node of nodes) assignments.set(node, mode);
+    const assign = (node, mode) => { const block = topLevel(node); if (block) assignments.set(block, mode); };
+    if (find('timings-panel')) {
+      find('explore')?.querySelector('nav')?.classList.add('report-view-redundant-nav');
+      assign(find('explore'), 'demo'); assign(find('stats'), 'results'); assign(find('saved-context'), 'results');
+      main.querySelectorAll('.availability-note').forEach(node => assign(node, 'evidence'));
+    } else {
+      assign(find('overview'), 'results');
+      main.querySelectorAll('.explore-label').forEach(node => assign(node, 'demo'));
+    }
+    const make = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    };
+    // Legacy observers keep their old detached anchors and cannot overwrite view selection.
+    const nav = make('nav','report-view-nav'); nav.setAttribute('aria-label','Report views');
+    const utilities = make('div','report-view-utilities');
+    for (const link of originalLinks) if (!internalTarget(link)) utilities.append(link);
+    const scope = make('p','report-view-scope'), localNav = make('nav','report-view-sections');
+    localNav.setAttribute('aria-label','In this view');
+    originalNav.replaceWith(nav, utilities, scope, localNav);
+    // Related topics stay outside modes and out of the primary navigation hierarchy.
+    const related = [...main.querySelectorAll('.related-reports, .ic0-related')];
+    if (related.length) {
+      const details = make('details','report-view-related'); details.append(make('summary','','Related reports'));
+      for (const row of related) details.append(row);
+      utilities.append(details);
+    }
+    utilities.hidden = !utilities.children.length;
+    main.classList.add('report-modes-enabled');
+    let activeMode, modes = [], modeLinks = new Map(), localLinks = [], resizeFrame;
+    const redraw = () => { win.cancelAnimationFrame(resizeFrame); resizeFrame = win.requestAnimationFrame(() => win.dispatchEvent(new Event('resize'))); };
+    const activeSections = mode => sections[mode].filter(available);
+    const defaultMode = () => modes.includes('results') ? 'results' : modes.includes('evidence') ? 'evidence' : modes[0];
+    const modeFor = target => { const mode = assignments.get(topLevel(target)); return modes.includes(mode) ? mode : null; };
+    const localLabel = node => ({'live-panel':'Run a benchmark','accuracy-panel':'Sensitivity','geometry-panel':'Matrix geometry'}[node.id] || labels.get(node.id) || node.querySelector('h2')?.textContent.trim() || node.id);
+    const markLocal = target => {
+      for (const link of localLinks) {
+        const section = internalTarget(link);
+        if (section === target || section?.contains(target)) link.setAttribute('aria-current','location');
+        else link.removeAttribute('aria-current');
+      }
+    };
+    const activate = (mode, target) => {
+      mode = modes.includes(mode) ? mode : defaultMode(); if (!mode) return;
+      const changed = activeMode !== mode; activeMode = mode; main.setAttribute('data-report-view', mode);
+      for (const [node, assigned] of assignments) {
+        // Verification-only captures show their run summary with evidence, without an empty Results view.
+        const actual = assigned === 'results' && !modes.includes('results') ? 'evidence' : assigned;
+        node.classList.toggle('report-mode-inactive', actual !== mode);
+      }
+      for (const [key, link] of modeLinks) key === mode ? link.setAttribute('aria-current','page') : link.removeAttribute('aria-current');
+      scope.textContent = scopes[mode];
+      const nodes = activeSections(mode); localNav.replaceChildren(); localLinks = []; localNav.hidden = nodes.length < 2;
+      if (nodes.length > 1) {
+        localNav.append(make('span','','In this view:'));
+        for (const node of nodes) { const link = make('a','',localLabel(node)); link.setAttribute('href',`#${node.id}`); localNav.append(link); localLinks.push(link); }
+      }
+      markLocal(target); if (changed) redraw();
+    };
+    const sync = () => {
+      modes = Object.keys(sections).filter(mode => activeSections(mode).length); modeLinks = new Map(); nav.replaceChildren();
+      for (const mode of modes) { const link = make('a','',names[mode]); link.setAttribute('data-report-icon', {results:'chart',demo:'play',evidence:'info'}[mode]); link.setAttribute('href',`#${activeSections(mode)[0].id}`); nav.append(link); modeLinks.set(mode,link); }
+      const target = targetFor(win.location.hash); activate(modeFor(target) || activeMode || defaultMode(), target); redraw();
+    };
+    const openAncestors = target => { for (let node = target?.parentElement; node && node !== main; node = node.parentElement) if (node.tagName === 'DETAILS') node.open = true; };
+    const revealHash = () => {
+      const target = targetFor(win.location.hash); activate(modeFor(target) || defaultMode(), target); openAncestors(target);
+      // Native history may scroll before a hidden target is revealed.
+      if (target && available(target) && !target.closest('.report-mode-inactive')) win.requestAnimationFrame(() => target.scrollIntoView({block:'start',behavior:'auto'}));
+    };
+    sync(); if (win.location.hash) revealHash();
+    win.addEventListener('hashchange', revealHash); win.addEventListener('popstate', revealHash);
+    document.addEventListener('click', event => {
+      if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target.closest('a[href]'), target = internalTarget(link), mode = modeFor(target);
+      // Reveal before native link scrolling, without replacing browser history or controls.
+      if (mode) { activate(mode, target); openAncestors(target); }
+    });
+    if (typeof MutationObserver === 'function') {
+      const observer = new MutationObserver(sync);
+      for (const nodes of Object.values(sections)) for (const node of nodes) observer.observe(node,{attributes:true,attributeFilter:['hidden']});
+    }
+    win.addEventListener('matrix-profile-focus', () => {
+      if (modes.includes('results') && available(find('profiles-panel'))) { activate('results',find('profiles-panel')); win.location.hash = 'profiles-panel'; }
+    }, {capture:true});
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
+})();
+
 </script>
 </body></html>

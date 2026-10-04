@@ -48,6 +48,7 @@
 :root{color-scheme:light;--bg:#f5f3ea;--panel:#fffef9;--ink:#203c37;--muted:#64756e;--line:#d8dfd3;--green:#257969;--orange:#bd6038;--plot:#edf2e9}html[data-theme=dark]{color-scheme:dark;--bg:#101c19;--panel:#182b25;--ink:#e5f1e7;--muted:#a4b9ab;--line:#385045;--green:#68c5ac;--orange:#ffb07d;--plot:#13231d}*{box-sizing:border-box}body{margin:0;font:15px/1.65 system-ui,sans-serif;background:var(--bg);color:var(--ink)}main{max-width:1160px;margin:auto;padding:32px 24px}a{color:var(--green)}header{padding:45px 0 26px}h1{font-size:clamp(38px,6vw,68px);line-height:1.05;letter-spacing:-2px;margin:18px 0}h2{font-size:28px;line-height:1.2;margin:8px 0 18px}h3{font-size:16px}.eyebrow{font:13px ui-monospace,monospace;text-transform:uppercase;letter-spacing:.16em;color:var(--green)}header p{max-width:700px;color:var(--muted)}.top,nav,.controls{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.top{justify-content:space-between}nav{margin:26px 0}section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;margin:28px 0;scroll-margin-top:90px}.layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(250px,1fr);gap:28px}.plot{width:100%;height:360px;display:block;background:var(--plot);border:1px solid var(--line);border-radius:7px;touch-action:none;cursor:crosshair}button,input,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:8px;max-width:100%}button{cursor:pointer}label{font-size:14px;color:var(--muted);display:grid;gap:4px}label input{width:100%}button:hover{border-color:var(--green)}:focus-visible{outline:3px solid var(--orange);outline-offset:3px}.editor{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.editor label:first-child{grid-column:1/-1}.status{min-height:3em;color:var(--green);font-size:13px}small,.note{font-size:14px;color:var(--muted)}pre{white-space:pre-wrap;font:13px/1.8 ui-monospace,monospace;overflow-wrap:anywhere}.metrics{border-top:1px solid var(--line);padding-top:15px}.images{display:grid;grid-template-columns:1fr 1fr;gap:18px}.images canvas{display:block;width:100%;aspect-ratio:1;image-rendering:pixelated;border:1px solid var(--line);touch-action:none}.images h3{margin-top:0}input[type=range]{width:100%;accent-color:var(--green)}footer{border-top:1px solid var(--line);padding:22px 0;color:var(--muted);font-size:14px}details{margin-top:18px}summary{cursor:pointer}#image-spectrum{display:flex;height:60px;gap:3px;align-items:end}#image-spectrum span{min-height:1px;flex:1}#image-spectrum .retained,.spectrum-legend .retained{background:var(--green)}#image-spectrum .omitted,.spectrum-legend .omitted{background:var(--muted);opacity:.7}.spectrum-plot{position:relative;padding-top:28px;margin-top:8px}.spectrum-cutoff{position:absolute;top:25px;bottom:0;border-left:2px dashed var(--orange)}.spectrum-cutoff span{position:absolute;top:-26px;left:-1px;transform:translateX(-50%);white-space:nowrap;font:600 13px system-ui;color:var(--orange)}.spectrum-cutoff.at-start span{transform:none}.spectrum-cutoff.at-end span{transform:translateX(-100%)}.spectrum-legend{display:flex;flex-wrap:wrap;gap:5px 14px;margin:10px 0 5px}.spectrum-legend span{display:flex;align-items:center;gap:6px}.spectrum-legend i{display:inline-block;width:10px;height:10px}#image-spectrum-caption{margin:5px 0 12px} @media(max-width:800px){.layout{grid-template-columns:1fr}.plot{height:310px}section{padding:18px}main{padding:24px 14px}.images{gap:10px}}
 .spectrum-values{overflow:auto;max-height:340px;margin-top:12px}.spectrum-values table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}.spectrum-values th,.spectrum-values td{padding:8px;text-align:left;border-bottom:1px solid var(--line)}.spectrum-values thead th{position:sticky;top:0;background:var(--panel)}.spectrum-values caption{text-align:left;color:var(--muted);margin:8px 0}.spectrum-values tr.retained{background:color-mix(in srgb,var(--green) 9%,var(--panel))}
 #image-output-panel[data-state="updating"] canvas{outline:2px dashed var(--orange);outline-offset:3px}#image-output-panel[data-state="updating"] #image-output-state,#image-output-panel[data-state="error"] #image-output-state{color:var(--orange)}#image-output-state{min-height:3em;margin:10px 0 0}
+.point-editor{border:0;padding:0;margin:20px 0;min-width:0}.point-editor legend{padding:0;font-size:16px;font-weight:650}.point-editor .editor{margin-top:10px}
 </style>
 <style id="report-design">
 /* Shared by every report; inlined at publication time for portable offline HTML. */
@@ -120,11 +121,80 @@ footer { font-size: 13px; color: var(--muted); }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
+/* Shared controls: text carries the meaning; SVG masks are decorative and offline. */
+button, select, .link-button { min-height: 44px; }
+button:not(:disabled):not([aria-disabled="true"]):hover { border-color: var(--green); background-color: var(--tint); color: var(--ink); }
+button:not(:disabled):not([aria-disabled="true"]):active,
+button[aria-pressed="true"] { border-color: var(--green); background-color: var(--tint); color: var(--ink); box-shadow: inset 0 0 0 1px var(--green); }
+button:disabled, button[aria-disabled="true"], select:disabled, input:disabled {
+  color: var(--muted); opacity: .55; cursor: default; border-color: var(--line); box-shadow: none;
+}
+button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible {
+  outline: 3px solid var(--focus); outline-offset: 3px;
+}
+[data-report-icon]::before {
+  content: ""; display: inline-block; width: 1em; height: 1em; flex: 0 0 1em;
+  margin-inline-end: .45em; vertical-align: -.12em; background-color: currentColor;
+  -webkit-mask: var(--report-icon) center / contain no-repeat;
+  mask: var(--report-icon) center / contain no-repeat;
+}
+button[data-report-icon] { display: inline-flex; align-items: center; justify-content: center; gap: .45em; }
+button[data-report-icon]::before { margin-inline-end: 0; }
+[data-report-icon="none"]::before { display: none; }
+[data-report-icon="play"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m8%205%2011%207-11%207Z%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="pause"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8%205v14M16%205v14%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="stop"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%226%22%20y%3D%226%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%221%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="previous"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%205v14m13-14L8%2012l10%207Z%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="next"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M19%205v14M6%205l10%207-10%207Z%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="reset"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2010a9%209%200%201%201%202%208M3%204v6h6%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="download"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203v12m-5-5%205%205%205-5M4%2016v5h16v-5%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="check"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m5%2012%204%204L19%206%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="clear"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%206l12%2012M6%2018%2018%206%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="swap"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%207h17m-4-4%204%204-4%204M21%2017H4m4-4-4%204%204%204%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="settings"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%207h7m4%200h5M4%2017h3m4%200h9%22%2F%3E%3Ccircle%20cx%3D%2213%22%20cy%3D%227%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2217%22%20r%3D%222%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="add"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%204v16M4%2012h16%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="remove"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%207h14M9%207V4h6v3M7%207l1%2013h8l1-13M10%2010v7M14%2010v7%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="shuffle"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%206h3c4%200%208%2012%2012%2012h3m-4-4%204%204-4%204M3%2018h3c1.5%200%203-1.7%204.5-4M14%208c1.5-1.3%202.5-2%204-2h3m-4-4%204%204-4%204%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="search"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2210.5%22%20cy%3D%2210.5%22%20r%3D%226.5%22%2F%3E%3Cpath%20d%3D%22m16%2016%205%205%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="more"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m5%209%207%207%207-7%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="home"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m3%2011%209-8%209%208M5%2010v11h5v-7h4v7h5V10%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="back"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M20%2012H4m7-7-7%207%207%207%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="chart"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%203v17h17M8%2015v-3m5%203V6m5%209V9%22%2F%3E%3C%2Fsvg%3E"); }
+[data-report-icon="info"] { --report-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%2011v6M12%207h.01%22%2F%3E%3C%2Fsvg%3E"); }
+@media (forced-colors: active) {
+  [data-report-icon]::before { background-color: ButtonText; forced-color-adjust: none; }
+  a[data-report-icon]::before { background-color: LinkText; }
+}
+
+/* Playback is the primary action; stepping and reset remain secondary. */
+#play:not(:disabled), #geometry-play:not(:disabled) { background:var(--green);color:var(--card);border-color:var(--green); }
+#play:not(:disabled):hover, #geometry-play:not(:disabled):hover { background:var(--tint);color:var(--ink); }
+
+/* Only enhanced pages hide views; without JavaScript the original document is complete. */
+main.report-modes-enabled .report-view-redundant-nav { display:none; }
+main.report-modes-enabled > .report-mode-inactive { display: none !important; }
+.report-view-nav { display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:5;margin:18px 0 12px;padding:10px 0;border-block:1px solid var(--line);background:var(--paper); }
+.report-view-nav a { display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border-radius:6px;color:var(--muted);font-size:14px;font-weight:650;text-decoration:none; }
+.report-view-nav a:hover { color:var(--ink);background:var(--tint); }
+.report-view-nav a[aria-current="page"] { color:var(--card);background:var(--green); }
+.report-view-scope { max-width:86ch;margin:10px 0 12px;font-size:14px; }
+.report-view-sections,.report-view-utilities { display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:10px 0 18px;font-size:13px; }
+.report-view-sections>span { color:var(--muted); }
+.report-view-sections a[aria-current="location"],.report-nav a[aria-current="location"] { text-decoration-thickness:2px;font-weight:700; }
+.report-view-utilities { justify-content:flex-end; }
+.report-view-related { margin:0;font-size:13px; }
+.report-view-related>summary { padding:6px 0;font-weight:600; }
+.report-view-related .related-reports,.report-view-related .ic0-related { display:flex;flex-wrap:wrap;gap:8px 18px;margin:8px 0;align-items:center;font-size:13px; }
+.report-view-related nav>span { display:none; }
+.report-view-related nav a[aria-current="page"] { color:var(--ink);font-weight:700;text-decoration:none; }
+@media(max-width:600px) { .report-view-nav{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px}.report-view-nav a{min-width:0;padding:8px 4px;font-size:12px;line-height:1.3;text-align:center}.report-view-nav a::before{margin-inline-end:5px}.report-view-scope{font-size:13px}.report-view-utilities{justify-content:flex-start} }
+@media print { main.report-modes-enabled>.report-mode-inactive:not([hidden]){display:block!important}.report-view-nav,.report-view-sections,.report-view-scope{display:none} }
+
 </style>
 <main><div class="report-topbar"><a href="../">← All reports</a><label>Appearance<select id="report-theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></div>
-<header><p class="eyebrow">Explore / change / understand</p><h1>Numerical playground</h1><p>Drag a cloud, fit a curve, reconstruct an image. These three experiments run the library’s numerical kernels in WebAssembly on your device. Everything stays in this page.</p></header><nav class="report-nav" aria-label="Playground sections"><a href="#pca">01 · Principal directions</a><a href="#fit">02 · Fitting observations</a><a href="#image">03 · Image rank</a></nav>
-<section id="pca"><p class="eyebrow">01 / Principal component analysis</p><h2>Which way does the cloud stretch?</h2><div class="layout"><div><canvas id="pca-canvas" class="plot" aria-label="PCA point cloud; edit points using the adjacent coordinate controls"></canvas><p class="note">Drag a point or click empty space to add one. PC1 (green) and PC2 (orange) show ±2 standard deviations. Numbered x/y axes give point coordinates. Dotted segments project onto the first principal direction.</p></div><div><div class="controls"><button id="pca-reset">Reset cloud</button><button id="pca-remove">Remove selected</button></div><div class="editor"><label>Selected point<select id="pca-selected"></select></label><label>X<input id="pca-x" type="number" min="-5" max="5" step="0.1"></label><label>Y<input id="pca-y" type="number" min="-5" max="5" step="0.1"></label></div><button id="pca-add">Add point at origin</button><p id="pca-status" class="status" role="status" aria-live="polite">Preparing PCA…</p><pre id="pca-metrics" class="metrics"></pre></div></div><details><summary>What the axes mean</summary><p>We center the points and form the 2×2 sample covariance using division by n−1. Its symmetric eigendecomposition gives the principal directions and variances. The first component maximizes projected variance. Direction signs are arbitrary; tied eigenvalues have no unique principal direction. A collapsed cloud has zero variance, so its explained-variance percentage is undefined.</p></details></section>
-<section id="fit"><p class="eyebrow">02 / Least squares</p><h2>A model for imperfect observations.</h2><div class="layout"><div><canvas id="fit-canvas" class="plot" aria-label="Least-squares fit and residuals; edit observations using the adjacent coordinate controls"></canvas><p class="note">Drag or add observations. Orange vertical segments show observed minus predicted values. Curves are clipped to the fixed −5…5 view.</p></div><div><div class="controls"><label>Polynomial degree<select id="fit-degree"><option value="1">1 · Line</option><option value="2" selected>2 · Quadratic</option><option value="3">3 · Cubic</option></select></label><button id="fit-reset">Reset observations</button></div><div class="editor"><label>Selected observation<select id="fit-selected"></select></label><label>X<input id="fit-x" type="number" min="-5" max="5" step="0.1"></label><label>Y<input id="fit-y" type="number" min="-5" max="5" step="0.1"></label></div><div class="controls"><button id="fit-add">Add at origin</button><button id="fit-remove">Remove selected</button></div><p id="fit-status" class="status" role="status" aria-live="polite">Preparing fit…</p><pre id="fit-metrics" class="metrics"></pre></div></div><details><summary>How the fit is computed</summary><p>The design matrix uses columns 1, t, t², t³ with t=x/5. Column-pivoted Householder QR solves for the coefficients without forming normal equations. A rank-deficient design is rejected. RMSE describes training residuals, not prediction uncertainty; more polynomial terms can overfit. R² is undefined when all observed y values are equal.</p></details></section>
+<header><p class="eyebrow">Interactive demo / WebAssembly on this device</p><h1>Numerical playground</h1><p>Drag a cloud, fit a curve, reconstruct an image. These three experiments run the library’s numerical kernels in WebAssembly on your device. Everything stays in this page.</p></header><nav class="report-nav" aria-label="Playground sections"><a href="#pca">01 · Principal directions</a><a href="#fit">02 · Fitting observations</a><a href="#image">03 · Image rank</a></nav>
+<section id="pca"><p class="eyebrow">01 / Principal component analysis</p><h2>Which way does the cloud stretch?</h2><div class="layout"><div><canvas id="pca-canvas" class="plot" aria-label="PCA point cloud; edit points using the adjacent coordinate controls"></canvas><p class="note">Drag a point or click empty space to add one. PC1 (green) and PC2 (orange) show ±2 standard deviations. Numbered x/y axes give point coordinates. Dotted segments project onto the first principal direction.</p></div><div><div class="controls"><button id="pca-reset">Reset cloud</button></div><fieldset class="point-editor"><legend>Edit points</legend><div class="editor"><label>Selected point<select id="pca-selected"></select></label><label>X<input id="pca-x" type="number" min="-5" max="5" step="0.1"></label><label>Y<input id="pca-y" type="number" min="-5" max="5" step="0.1"></label></div><div class="controls"><button id="pca-add">Add point at origin</button><button id="pca-remove">Remove selected</button></div></fieldset><p id="pca-status" class="status" role="status" aria-live="polite">Preparing PCA…</p><pre id="pca-metrics" class="metrics"></pre></div></div><details><summary>What the axes mean</summary><p>We center the points and form the 2×2 sample covariance using division by n−1. Its symmetric eigendecomposition gives the principal directions and variances. The first component maximizes projected variance. Direction signs are arbitrary; tied eigenvalues have no unique principal direction. A collapsed cloud has zero variance, so its explained-variance percentage is undefined.</p></details></section>
+<section id="fit"><p class="eyebrow">02 / Least squares</p><h2>A model for imperfect observations.</h2><div class="layout"><div><canvas id="fit-canvas" class="plot" aria-label="Least-squares fit and residuals; edit observations using the adjacent coordinate controls"></canvas><p class="note">Drag or add observations. Orange vertical segments show observed minus predicted values. Curves are clipped to the fixed −5…5 view.</p></div><div><div class="controls"><label>Polynomial degree<select id="fit-degree"><option value="1">1 · Line</option><option value="2" selected>2 · Quadratic</option><option value="3">3 · Cubic</option></select></label><button id="fit-reset">Reset observations</button></div><fieldset class="point-editor"><legend>Edit observations</legend><div class="editor"><label>Selected observation<select id="fit-selected"></select></label><label>X<input id="fit-x" type="number" min="-5" max="5" step="0.1"></label><label>Y<input id="fit-y" type="number" min="-5" max="5" step="0.1"></label></div><div class="controls"><button id="fit-add">Add observation at origin</button><button id="fit-remove">Remove selected</button></div></fieldset><p id="fit-status" class="status" role="status" aria-live="polite">Preparing fit…</p><pre id="fit-metrics" class="metrics"></pre></div></div><details><summary>How the fit is computed</summary><p>The design matrix uses columns 1, t, t², t³ with t=x/5. Column-pivoted Householder QR solves for the coefficients without forming normal equations. A rank-deficient design is rejected. RMSE describes training residuals, not prediction uncertainty; more polynomial terms can overfit. R² is undefined when all observed y values are equal.</p></details></section>
 <section id="image"><p class="eyebrow">03 / Low-rank image reconstruction</p><h2>How many layers make an image?</h2><div class="layout"><div class="images"><div><h3>Original · paint to edit</h3><canvas id="image-original" width="24" height="24" aria-label="Original 24 by 24 grayscale image; preset controls provide a keyboard alternative"></canvas></div><div id="image-output-panel" aria-busy="true"><h3>Rank reconstruction</h3><canvas id="image-output" aria-describedby="image-output-state" width="24" height="24" aria-label="Low-rank reconstructed grayscale image"></canvas><p id="image-output-state" class="note">Preparing reconstruction…</p></div></div><div><label>Image<select id="image-preset"><option value="shapes">Shapes</option><option value="waves">Waves</option><option value="checker">Checkerboard</option><option value="blank">Blank</option></select></label><label>Rank <output id="image-rank-label">6</output><input id="image-rank" aria-label="Retained rank" aria-describedby="image-spectrum-caption image-spectrum-legend" type="range" min="0" max="24" value="6"></label><label>Paint intensity<input id="image-ink" type="range" min="0" max="1" step="0.05" value="1"></label><p id="image-status" class="status" role="status" aria-live="polite">Preparing image…</p><pre id="image-metrics" class="metrics"></pre><h3>Singular-value spectrum</h3><div class="spectrum-plot" aria-hidden="true"><div id="image-spectrum"></div><div id="image-spectrum-cutoff" class="spectrum-cutoff" hidden><span id="image-spectrum-cutoff-label"></span></div></div><p id="image-spectrum-legend" class="spectrum-legend note"><span><i class="retained"></i>Retained</span><span><i class="omitted"></i>Omitted</span><span>Dashed line: rank cutoff</span></p><p id="image-spectrum-caption" class="note">The rank slider selects how many components to retain.</p><details><summary>Inspect all singular values</summary><div class="spectrum-values"><table><caption>Values in descending order. Retained/omitted follows the selected rank; the displayed reconstruction may still be updating.</caption><thead><tr><th scope="col">Component</th><th scope="col">Singular value</th><th scope="col">Selected rank</th></tr></thead><tbody id="image-spectrum-values"></tbody></table></div></details></div></div><details><summary>Rank, storage, and numerical limits</summary><p>The WebAssembly SVD API factors the image directly as A = UΣVᵀ using one-sided Jacobi rotations. The rank-k reconstruction retains the first k terms of UΣVᵀ. It supports zero and rank-deficient images without forming a Gram matrix. Tiny singular values still have floating-point accuracy limits; singular-vector signs and bases for repeated values are not unique.</p><p>Errors are measured before display values are clipped to [0,1]. The storage comparison counts k(2n+1) floating-point scalars for U, singular values and V, versus n² matrix entries. It is not a PNG/JPEG file-size estimate; high ranks can use more scalars than the original. No compressed file is produced.</p></details></section>
 <details><summary>Source and reproducibility</summary><p><a href="https://github.com/jmcummings77/linear-A/tree/main/applications">Source, tests, and build instructions</a>. The embedded WASM build passes the shared correctness suite before publication. Live values are exploratory calculations, not saved performance measurements.</p><pre id="provenance"></pre></details>
 <footer>© 2026 J.M. Cummings. · Local computation. No external assets or analytics.</footer></main>
@@ -212,3 +282,214 @@ let painting=false;const original=$('image-original');function brush(e){const r=
 original.onpointerdown=e=>{painting=true;original.setPointerCapture(e.pointerId);brush(e);};original.onpointermove=e=>{if(painting)brush(e);};original.onpointerup=original.onpointercancel=()=>painting=false;
 imagePreset();addEventListener('resize',()=>{draw('pca');draw('fit');});addEventListener('pagehide',()=>{for(const s of Object.values(states)){clearTimeout(s.timer);stop(s);}});
 </script></html>
+
+<script id="report-controls">
+/** Decorative action icons; native controls and visible labels remain authoritative. */
+(() => {
+  const actionIcons = {
+    csv: "download", download: "download", "live-export": "download",
+    previous: "previous", "geometry-prev": "previous",
+    next: "next", "geometry-next": "next",
+    reset: "reset", "geometry-reset": "reset", "pca-reset": "reset", "fit-reset": "reset",
+    "live-check": "check", "live-run": "play", "live-stop": "stop",
+    swap: "swap", "profile-more": "more",
+    "timing-language-all": "check", "timing-language-none": "clear",
+    "geometry-settings-open": "settings", "geometry-settings-close": "check",
+    "geometry-randomize": "shuffle", "geometry-profile-link": "search",
+    "pca-add": "add", "fit-add": "add", "pca-remove": "remove", "fit-remove": "remove",
+  };
+  const playbackIds = new Set(["play", "geometry-play"]);
+
+  function decorate() {
+    const playback = [];
+    for (const control of document.querySelectorAll("button[id], a[download], [data-report-icon]")) {
+      // An explicit icon is an opt-in for new controls; "none" opts out.
+      const explicit = control.getAttribute("data-report-icon");
+      if (explicit === "none") continue;
+      const isPlayback = playbackIds.has(control.id) ||
+        (control.tagName === "BUTTON" && (explicit === "play" || explicit === "pause"));
+      const icon = explicit || (isPlayback ? "play" : actionIcons[control.id]) ||
+        (control.tagName === "A" && control.hasAttribute("download") ? "download" : null);
+      if (!icon) continue;
+      // The existing settings button has only an SVG. Give it a visible label too.
+      if (control.id === "geometry-settings-open" && !control.textContent.trim()) {
+        control.textContent = "Settings";
+        control.removeAttribute("title");
+      }
+      control.setAttribute("data-report-icon", icon);
+      if (isPlayback) playback.push(control);
+    }
+
+    function sync(control) {
+      const icon = /^\s*pause\b/i.test(control.textContent) ? "pause" : "play";
+      if (control.getAttribute("data-report-icon") !== icon) control.setAttribute("data-report-icon", icon);
+    }
+    playback.forEach(sync);
+    // Observe just the playback labels, not plots or continuously updated frame data.
+    // The CSS pseudo-element survives all existing textContent replacements.
+    if (typeof MutationObserver === "function" && playback.length) {
+      const observer = new MutationObserver(records => {
+        for (const control of playback) {
+          if (records.some(record => record.target === control || control.contains(record.target))) sync(control);
+        }
+      });
+      for (const control of playback) observer.observe(control, { childList: true, characterData: true, subtree: true });
+      window.addEventListener("pagehide", event => { if (!event.persisted) observer.disconnect(); });
+    }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", decorate, { once: true });
+  else decorate();
+})();
+
+</script>
+<script id="report-navigation">
+/* Progressive report views: all original content remains available without JavaScript. */
+(() => {
+  'use strict';
+  const boot = () => {
+    const main = document.querySelector('main'), originalNav = main?.querySelector('.report-nav');
+    if (!main || !originalNav || main.classList.contains('report-modes-enabled')) return;
+    const win = window, find = id => document.getElementById(id);
+    const decode = hash => { try { return decodeURIComponent(hash.replace(/^#/, '')); } catch { return hash.replace(/^#/, ''); } };
+    const targetFor = hash => find(decode(hash));
+    const internalTarget = link => {
+      if (!link) return null;
+      try {
+        const url = new URL(link.getAttribute('href'), win.location.href);
+        return url.origin === win.location.origin && url.pathname === win.location.pathname && url.search === win.location.search ? targetFor(url.hash) : null;
+      } catch { return null; }
+    };
+    const originalLinks = [...originalNav.querySelectorAll('a[href]')];
+    const labels = new Map(originalLinks.map(link => [internalTarget(link)?.id, link.textContent.trim()]));
+    const topLevel = node => {
+      while (node && node.parentElement !== main) node = node.parentElement;
+      return node && node.tagName !== 'HEADER' ? node : null;
+    };
+    const available = node => !!node && !node.closest('[hidden]');
+    let definitions;
+    if (find('timings-panel') && find('method-panel')) definitions = {results:['timings-panel','profiles-panel'], demo:['live-panel','accuracy-panel','geometry-panel'], evidence:['correctness-panel','method-panel']};
+    else if (find('runtime') && find('storage-section') && find('explore')) definitions = {results:['runtime','reuse-section','storage-section'], demo:['explore'], evidence:['method-section']};
+    else if (find('results') && find('explore') && find('method-section')) definitions = {results:['results'], demo:['explore'], evidence:['method-section']};
+    const back = main.querySelector('.report-topbar a');
+    if (back && !find('report-library')) { back.textContent = 'Report library'; back.setAttribute('data-report-icon','back'); }
+    // Playgrounds, comparisons, studies and the directory retain the complete reading order.
+    if (!definitions || find('report-library')) {
+      const links = originalLinks.filter(link => internalTarget(link));
+      const mark = target => {
+        const active = links.find(link => { const section = internalTarget(link); return section === target || section?.contains(target); }) || links[0];
+        for (const link of links) link === active ? link.setAttribute('aria-current','location') : link.removeAttribute('aria-current');
+      };
+      mark(targetFor(win.location.hash));
+      win.addEventListener('hashchange', () => mark(targetFor(win.location.hash)));
+      if (typeof IntersectionObserver === 'function') {
+        const visible = new Set();
+        const observer = new IntersectionObserver(entries => {
+          for (const entry of entries) entry.isIntersecting ? visible.add(entry.target) : visible.delete(entry.target);
+          const first = links.map(internalTarget).find(target => visible.has(target));
+          if (first) mark(first);
+        }, {rootMargin:'-80px 0px -55% 0px'});
+        links.map(internalTarget).forEach(target => observer.observe(target));
+      }
+      return;
+    }
+    const names = {results:'Results', demo:'Interactive demo', evidence:'Method & data'};
+    const scopes = {
+      results:'Saved measurements from the recorded run. These results do not change when you use the interactive demo.',
+      demo:'Interactive calculations on your device. They are separate from the saved benchmark measurements.',
+      evidence:'Correctness checks, measurement methods and run details for interpreting the saved results.'
+    };
+    const sections = Object.fromEntries(Object.entries(definitions).map(([mode, ids]) => [mode, ids.map(find).filter(node => topLevel(node) === node)]));
+    const assignments = new Map();
+    for (const [mode, nodes] of Object.entries(sections)) for (const node of nodes) assignments.set(node, mode);
+    const assign = (node, mode) => { const block = topLevel(node); if (block) assignments.set(block, mode); };
+    if (find('timings-panel')) {
+      find('explore')?.querySelector('nav')?.classList.add('report-view-redundant-nav');
+      assign(find('explore'), 'demo'); assign(find('stats'), 'results'); assign(find('saved-context'), 'results');
+      main.querySelectorAll('.availability-note').forEach(node => assign(node, 'evidence'));
+    } else {
+      assign(find('overview'), 'results');
+      main.querySelectorAll('.explore-label').forEach(node => assign(node, 'demo'));
+    }
+    const make = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    };
+    // Legacy observers keep their old detached anchors and cannot overwrite view selection.
+    const nav = make('nav','report-view-nav'); nav.setAttribute('aria-label','Report views');
+    const utilities = make('div','report-view-utilities');
+    for (const link of originalLinks) if (!internalTarget(link)) utilities.append(link);
+    const scope = make('p','report-view-scope'), localNav = make('nav','report-view-sections');
+    localNav.setAttribute('aria-label','In this view');
+    originalNav.replaceWith(nav, utilities, scope, localNav);
+    // Related topics stay outside modes and out of the primary navigation hierarchy.
+    const related = [...main.querySelectorAll('.related-reports, .ic0-related')];
+    if (related.length) {
+      const details = make('details','report-view-related'); details.append(make('summary','','Related reports'));
+      for (const row of related) details.append(row);
+      utilities.append(details);
+    }
+    utilities.hidden = !utilities.children.length;
+    main.classList.add('report-modes-enabled');
+    let activeMode, modes = [], modeLinks = new Map(), localLinks = [], resizeFrame;
+    const redraw = () => { win.cancelAnimationFrame(resizeFrame); resizeFrame = win.requestAnimationFrame(() => win.dispatchEvent(new Event('resize'))); };
+    const activeSections = mode => sections[mode].filter(available);
+    const defaultMode = () => modes.includes('results') ? 'results' : modes.includes('evidence') ? 'evidence' : modes[0];
+    const modeFor = target => { const mode = assignments.get(topLevel(target)); return modes.includes(mode) ? mode : null; };
+    const localLabel = node => ({'live-panel':'Run a benchmark','accuracy-panel':'Sensitivity','geometry-panel':'Matrix geometry'}[node.id] || labels.get(node.id) || node.querySelector('h2')?.textContent.trim() || node.id);
+    const markLocal = target => {
+      for (const link of localLinks) {
+        const section = internalTarget(link);
+        if (section === target || section?.contains(target)) link.setAttribute('aria-current','location');
+        else link.removeAttribute('aria-current');
+      }
+    };
+    const activate = (mode, target) => {
+      mode = modes.includes(mode) ? mode : defaultMode(); if (!mode) return;
+      const changed = activeMode !== mode; activeMode = mode; main.setAttribute('data-report-view', mode);
+      for (const [node, assigned] of assignments) {
+        // Verification-only captures show their run summary with evidence, without an empty Results view.
+        const actual = assigned === 'results' && !modes.includes('results') ? 'evidence' : assigned;
+        node.classList.toggle('report-mode-inactive', actual !== mode);
+      }
+      for (const [key, link] of modeLinks) key === mode ? link.setAttribute('aria-current','page') : link.removeAttribute('aria-current');
+      scope.textContent = scopes[mode];
+      const nodes = activeSections(mode); localNav.replaceChildren(); localLinks = []; localNav.hidden = nodes.length < 2;
+      if (nodes.length > 1) {
+        localNav.append(make('span','','In this view:'));
+        for (const node of nodes) { const link = make('a','',localLabel(node)); link.setAttribute('href',`#${node.id}`); localNav.append(link); localLinks.push(link); }
+      }
+      markLocal(target); if (changed) redraw();
+    };
+    const sync = () => {
+      modes = Object.keys(sections).filter(mode => activeSections(mode).length); modeLinks = new Map(); nav.replaceChildren();
+      for (const mode of modes) { const link = make('a','',names[mode]); link.setAttribute('data-report-icon', {results:'chart',demo:'play',evidence:'info'}[mode]); link.setAttribute('href',`#${activeSections(mode)[0].id}`); nav.append(link); modeLinks.set(mode,link); }
+      const target = targetFor(win.location.hash); activate(modeFor(target) || activeMode || defaultMode(), target); redraw();
+    };
+    const openAncestors = target => { for (let node = target?.parentElement; node && node !== main; node = node.parentElement) if (node.tagName === 'DETAILS') node.open = true; };
+    const revealHash = () => {
+      const target = targetFor(win.location.hash); activate(modeFor(target) || defaultMode(), target); openAncestors(target);
+      // Native history may scroll before a hidden target is revealed.
+      if (target && available(target) && !target.closest('.report-mode-inactive')) win.requestAnimationFrame(() => target.scrollIntoView({block:'start',behavior:'auto'}));
+    };
+    sync(); if (win.location.hash) revealHash();
+    win.addEventListener('hashchange', revealHash); win.addEventListener('popstate', revealHash);
+    document.addEventListener('click', event => {
+      if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target.closest('a[href]'), target = internalTarget(link), mode = modeFor(target);
+      // Reveal before native link scrolling, without replacing browser history or controls.
+      if (mode) { activate(mode, target); openAncestors(target); }
+    });
+    if (typeof MutationObserver === 'function') {
+      const observer = new MutationObserver(sync);
+      for (const nodes of Object.values(sections)) for (const node of nodes) observer.observe(node,{attributes:true,attributeFilter:['hidden']});
+    }
+    win.addEventListener('matrix-profile-focus', () => {
+      if (modes.includes('results') && available(find('profiles-panel'))) { activate('results',find('profiles-panel')); win.location.hash = 'profiles-panel'; }
+    }, {capture:true});
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
+})();
+
+</script>

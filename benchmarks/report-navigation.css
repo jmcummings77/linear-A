@@ -1,0 +1,19 @@
+/* Only enhanced pages hide views; without JavaScript the original document is complete. */
+main.report-modes-enabled .report-view-redundant-nav { display:none; }
+main.report-modes-enabled > .report-mode-inactive { display: none !important; }
+.report-view-nav { display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:5;margin:18px 0 12px;padding:10px 0;border-block:1px solid var(--line);background:var(--paper); }
+.report-view-nav a { display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border-radius:6px;color:var(--muted);font-size:14px;font-weight:650;text-decoration:none; }
+.report-view-nav a:hover { color:var(--ink);background:var(--tint); }
+.report-view-nav a[aria-current="page"] { color:var(--card);background:var(--green); }
+.report-view-scope { max-width:86ch;margin:10px 0 12px;font-size:14px; }
+.report-view-sections,.report-view-utilities { display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:10px 0 18px;font-size:13px; }
+.report-view-sections>span { color:var(--muted); }
+.report-view-sections a[aria-current="location"],.report-nav a[aria-current="location"] { text-decoration-thickness:2px;font-weight:700; }
+.report-view-utilities { justify-content:flex-end; }
+.report-view-related { margin:0;font-size:13px; }
+.report-view-related>summary { padding:6px 0;font-weight:600; }
+.report-view-related .related-reports,.report-view-related .ic0-related { display:flex;flex-wrap:wrap;gap:8px 18px;margin:8px 0;align-items:center;font-size:13px; }
+.report-view-related nav>span { display:none; }
+.report-view-related nav a[aria-current="page"] { color:var(--ink);font-weight:700;text-decoration:none; }
+@media(max-width:600px) { .report-view-nav{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px}.report-view-nav a{min-width:0;padding:8px 4px;font-size:12px;line-height:1.3;text-align:center}.report-view-nav a::before{margin-inline-end:5px}.report-view-scope{font-size:13px}.report-view-utilities{justify-content:flex-start} }
+@media print { main.report-modes-enabled>.report-mode-inactive:not([hidden]){display:block!important}.report-view-nav,.report-view-sections,.report-view-scope{display:none} }

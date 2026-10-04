@@ -1,0 +1,257 @@
+{
+  "groups": [
+    {
+      "id": "core-operations",
+      "label": "Matrix operations",
+      "description": "Arithmetic, determinants, eigenvalues, and rotations."
+    },
+    {
+      "id": "sparse-solvers",
+      "label": "Solving sparse systems",
+      "description": "Start with storage, then compare iteration and preconditioning for the supported problem."
+    },
+    {
+      "id": "ordering-fill",
+      "label": "Ordering & factorization",
+      "description": "How changing the order of variables changes preparation, fill, and solve cost."
+    },
+    {
+      "id": "studies",
+      "label": "Optimization studies",
+      "description": "Focused experiments with their own workloads and measurement boundaries."
+    },
+    {
+      "id": "applications",
+      "label": "Applied mathematics",
+      "description": "Small interactive examples of the library at work."
+    }
+  ],
+  "items": [
+    {
+      "id": "latest",
+      "title": "Core matrix operations",
+      "group": "core-operations",
+      "kind": "benchmark",
+      "questions": {
+        "results": "Which implementation is faster for basic matrix operations?",
+        "demo": "How do transformations and small input changes affect the answer?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "latest/#timings-panel",
+        "demo": "latest/#explore",
+        "evidence": "latest/#method-panel"
+      }
+    },
+    {
+      "id": "determinants",
+      "title": "Determinants",
+      "group": "core-operations",
+      "kind": "benchmark",
+      "questions": {
+        "results": "Which determinant algorithm fits the matrix?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "determinants/#timings-panel",
+        "evidence": "determinants/#method-panel"
+      }
+    },
+    {
+      "id": "eigen",
+      "title": "Eigenvalues & eigenvectors",
+      "group": "core-operations",
+      "kind": "benchmark",
+      "questions": {
+        "results": "How do symmetric eigensolver timings compare?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "eigen/#timings-panel",
+        "evidence": "eigen/#method-panel"
+      }
+    },
+    {
+      "id": "vectors",
+      "title": "Vectors & rotations",
+      "group": "core-operations",
+      "kind": "benchmark",
+      "questions": {
+        "results": "How fast are cross products and rotations?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "vectors/#timings-panel",
+        "evidence": "vectors/#method-panel"
+      }
+    },
+    {
+      "id": "sparse",
+      "title": "Sparse storage & solvers",
+      "group": "sparse-solvers",
+      "kind": "benchmark",
+      "questions": {
+        "results": "When does sparse storage reduce runtime and memory?",
+        "demo": "How does an iterative solver find equilibrium?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "sparse/#runtime",
+        "demo": "sparse/#explore",
+        "evidence": "sparse/#method-section"
+      }
+    },
+    {
+      "id": "gmres",
+      "title": "Restarted GMRES",
+      "group": "sparse-solvers",
+      "kind": "benchmark",
+      "questions": {
+        "results": "How do restart length, runtime, and workspace trade off?",
+        "demo": "How does GMRES solve a nonsymmetric flow problem?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "gmres/#runtime",
+        "demo": "gmres/#explore",
+        "evidence": "gmres/#method-section"
+      }
+    },
+    {
+      "id": "ilu",
+      "title": "ILU(0) preconditioning",
+      "group": "sparse-solvers",
+      "kind": "benchmark",
+      "questions": {
+        "results": "When does preparing and reusing an ILU factor pay off?",
+        "demo": "How does preconditioning change convergence?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "ilu/#runtime",
+        "demo": "ilu/#explore",
+        "evidence": "ilu/#method-section"
+      }
+    },
+    {
+      "id": "ic0",
+      "title": "Incomplete Cholesky (IC(0))",
+      "group": "sparse-solvers",
+      "kind": "benchmark",
+      "questions": {
+        "results": "How do CG, Jacobi, IC(0), and full Cholesky compare?",
+        "demo": "How do the solution and residual change at each iteration?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "ic0/#results",
+        "demo": "ic0/#explore",
+        "evidence": "ic0/#method-section"
+      }
+    },
+    {
+      "id": "multigrid",
+      "title": "Geometric multigrid",
+      "group": "sparse-solvers",
+      "kind": "benchmark",
+      "questions": {
+        "results": "Does multigrid keep solve cost manageable as the grid grows?",
+        "demo": "Why do smoothing and coarse-grid corrections work together?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "multigrid/#results",
+        "demo": "multigrid/#explore",
+        "evidence": "multigrid/#method-section"
+      }
+    },
+    {
+      "id": "ordering",
+      "title": "Reverse Cuthill–McKee (RCM)",
+      "group": "ordering-fill",
+      "kind": "benchmark",
+      "questions": {
+        "results": "Does reducing bandwidth also reduce total solve time?",
+        "demo": "What changes when a sparse system is reordered?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "ordering/#results",
+        "demo": "ordering/#explore",
+        "evidence": "ordering/#method-section"
+      }
+    },
+    {
+      "id": "cholesky",
+      "title": "Sparse Cholesky",
+      "group": "ordering-fill",
+      "kind": "benchmark",
+      "questions": {
+        "results": "What do analysis, factorization, and repeated solves cost?",
+        "demo": "Why does eliminating a variable create new entries?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "cholesky/#results",
+        "demo": "cholesky/#explore",
+        "evidence": "cholesky/#method-section"
+      }
+    },
+    {
+      "id": "amd",
+      "title": "Approximate minimum degree (AMD)",
+      "group": "ordering-fill",
+      "kind": "benchmark",
+      "questions": {
+        "results": "Can a different ordering reduce fill and total work?",
+        "demo": "How do natural, RCM, and AMD elimination patterns differ?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "amd/#results",
+        "demo": "amd/#explore",
+        "evidence": "amd/#method-section"
+      }
+    },
+    {
+      "id": "matmul-locality",
+      "title": "Matrix multiplication locality",
+      "group": "studies",
+      "kind": "study",
+      "questions": {
+        "results": "How much do loop order, blocking, and SIMD help?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "matmul-locality/#results",
+        "evidence": "matmul-locality/#method"
+      }
+    },
+    {
+      "id": "machine-code-dot",
+      "title": "Machine-code dot product",
+      "group": "studies",
+      "kind": "study",
+      "questions": {
+        "results": "How does a hand-encoded kernel compare with compiled code?",
+        "evidence": "What was measured, how was it checked, and what are the limits?"
+      },
+      "links": {
+        "results": "machine-code-dot/#results",
+        "evidence": "machine-code-dot/#method"
+      }
+    },
+    {
+      "id": "applications",
+      "title": "PCA, curve fitting & image rank",
+      "group": "applications",
+      "kind": "application",
+      "questions": {
+        "demo": "What can eigenvectors, least squares, and low-rank images do?"
+      },
+      "links": {
+        "demo": "applications/#pca"
+      }
+    }
+  ]
+}

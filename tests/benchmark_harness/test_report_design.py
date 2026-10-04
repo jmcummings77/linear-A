@@ -42,21 +42,22 @@ class DirectoryElements(Elements):
         super().handle_starttag(tag, attributes)
         attrs = dict(attributes)
         classes = attrs.get('class', '').split()
-        if tag == 'div':
+        if tag in ('div', 'section'):
             family = attrs.get('id') if 'report-family' in classes else (self.div_families[-1] if self.div_families else None)
             self.div_families.append(family)
-        if tag == 'a' and 'report' in classes:
-            self.current_card = {'href': attrs.get('href'), 'family': self.div_families[-1] if self.div_families else None, 'metadata': ''}
+        if (tag == 'a' and 'report' in classes) or (tag == 'article' and 'report-entry' in classes):
+            self.card_tag = tag
+            self.current_card = {'href': attrs.get('href', attrs.get('data-entry', '') + '/'), 'family': self.div_families[-1] if self.div_families else None, 'metadata': ''}
             self.cards.append(self.current_card)
         if tag == 'span' and 'run-meta' in classes:
             self.in_metadata = True
 
     def handle_endtag(self, tag):
-        if tag == 'div' and self.div_families:
+        if tag in ('div', 'section') and self.div_families:
             self.div_families.pop()
         if tag == 'span':
             self.in_metadata = False
-        if tag == 'a':
+        if tag == getattr(self, 'card_tag', None):
             self.current_card = None
 
     def handle_data(self, text):
@@ -174,8 +175,10 @@ class ReportDirectoryTests(unittest.TestCase):
         return html, parsed
 
     def test_every_current_benchmark_card_has_metadata_from_its_own_measurements(self):
-        expected_names = {'latest', 'determinants', 'eigen', 'vectors', 'sparse',
-                          'gmres', 'ilu', 'ordering', 'cholesky', 'amd', 'ic0', 'multigrid'}
+        catalog = json.loads((report_design.HERE / 'pages/catalog.json').read_text())
+        expected_names = {item['id'] for item in catalog['items'] if item['kind'] == 'benchmark'
+                          and (report_design.HERE / 'reports' / item['id'] / 'index.html').exists()
+                          and (report_design.HERE / 'reports' / item['id'] / 'results.json').exists()}
         html, parsed = self.render()
         cards = {card['href'].rstrip('/'): card for card in parsed.cards if card['metadata']}
         self.assertEqual(set(cards), expected_names)
@@ -197,7 +200,7 @@ class ReportDirectoryTests(unittest.TestCase):
                     self.assertIn(f'{len(passed_implementations)} verified implementations', metadata)
                 self.assertTrue(metadata.endswith(f'{len(passed_results)} timing results'))
 
-    def test_directory_navigation_targets_exist_and_solver_cards_follow_the_learning_sequence(self):
+    def test_directory_has_one_identity_per_topic_and_explicit_task_destinations(self):
         _, parsed = self.render()  # Parsing also rejects duplicate IDs.
         for link in parsed.links:
             href = link.get('href', '')
@@ -206,7 +209,13 @@ class ReportDirectoryTests(unittest.TestCase):
                     self.assertIn(href[1:], parsed.ids)
         solver_cards = [card['href'] for card in parsed.cards
                         if card['family'] == 'sparse-solvers']
-        self.assertEqual(solver_cards, ['sparse/', 'gmres/', 'ilu/', 'multigrid/', 'ic0/'])
+        expected = ['sparse/', 'gmres/', 'ilu/', 'ic0/']
+        if (report_design.HERE / 'reports/multigrid/index.html').exists():
+            expected.append('multigrid/')
+        self.assertEqual(solver_cards, expected)
+        self.assertEqual(len(parsed.cards), len({card['href'] for card in parsed.cards}))
+        for target in ['latest/#timings-panel', 'ic0/#method-section', 'compare/']:
+            self.assertIn(target, [link.get('href') for link in parsed.links])
         for target in ['ilu/#explore', 'ic0/#explore', 'amd/#explore']:
             self.assertIn(target, [link.get('href') for link in parsed.links])
 
