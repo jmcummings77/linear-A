@@ -119,6 +119,10 @@ def report_presentation(data, live):
                     "accuracy": bool(live.get("available") and live.get("accuracy_worker_source")),
                     "geometry": bool(live.get("available") and live.get("geometry_worker_source"))}
     unavailable = []
+    if data.get("dirty") is True:
+        unavailable.append("Source reconstruction unavailable: this run included uncommitted changes. "
+                           "The recorded commit and source hash cannot reconstruct the measured source. "
+                           "These measurements are retained as historical evidence.")
     if not results:
         unavailable.append("No successful timing samples are available; review the correctness and failure details below."
                            if recorded_results else "This snapshot contains correctness checks only; there are no saved timing samples.")

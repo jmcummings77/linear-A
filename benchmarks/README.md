@@ -40,6 +40,66 @@ third-party numeric libraries or BLAS.
 
 ## Common commands
 
+### Publishing reproducible source records
+
+Use `reproduce.py` for new saved measurements intended for the repository or
+GitHub Pages. Commit the source first and start from a clean checkout, including
+staged and untracked files. The wrapper makes a fresh local clone at that exact
+commit, builds there, and writes output outside the clone. Ignored build products
+in your working directory are never reused. It rejects source changes during the
+run, missing toolchains, failed checks, and failed measurements.
+
+```sh
+# After committing the source, capture all implementations with fresh builds.
+python3 benchmarks/reproduce.py --output .build/publishable/latest -- --suite full --profiles
+
+# Or capture a focused suite (the output directory must not already exist).
+python3 benchmarks/reproduce.py --runner cholesky_bench.py --output .build/publishable/cholesky -- --languages c python --sizes 12
+
+# Review the output, then replace the saved report, including provenance.json.
+rsync -a --delete .build/publishable/latest/ benchmarks/reports/latest/
+python3 benchmarks/check_provenance.py
+```
+
+The wrapper supports `run.py`, `determinants.py`, `sparse.py`, and the GMRES,
+ILU, ordering, Cholesky, AMD, and IC0 benchmark runners. Pass runner options after
+`--`. Fresh builds and successful verification of every requested implementation
+are mandatory. `--no-build`, `--render-only`, and runner `--output` overrides are
+rejected, including abbreviated forms. The optional external `--amd-library`
+reference is excluded because its source is not captured by this workflow.
+
+Each capture includes `provenance.json` with the full source commit and Git tree,
+the benchmark command, harness Python version, and SHA-256 hashes of measurement
+artifacts. Compiler/runtime versions and build commands remain in `results.json`.
+To repeat a run, check out its recorded revision in a fresh clone, install the
+recorded toolchains, and run the recorded command with `<output>` replaced by a
+new directory. The source revision must be an ancestor of the commit publishing
+the results, so it remains in the repository's history. Prefer capturing a source
+commit already on `main`. If source and reports share a pull request, preserve the
+measured commit with a merge commit; squashing or rebasing it would invalidate
+the recorded ancestry. This preserves source and invocation; hardware, operating system, dependencies and compiler environment
+still affect timings. It does not promise identical timing samples.
+
+CI and the Pages workflow reject missing provenance, mismatched measurement
+hashes, unavailable source commits, and HTML whose embedded measurements differ
+from `results.json`. HTML presentation may still be refreshed without changing
+measurement artifacts or their provenance. Commit a completed report before
+capturing another run, or keep intermediate captures under ignored `.build/`.
+
+The existing saved reports, including `latest`, were captured with `dirty: true`.
+Their exact measured source was not preserved: the commit and source hash alone
+cannot reconstruct it. They remain historical evidence, not reproducible source
+snapshots. `legacy-results.json` lists their exact measurement hashes as a fixed
+migration exception. Do not add new runs or update hashes there; replace old
+snapshots with captures from `reproduce.py`. Original timings, source metadata and
+profiles are not retroactively relabeled as clean.
+
+### Local development runs
+
+The ordinary runners below allow working changes and reused builds for local
+experiments. Their output cannot replace published snapshots without a new
+capture through `reproduce.py`.
+
 ```sh
 # Build and verify every implementation, without performance measurements.
 python3 benchmarks/run.py --verify-only --require-all --output benchmarks/reports/verification

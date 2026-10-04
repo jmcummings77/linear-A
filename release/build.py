@@ -229,15 +229,17 @@ def audit_assets(paths, private_paths=None):
 
 
 def main():
+    manifest=json.loads(MANIFEST.read_text())
+    version=manifest['version']
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--port', action='append', choices=list(json.loads(MANIFEST.read_text())['ports']))
+    parser.add_argument('--version', action='version', version=version,
+                        help='print the release version from manifest.json and exit')
+    parser.add_argument('--port', action='append', choices=list(manifest['ports']))
     parser.add_argument('--output', type=Path, default=None)
     parser.add_argument('--tag', help='require this release tag to match the version and a clean checkout')
     parser.add_argument('--source-only', action='store_true', help='prepare source kits without installation verification')
     parser.add_argument('--write-table', action='store_true')
     args=parser.parse_args()
-    manifest=json.loads(MANIFEST.read_text())
-    version=manifest['version']
     if args.write_table:
         (ROOT/'docs/api'/version/'compatibility.md').write_text(table(manifest)); return
     check_manifest(manifest)
