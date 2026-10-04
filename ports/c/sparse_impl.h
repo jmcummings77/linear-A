@@ -55,3 +55,8 @@ matrix_status m_ic0_create(const sparse_matrix *a,matrix_ic0 *out){return sparse
 void m_ic0_free(matrix_ic0 *f){la_cholesky_free(f);}
 matrix_status m_ic0_apply(const matrix_ic0 *f,const matrix *b,matrix *out){return m_cholesky_solve(f,b,out);}
 matrix_status m_csr_cg_preconditioned(const sparse_matrix *a,const double *b,size_t count,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_ic0 *f,matrix_cg_result *out){return sparse_status(la_csr_cg_ic0(a,b,count,rtol,atol,limit,jacobi,capture,f,out));}
+
+matrix_status m_multigrid_create(size_t width,matrix_multigrid *out){return sparse_status(la_mg_create(width,out));}
+matrix_status m_multigrid_matrix(const matrix_multigrid *m,sparse_matrix *out){return sparse_status(la_mg_matrix(m,out));}
+matrix_status m_multigrid_apply(const matrix_multigrid *m,const matrix *b,matrix *out){if(!la_mg_valid(m)||validate(b)||!empty_output(out)||b==out)return M_ARGUMENT;if(b->cols!=1||b->rows!=m->width*m->width)return M_SHAPE;matrix result={0};matrix_status code=m_create(b->rows,1,&result);if(code)return code;code=sparse_status(la_mg_apply(m,b->values,b->rows,result.values));if(code)m_free(&result);else *out=result;return code;}
+matrix_status m_csr_cg_multigrid(const sparse_matrix *a,const double *b,size_t count,double rtol,double atol,size_t limit,bool jacobi,bool capture,const matrix_multigrid *m,matrix_cg_result *out){return sparse_status(la_csr_cg_mg(a,b,count,rtol,atol,limit,jacobi,capture,m,out));}

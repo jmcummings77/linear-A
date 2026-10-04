@@ -6,9 +6,9 @@ static double sparse_token(void){double x;if(scanf("%lf",&x)!=1||!isfinite(x))fa
 static size_t sparse_index(void){double x=sparse_token();if(x<0||x>=(double)SIZE_MAX||floor(x)!=x)fail("invalid CSR index");return (size_t)x;}
 static int sparse_cli(int argc,char **argv){
     if(argc!=(argc>2&&!strcmp(argv[2],"gmres")?13:12))fail("expected sparse OP ROWS COLS NNZ ITERATIONS RTOL ATOL LIMIT JACOBI CAPTURE");
-    const char *op=argv[2];if(strcmp(op,"spmv")&&strcmp(op,"dense")&&strcmp(op,"cg")&&strcmp(op,"gmres")&&strcmp(op,"ic0_factor")&&strcmp(op,"ic0_apply")&&strcmp(op,"ilu_setup")&&strcmp(op,"ilu_apply")&&strcmp(op,"rcm")&&strcmp(op,"amd")&&strcmp(op,"permute")&&strcmp(op,"permutation_check")&&strcmp(op,"rcm_solve")&&strcmp(op,"ilu_solve")&&strcmp(op,"chol_symbolic")&&strcmp(op,"chol_factor")&&strcmp(op,"chol_solve")&&strcmp(op,"chol_total")&&strcmp(op,"chol_rcm_total")&&strcmp(op,"chol_amd_total"))fail("invalid sparse operation");
+    const char *op=argv[2];if(strcmp(op,"mg_setup")&&strcmp(op,"mg_matrix")&&strcmp(op,"mg_apply")&&strcmp(op,"spmv")&&strcmp(op,"dense")&&strcmp(op,"cg")&&strcmp(op,"gmres")&&strcmp(op,"ic0_factor")&&strcmp(op,"ic0_apply")&&strcmp(op,"ilu_setup")&&strcmp(op,"ilu_apply")&&strcmp(op,"rcm")&&strcmp(op,"amd")&&strcmp(op,"permute")&&strcmp(op,"permutation_check")&&strcmp(op,"rcm_solve")&&strcmp(op,"ilu_solve")&&strcmp(op,"chol_symbolic")&&strcmp(op,"chol_factor")&&strcmp(op,"chol_solve")&&strcmp(op,"chol_total")&&strcmp(op,"chol_rcm_total")&&strcmp(op,"chol_amd_total"))fail("invalid sparse operation");
     size_t rows=integer(argv[3]),cols=integer(argv[4]),nnz=integer(argv[5]),iterations=integer(argv[6]),limit=integer(argv[9]),jacobi=integer(argv[10]),capture=integer(argv[11]);
-    double rtol=number(argv[7]),atol=number(argv[8]);if(jacobi>3||(strcmp(op,"gmres")&&strcmp(op,"cg")&&jacobi>1)||capture>1||rows==SIZE_MAX||rows>SIZE_MAX/sizeof(size_t)-1||nnz>SIZE_MAX/sizeof(double))fail("invalid sparse dimensions/options");
+    double rtol=number(argv[7]),atol=number(argv[8]);if(jacobi>5||(strcmp(op,"cg")&&jacobi>3)||(strcmp(op,"gmres")&&strcmp(op,"cg")&&jacobi>1)||capture>1||rows==SIZE_MAX||rows>SIZE_MAX/sizeof(size_t)-1||nnz>SIZE_MAX/sizeof(double))fail("invalid sparse dimensions/options");
     size_t *rp=(size_t*)calloc(rows+1,sizeof(size_t)),*ci=(size_t*)calloc(nnz?nnz:1,sizeof(size_t));double *v=(double*)calloc(nnz?nnz:1,sizeof(double));
     if(!rp||!ci||!v)fail("sparse allocation failed");
     for(size_t i=0;i<=rows;i++)rp[i]=sparse_index();for(size_t i=0;i<nnz;i++)ci[i]=sparse_index();for(size_t i=0;i<nnz;i++)v[i]=sparse_token();
@@ -19,11 +19,15 @@ static int sparse_cli(int argc,char **argv){
 #else
     sparse_matrix sparse={0};require(m_csr_create(rows,cols,nnz,rp,ci,v,&sparse));
 #endif
+    size_t mg_width=(size_t)sqrt((double)rows);int needs_mg=!strncmp(op,"mg_",3)||(!strcmp(op,"cg")&&jacobi>=4);
+    if(needs_mg&&(rows!=cols||mg_width*mg_width!=rows))fail("multigrid requires a square grid");
 #ifdef __cplusplus
+    std::unique_ptr<linear_a::GeometricMultigrid> mg;if(!strcmp(op,"mg_apply")||!strcmp(op,"mg_matrix")||(!strcmp(op,"cg")&&jacobi==4))mg.reset(new linear_a::GeometricMultigrid(mg_width));
     std::unique_ptr<linear_a::IC0> ic;if(!strcmp(op,"ic0_apply")||(!strcmp(op,"cg")&&jacobi==2))ic.reset(new linear_a::IC0(sparse));
     std::unique_ptr<linear_a::ILU0> factor;
     if(!strcmp(op,"ilu_apply")||(!strcmp(op,"gmres")&&jacobi==2))factor.reset(new linear_a::ILU0(sparse));
 #else
+    matrix_multigrid mg={0};if(!strcmp(op,"mg_apply")||!strcmp(op,"mg_matrix")||(!strcmp(op,"cg")&&jacobi==4))require(m_multigrid_create(mg_width,&mg));
     matrix_ic0 ic={0};if(!strcmp(op,"ic0_apply")||(!strcmp(op,"cg")&&jacobi==2))require(m_ic0_create(&sparse,&ic));
     matrix_ilu0 factor={0};
     if(!strcmp(op,"ilu_apply")||(!strcmp(op,"gmres")&&jacobi==2))require(m_ilu0_create(&sparse,&factor));
@@ -44,7 +48,26 @@ static int sparse_cli(int argc,char **argv){
     for(size_t run=0;run<runs;run++){
         if(iterations&&run==3)start=now_ns();
         matrix out={0};
-        if(!strcmp(op,"ic0_factor")){
+        if(!strcmp(op,"mg_setup")){
+            require(m_create(1,2,&out));
+#ifdef __cplusplus
+            linear_a::GeometricMultigrid m(mg_width);out.values[0]=(double)m.size();out.values[1]=(double)m.levels();
+#else
+            matrix_multigrid m={0};require(m_multigrid_create(mg_width,&m));size_t levels=0;for(size_t w=m.width;w;w/=2)levels++;out.values[0]=(double)(m.width*m.width);out.values[1]=(double)levels;
+#endif
+        }else if(!strcmp(op,"mg_apply")){
+#ifdef __cplusplus
+            auto x=mg->apply(std::vector<double>(b.values,b.values+count));require(m_create(1,x.size(),&out));memcpy(out.values,x.data(),x.size()*sizeof(double));
+#else
+            require(m_multigrid_apply(&mg,&b,&out));
+#endif
+        }else if(!strcmp(op,"mg_matrix")){
+#ifdef __cplusplus
+            auto m=mg->matrix();require(m_create(1,rows+1+2*m.nnz(),&out));size_t k=0;for(auto x:m.row_offsets())out.values[k++]=(double)x;for(auto x:m.column_indices())out.values[k++]=(double)x;for(auto x:m.values())out.values[k++]=x;
+#else
+            sparse_matrix m={0};require(m_multigrid_matrix(&mg,&m));require(m_create(1,rows+1+2*m.nnz,&out));size_t k=0;for(size_t i=0;i<=rows;i++)out.values[k++]=(double)m.offsets[i];for(size_t p=0;p<m.nnz;p++)out.values[k++]=(double)m.indices[p];for(size_t p=0;p<m.nnz;p++)out.values[k++]=m.values[p];m_csr_free(&m);
+#endif
+        }else if(!strcmp(op,"ic0_factor")){
 #ifdef __cplusplus
             linear_a::IC0 f(sparse);auto l=f.lower();size_t m=l.nnz();require(m_create(1,rows+1+2*m,&out));size_t k=0;for(auto v:l.row_offsets())out.values[k++]=(double)v;for(auto v:l.column_indices())out.values[k++]=(double)v;for(auto v:l.values())out.values[k++]=v;
 #else
@@ -174,13 +197,15 @@ static int sparse_cli(int argc,char **argv){
         }else{
 #ifdef __cplusplus
             std::unique_ptr<linear_a::IC0> current;if(jacobi==3)current.reset(new linear_a::IC0(sparse));
-            auto result=sparse.conjugate_gradient(std::vector<double>(b.values,b.values+count),rtol,atol,limit,jacobi==1,capture!=0,jacobi==3?current.get():ic.get());
+            std::unique_ptr<linear_a::GeometricMultigrid> current_mg;if(jacobi==5)current_mg.reset(new linear_a::GeometricMultigrid(mg_width));
+            auto result=jacobi>=4?sparse.conjugate_gradient_multigrid(std::vector<double>(b.values,b.values+count),rtol,atol,limit,false,capture!=0,jacobi==5?current_mg.get():mg.get()):sparse.conjugate_gradient(std::vector<double>(b.values,b.values+count),rtol,atol,limit,jacobi==1,capture!=0,jacobi==3?current.get():ic.get());
             int reason=result.reason=="converged"?0:result.reason=="iteration_limit"?1:result.reason=="breakdown"?2:3;
             size_t steps=result.iterations;const double *x=result.x.data(),*history=result.residuals.data();
             std::vector<double> flat;for(const auto& f:result.iterates)flat.insert(flat.end(),f.begin(),f.end());const double *frames=flat.data();
 #else
             matrix_ic0 current={0};if(jacobi==3)require(m_ic0_create(&sparse,&current));
-            matrix_cg_result result={0};require(m_csr_cg_preconditioned(&sparse,b.values,count,rtol,atol,limit,jacobi==1,capture!=0,jacobi==3?&current:jacobi==2?&ic:NULL,&result));m_ic0_free(&current);
+            matrix_multigrid current_mg={0};if(jacobi==5)require(m_multigrid_create(mg_width,&current_mg));
+            matrix_cg_result result={0};require(jacobi>=4?m_csr_cg_multigrid(&sparse,b.values,count,rtol,atol,limit,false,capture!=0,jacobi==5?&current_mg:&mg,&result):m_csr_cg_preconditioned(&sparse,b.values,count,rtol,atol,limit,jacobi==1,capture!=0,jacobi==3?&current:jacobi==2?&ic:NULL,&result));m_ic0_free(&current);
             int reason=result.reason;size_t steps=result.iterations;const double *x=result.x,*history=result.residuals,*frames=result.iterates;
 #endif
             if(iterations){if(reason)fail("benchmark CG did not converge");require(m_create(rows,1,&out));if(rows)memcpy(out.values,x,rows*sizeof(double));}

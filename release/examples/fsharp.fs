@@ -44,3 +44,8 @@ let ic=IC0(sparse)
 for rhs in [[|6.;7.|];[|11.;13.|]] do
     let pcg=sparse.ConjugateGradient(rhs,preconditioner=ic)
     if not pcg.Converged || pcg.Iterations<>1 then failwith "incorrect IC0 reuse"
+
+let mg=GeometricMultigrid(3)
+let grid=mg.Matrix
+let rhsMG=grid.Matvec(Array.create 9 1.)
+if not(grid.ConjugateGradient(rhsMG,preconditioner=mg).Converged) || mg.Apply(rhsMG).Length<>9 || mg.Levels<>2 then failwith "incorrect multigrid"

@@ -28,4 +28,6 @@ int main() {
     linear_a::IC0 ic(sparse);
     for(const auto& rhs:std::vector<std::vector<double>>{{6,7},{11,13}}){auto pcg=sparse.conjugate_gradient(rhs,1e-10,0,1000,false,false,&ic);if(!pcg.converged||pcg.iterations!=1)return 1;}
     std::cout << "solution: 1, 2\n";
+    linear_a::GeometricMultigrid mg(3);auto grid=mg.matrix();auto rhs_mg=grid.matvec(std::vector<double>(9,1));
+    if(!grid.conjugate_gradient_multigrid(rhs_mg,1e-10,0,100,false,false,&mg).converged||mg.apply(rhs_mg).size()!=9||mg.levels()!=2)return 1;
 }

@@ -1,11 +1,15 @@
 function sparse_run(args)
     length(args)==(length(args)>0 && args[1]=="gmres" ? 11 : 10) || throw(ArgumentError("invalid sparse protocol"))
     op=args[1];rows,cols,nnz,iterations=parse.(Int,args[2:5]);rtol,atol=parse.(Float64,args[6:7]);limit,jacobi,capture=parse.(Int,args[8:10])
-    op in ("spmv","dense","cg","gmres","ic0_factor","ic0_apply","ilu_setup","ilu_apply","rcm","amd","permute","permutation_check","rcm_solve","ilu_solve","chol_symbolic","chol_factor","chol_solve","chol_total","chol_rcm_total","chol_amd_total") && min(rows,cols,nnz,iterations)>=0 && jacobi in (op in ("cg","gmres") ? (0,1,2,3) : (0,1)) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
+    op in ("mg_setup","mg_matrix","mg_apply","spmv","dense","cg","gmres","ic0_factor","ic0_apply","ilu_setup","ilu_apply","rcm","amd","permute","permutation_check","rcm_solve","ilu_solve","chol_symbolic","chol_factor","chol_solve","chol_total","chol_rcm_total","chol_amd_total") && min(rows,cols,nnz,iterations)>=0 && jacobi in (op=="cg" ? (0,1,2,3,4,5) : op=="gmres" ? (0,1,2,3) : (0,1)) && capture in (0,1) || throw(ArgumentError("invalid sparse options"))
     tokens=split(read(stdin,String));count=op in ("cg","gmres") ? rows : cols
     length(tokens)==rows+1+2*nnz+count || throw(ArgumentError("incorrect sparse input count"))
     rp=parse.(Int,tokens[1:rows+1]);ci=parse.(Int,tokens[rows+2:rows+1+nnz]);v=parse.(Float64,tokens[rows+2+nnz:rows+1+2*nnz]);b=parse.(Float64,tokens[rows+2+2*nnz:end])
     a=CSRMatrix(rows,cols,rp,ci,v);dense=nothing;right=nothing
+    function new_mg()
+        w=isqrt(rows);rows==cols && w*w==rows || throw(ArgumentError("multigrid requires a square grid"));GeometricMultigrid(w)
+    end
+    mg=op in ("mg_apply","mg_matrix") || (op=="cg" && jacobi==4) ? new_mg() : nothing
     factor=op=="ilu_apply" || (op=="gmres" && jacobi==2) ? ILU0(a) : nothing
     if op=="dense"
         dense=Matrix64(rows,cols);right=Matrix64(cols,1,b)
@@ -15,6 +19,9 @@ function sparse_run(args)
     plan=op in ("chol_factor","chol_solve") ? SparseCholeskySymbolic(a) : nothing
     chol=op=="chol_solve" ? cholesky_factorize(plan,a) : nothing
     function compute()
+        if op=="mg_setup";m=new_mg();return Float64[multigrid_size(m),multigrid_levels(m)];end
+        if op=="mg_matrix";m=multigrid_matrix(mg);return vcat(Float64.(m.offsets),Float64.(m.indices),m.values);end
+        op=="mg_apply" && return multigrid_apply(mg,b)
         if op=="ic0_factor";l=ic0_lower(IC0(a));return vcat(Float64.(l.offsets),Float64.(l.indices),l.values);end
         op=="ic0_apply" && return ic0_apply(ic,b)
         if op=="chol_symbolic";s=SparseCholeskySymbolic(a);return Float64.(vcat(s.offsets,s.indices,s.fill_steps));end
@@ -47,7 +54,7 @@ function sparse_run(args)
         op=="ilu_apply" && return ilu_apply(factor,b)
         op=="spmv" && return matvec(a,b)
         op=="dense" && return rowmajor(dense*right)
-        r=op=="gmres" ? gmres(a,b;restart=parse(Int,args[11]),rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi==1,capture=capture!=0,preconditioner=jacobi==3 ? ILU0(a) : factor) : conjugate_gradient(a,b;rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi==1,capture=capture!=0,preconditioner=jacobi==3 ? IC0(a) : ic)
+        r=op=="gmres" ? gmres(a,b;restart=parse(Int,args[11]),rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi==1,capture=capture!=0,preconditioner=jacobi==3 ? ILU0(a) : factor) : conjugate_gradient(a,b;rtol=rtol,atol=atol,max_iterations=limit,jacobi=jacobi==1,capture=capture!=0,preconditioner=jacobi==5 ? new_mg() : jacobi==4 ? mg : jacobi==3 ? IC0(a) : ic)
         if iterations>0
             r.converged || error("benchmark CG did not converge: "*r.reason)
             return r.x

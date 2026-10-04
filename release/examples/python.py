@@ -47,3 +47,8 @@ ic=IC0(sparse)
 for rhs in ([6,7],[11,13]):
     pcg=sparse.conjugate_gradient(rhs,preconditioner=ic)
     assert pcg.converged and pcg.iterations==1
+
+from matrix import GeometricMultigrid
+mg=GeometricMultigrid(3);grid=mg.matrix;rhs=grid.matvec([1.]*9)
+assert grid.conjugate_gradient(rhs,preconditioner=mg).converged
+assert len(mg.apply(rhs))==9 and mg.levels==2

@@ -134,7 +134,8 @@ class CSRMatrix:
             raise ValueError('invalid CG options')
         if preconditioner is not None:
             from cholesky import IC0
-            if not isinstance(preconditioner,IC0) or preconditioner.size!=n or jacobi:raise ValueError('invalid or conflicting CG preconditioner')
+            from multigrid import GeometricMultigrid
+            if not isinstance(preconditioner,(IC0,GeometricMultigrid)) or preconditioner.size!=n or jacobi:raise ValueError('invalid or conflicting CG preconditioner')
         # Validate symmetry without creating a dense copy. Explicit zero entries are allowed.
         from bisect import bisect_left
         diagonal=[1.0]*n

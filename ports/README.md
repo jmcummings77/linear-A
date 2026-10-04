@@ -228,3 +228,5 @@ All eleven ports provide canonical CSR construction, sparse matrix-vector multip
 All ports support [approximate minimum degree ordering](AMD.md), with deterministic new-to-old permutations and shared conformance fixtures.
 
 Compare [IC(0), plain CG, Jacobi-CG and full Cholesky](https://jmcummings77.github.io/linear-A/ic0/) with reusable factors, three orderings, and live solution/residual fields. See the [IC(0) contract](IC0.md).
+
+[Geometric multigrid](MULTIGRID.md) adds a reusable symmetric V-cycle for nested constant-coefficient diffusion grids in every port, with prepared CG solves and live coarse-grid correction frames.

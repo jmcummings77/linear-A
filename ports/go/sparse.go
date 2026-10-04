@@ -16,7 +16,7 @@ type CGOptions struct {
 	RelativeTolerance, AbsoluteTolerance float64
 	MaxIterations                        int
 	Jacobi, Capture                      bool
-	Preconditioner                       *IC0
+	Preconditioner                       SymmetricPreconditioner
 }
 
 func DefaultCGOptions() CGOptions { return CGOptions{RelativeTolerance: 1e-10, MaxIterations: 1000} }
@@ -110,6 +110,17 @@ func (a *CSRMatrix) ConjugateGradient(b []float64, o CGOptions) (*CGResult, erro
 	}
 	if !isFinite(o.RelativeTolerance) || o.RelativeTolerance < 0 || o.RelativeTolerance >= 1 || !isFinite(o.AbsoluteTolerance) || o.AbsoluteTolerance < 0 || o.MaxIterations < 0 || o.MaxIterations > 100000 {
 		return nil, errors.New("invalid CG options")
+	}
+	// Preserve the previous optional *IC0 API's nil-pointer behavior.
+	switch p := o.Preconditioner.(type) {
+	case *IC0:
+		if p == nil {
+			o.Preconditioner = nil
+		}
+	case *GeometricMultigrid:
+		if p == nil {
+			o.Preconditioner = nil
+		}
 	}
 	if o.Preconditioner != nil && (o.Preconditioner.Size() != n || o.Jacobi) {
 		return nil, errors.New("invalid or conflicting CG preconditioner")

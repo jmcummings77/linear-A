@@ -141,7 +141,7 @@ impl CSRMatrix {
         &self,
         b: &[f64],
         o: CGOptions,
-        preconditioner: Option<&crate::IC0>,
+        preconditioner: Option<&dyn crate::SymmetricPreconditioner>,
     ) -> Result<CGResult, MatrixError> {
         let n = self.rows;
         if preconditioner.map_or(false, |f| f.size() != n || o.jacobi) {

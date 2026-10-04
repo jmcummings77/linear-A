@@ -10,7 +10,7 @@ use case.
 [Browse all reports](https://jmcummings77.github.io/linear-A/) ·
 [Shared API and implementation differences](ports/README.md) ·
 [Release kits and installation](release/README.md) ·
-[Versioned API contract](docs/api/0.10.0/README.md)
+[Versioned API contract](docs/api/0.11.0/README.md)
 
 ## Choose an implementation
 
@@ -174,3 +174,5 @@ Explore [sparse Cholesky](https://jmcummings77.github.io/linear-A/cholesky/): an
 Compare [natural, RCM and AMD ordering](https://jmcummings77.github.io/linear-A/amd/) across eleven ports, with separate preparation and solve costs, SuiteSparse reference fill, and an interactive elimination graph. Read the [AMD contract](ports/AMD.md).
 
 Compare [IC(0), plain CG, Jacobi-CG and full Cholesky](https://jmcummings77.github.io/linear-A/ic0/) with reusable factors, three orderings, and live solution/residual fields. See the [IC(0) contract](ports/IC0.md).
+
+Explore [geometric multigrid](https://jmcummings77.github.io/linear-A/multigrid/): reusable V-cycles across all eleven ports, scaling comparisons, and live fine/coarse correction frames. [API details](ports/MULTIGRID.md).

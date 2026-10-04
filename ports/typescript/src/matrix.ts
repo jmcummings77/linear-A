@@ -491,3 +491,5 @@ export type {GMRESOptions,GMRESResult} from "./gmres.js";
 export {ILU0} from "./ilu.js";
 
 export {SparseCholeskySymbolic,SparseCholesky,IC0} from './cholesky.js';
+
+export {GeometricMultigrid} from './multigrid.js';

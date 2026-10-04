@@ -340,7 +340,7 @@ export async function createMatrixAPI({
     dispose(){if(this.#pointer)runtime._wm_factor_destroy(this.#pointer);this.#pointer=0;}
   }
 
-  let csrPointer,iluPointer,icPointer;
+  let csrPointer,iluPointer,icPointer,mgWidth;
   class SparseCholeskySymbolic {
     #pointer;#size;#rp;#ci;#steps;
     constructor(a){
@@ -360,6 +360,17 @@ export async function createMatrixAPI({
     get lower(){let out;try{out=new Matrix(runtime._wm_cholesky_lower(this.#alive()),0,undefined,ownedHandle);const v=out.toArray(),n=this.size,m=this.nnz;return new CSRMatrix(n,n,v.slice(0,n+1),v.slice(n+1,n+1+m),v.slice(n+1+m));}finally{out?.dispose();}}
     solve(values){let b,out;try{b=new Matrix(values.length,1,values);out=new Matrix(runtime._wm_cholesky_solve(this.#alive(),matrixPointer(b)),0,undefined,ownedHandle);return Array.from(out.toArray());}finally{b?.dispose();out?.dispose();}}
     dispose(){if(this.#pointer){runtime._wm_cholesky_destroy(this.#pointer);this.#pointer=0;}}
+  }
+  class GeometricMultigrid {
+    #width;#disposed=false;
+    static {mgWidth=m=>m.#alive();}
+    constructor(width){if(!Number.isInteger(width)||width<1||width>255||((width+1)&width)!==0)throw new RangeError('grid width must be 2**k-1 in 1..255');this.#width=width;}
+    get width(){return this.#width;}get size(){return this.width**2;}get levels(){return Math.log2(this.width+1);}
+    #alive(){if(this.#disposed)throw new Error('multigrid has been disposed');return this.width;}
+    dispose(){this.#disposed=true;}
+    get matrix(){let out;try{out=new Matrix(runtime._wm_multigrid_matrix(this.#alive()),0,undefined,ownedHandle);const v=out.toArray(),n=this.size,m=(v.length-n-1)/2;return new CSRMatrix(n,n,v.slice(0,n+1),v.slice(n+1,n+1+m),v.slice(n+1+m));}finally{out?.dispose();}}
+    #run(values,capture){let b,out;try{b=new Matrix(values.length,1,values);out=new Matrix(runtime._wm_multigrid_apply(this.#alive(),matrixPointer(b),+capture),0,undefined,ownedHandle);const v=Array.from(out.toArray()),x=v.slice(0,this.size),frames=[];for(let k=this.size;k<v.length;){const level=v[k++],width=v[k++],phase=['enter','pre_smooth','coarse_solve','correct','post_smooth'][v[k++]],n=width*width;frames.push({level,width,phase,x:v.slice(k,k+n),b:v.slice(k+n,k+2*n),residual:v.slice(k+2*n,k+3*n)});k+=3*n;}return {x,frames};}finally{b?.dispose();out?.dispose();}}
+    apply(b){return this.#run(b,false).x;}trace(b){return this.#run(b,true);}
   }
   class IC0 {
     #pointer=0;#size;#nnz;
@@ -421,7 +432,7 @@ export async function createMatrixAPI({
       let b,handle;
       try{
         b=new Matrix(values.length,1,values);
-        handle=checkedHandle(runtime._wm_csr_cg_preconditioned(this.#alive(),matrixPointer(b),rtol,atol,maxIterations,+jacobi,+capture,preconditioner===undefined?0:icPointer(preconditioner)));
+        handle=checkedHandle(preconditioner instanceof GeometricMultigrid?runtime._wm_csr_cg_multigrid(this.#alive(),matrixPointer(b),rtol,atol,maxIterations,+jacobi,+capture,mgWidth(preconditioner)):runtime._wm_csr_cg_preconditioned(this.#alive(),matrixPointer(b),rtol,atol,maxIterations,+jacobi,+capture,preconditioner===undefined?0:icPointer(preconditioner)));
         const iterations=runtime._wm_cg_iterations(handle),reason=['converged','iteration_limit','breakdown','nonfinite'][runtime._wm_cg_reason(handle)];
         const copy=(field,count)=>{const offset=runtime._wm_cg_data(handle,field)>>>3;return Array.from(runtime.HEAPF64.subarray(offset,offset+count));};
         const x=copy(0,this.rows),residuals=copy(1,iterations+1),flat=capture?copy(2,(iterations+1)*this.rows):[];
@@ -449,5 +460,5 @@ export async function createMatrixAPI({
     Object.defineProperty(Matrix.prototype, Symbol.dispose, { value: Matrix.prototype.dispose });
     Object.defineProperty(Factorization.prototype, Symbol.dispose, { value: Factorization.prototype.dispose });
   }
-  return { Matrix, Factorization, CSRMatrix, IC0, ILU0, SparseCholeskySymbolic, SparseCholesky };
+  return { Matrix, Factorization, CSRMatrix, GeometricMultigrid, IC0, ILU0, SparseCholeskySymbolic, SparseCholesky };
 }

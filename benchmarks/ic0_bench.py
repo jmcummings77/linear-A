@@ -51,12 +51,12 @@ def main():
  data=PublicSanitizer().report(data);args.output.mkdir(parents=True,exist_ok=True);(args.output/'results.json').write_text(json.dumps(data,indent=2,allow_nan=False)+'\n');render(data,args.output/'index.html')
  return int(len(available)!=len(implementations) or any(r['status']!='passed' for r in results))
 
-def benchmark(implementations,sizes,samples):
+def benchmark(implementations,sizes,samples,case_factory=None):
  import random,statistics
  from sparse_reference import protocol
  rows=[];rng=random.Random(2026)
  for size in sizes:
-  for operation,ordering,case,stats in cases(size):
+  for operation,ordering,case,stats in (case_factory or cases)(size):
    current=[]
    for impl in implementations:
     row=dict(implementation=impl['id'],operation=operation,ordering=ordering,problem='grid',size=size,unknowns=size*size,nnz=len(case['a']['values']),**stats,status='passed',samples=[])
