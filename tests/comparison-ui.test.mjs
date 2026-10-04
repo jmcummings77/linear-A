@@ -60,3 +60,18 @@ test('mobile workload activation moves to the inspector and provides a return li
  assert.equal(h.get('sample-panel').scrolled,true);assert.equal(h.get('sample-heading').focused,true);
  assert.equal(h.get('sample-back').href,'#'+button.id);
 });
+test('snapshot identities follow loaded files and swap consistently in results and inspector',async()=>{
+ const h=harness(),changed=structuredClone(report);changed.created_at='2026-10-04T01:02:03Z';changed.revision='abcdef0123456789abcdef0123456789abcdef01';changed.dirty=true;
+ const label='<img src=x> candidate.json';
+ await h.get('candidate-file').onchange({target:{files:[{name:label,size:100,text:async()=>JSON.stringify(changed)}],value:'file'}});
+ for(const prefix of ['', 'sample-']){
+  assert.equal(h.get(prefix+'candidate-label').textContent,label);assert.equal(h.get(prefix+'candidate-label').children.length,0);
+  assert.equal(h.get(prefix+'candidate-reference').textContent,'2026-10-04 · abcdef01 · dirty');
+ }
+ h.get('swap').onclick();
+ for(const prefix of ['', 'sample-']){
+  assert.equal(h.get(prefix+'baseline-label').textContent,label);
+  assert.equal(h.get(prefix+'baseline-reference').textContent,'2026-10-04 · abcdef01 · dirty');
+  assert.equal(h.get(prefix+'candidate-label').textContent,'baseline');
+ }
+});

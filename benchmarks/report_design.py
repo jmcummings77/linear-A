@@ -25,6 +25,18 @@ def apply_report_design(html):
     return html
 
 
+def implementation_summary(name, data):
+    """Distinguish algorithm variants and external references from project ports."""
+    passed = [item for item in data.get('implementations', []) if item.get('status') == 'passed']
+    if name == 'determinants':
+        ports = {item.get('name', item.get('id', '')).split(' / ')[0] for item in passed}
+        return f'{len(passed)} verified algorithm variants across {len(ports)} ports'
+    references = [item for item in passed if item.get('id') == 'suitesparse']
+    if references:
+        return f'{len(passed) - len(references)} verified ports + SuiteSparse reference'
+    return f'{len(passed)} verified implementations'
+
+
 def render_directory(destination=None):
     """Render the report directory with dates and counts from saved measurements."""
     template = (HERE / 'pages/template.html').read_text(encoding='utf-8')
@@ -33,9 +45,8 @@ def render_directory(destination=None):
         name = marker.lower().replace('_', '-')
         data = json.loads((HERE / 'reports' / name / 'results.json').read_text())
         date = str(data.get('created_at', 'Undated run')).split('T')[0]
-        ports = sum(item.get('status') == 'passed' for item in data.get('implementations', []))
         count = sum(row.get('status') == 'passed' for row in data.get('results', []))
-        label = f'{date} · {ports} verified implementations · {count} timing results'
+        label = f'{date} · {implementation_summary(name, data)} · {count} timing results'
         replacements['__' + marker + '_META__'] = markup.escape(label)
     html = re.sub(r'__[A-Z0-9_]+_META__', lambda match: replacements[match[0]], template)
     Path(destination or HERE / 'pages/index.html').write_text(apply_report_design(html))

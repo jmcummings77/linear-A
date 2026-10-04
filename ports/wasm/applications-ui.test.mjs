@@ -9,10 +9,10 @@ const template=readFileSync(new URL('../../applications/template.html',import.me
 function playground({width=340,height=310}={}){
  const nodes=new Map(),timers=new Map(),workers=[],events=new Map();let nextTimer=0;
  class CanvasContext{
-  constructor(){this.texts=[];this.strokes=[];this.path=[];this.boxes=[];}
+  constructor(){this.texts=[];this.strokes=[];this.path=[];this.boxes=[];this.clears=0;this.paints=0;}
   finite(...values){assert.ok(values.every(Number.isFinite),`Nonfinite drawing coordinates: ${values}`);}
   setTransform(...values){this.finite(...values);}
-  clearRect(){this.texts=[];this.strokes=[];this.boxes=[];}
+  clearRect(){this.texts=[];this.strokes=[];this.boxes=[];this.clears++;}
   beginPath(){this.path=[];}
   moveTo(x,y){this.finite(x,y);this.path.push([x,y]);}
   lineTo(x,y){this.finite(x,y);this.path.push([x,y]);}
@@ -24,14 +24,15 @@ function playground({width=340,height=310}={}){
   measureText(text){return {width:text.length*7};}
   fillRect(x,y,w,h){this.finite(x,y,w,h);this.boxes.push({x,y,w,h});}
   createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4)};}
-  putImageData(){}
+  putImageData(){this.paints++;}
  }
  class Element{
-  constructor(){this.children=[];this.style={};this.textContent='';this.className='';this.hidden=false;this.clientWidth=width;this.clientHeight=height;this.ctx=new CanvasContext();this._value='';}
+  constructor(){this.children=[];this.style={};this.dataset={};this.attributes={};this.textContent='';this.className='';this.hidden=false;this.clientWidth=width;this.clientHeight=height;this.ctx=new CanvasContext();this._value='';}
   set value(v){this._value=String(v);}
   get value(){return this._value;}
   append(...children){this.children.push(...children);}
   replaceChildren(...children){this.children=children;}
+  setAttribute(name,value){this.attributes[name]=value;}
   getContext(){return this.ctx;}
   getBoundingClientRect(){return {left:0,top:0,width:this.clientWidth,height:this.clientHeight};}
   setPointerCapture(){}
@@ -47,8 +48,10 @@ function playground({width=340,height=310}={}){
  const context={document:{getElementById:get,createElement:()=>new Element(),documentElement:{}},Worker,Blob,URL:{createObjectURL:()=> 'blob:test',revokeObjectURL(){}},getComputedStyle:()=>({getPropertyValue:name=>({'--ink':'#111','--muted':'#555','--green':'#070','--orange':'#b50','--plot':'#eee'}[name])}),devicePixelRatio:2,setTimeout:(callback,delay)=>{timers.set(++nextTimer,{callback,delay});return nextTimer;},clearTimeout:id=>timers.delete(id),addEventListener:(name,callback)=>events.set(name,callback)};
  vm.runInNewContext(source,context);
  function flush(){for(const [id,{callback,delay}] of [...timers])if(delay===300){timers.delete(id);callback();}}
- function deliver(kind,result){flush();const worker=workers.find(w=>w.message?.kind===kind);assert.ok(worker,`Missing ${kind} worker`);worker.onmessage({data:{id:worker.message.id,result}});}
- return {get,deliver,flush,resize:()=>events.get('resize')()};
+ function request(kind){flush();const worker=workers.findLast(w=>w.message?.kind===kind);assert.ok(worker,`Missing ${kind} worker`);return {worker,id:worker.message.id};}
+ function respond(ticket,data){ticket.worker.onmessage({data:{id:ticket.id,...data}});}
+ function deliver(kind,result){respond(request(kind),{result});}
+ return {get,deliver,flush,request,respond,resize:()=>events.get('resize')(),timeout:()=>{for(const [id,timer] of [...timers])if(timer.delay===20000){timers.delete(id);timer.callback();}}};
 }
 const pcaResult=({ambiguous=false,mean=[0,0],values=[25,.1],axes=[[1,0],[0,1]]}={})=>({mean,values,axes,explained:ambiguous?null:.9,ambiguous,projected:[]});
 const imageResult=(rank,values=Array.from({length:24},(_,i)=>24-i))=>({singularValues:values,reconstructed:Array(576).fill(0),relativeError:0,rmse:0,retained:rank/24,factorScalars:rank*49,originalScalars:576});
@@ -81,12 +84,21 @@ test('PCA labels remain within narrow canvas edges and disappear for ambiguous d
 });
 
 test('rank selection, cutoff and accessible values agree at zero, partial and full rank',()=>{
- const page=playground();
+ const page=playground();page.deliver('image',imageResult(6));
+ const output=page.get('image-output').ctx,clears=output.clears;
  for(const rank of [0,6,24]){
   page.get('image-rank').value=rank;page.get('image-rank').oninput();
   assert.equal(page.get('image-rank-label').textContent,String(rank));
-  assert.equal(page.get('image-spectrum-cutoff').hidden,true);
+  assert.equal(page.get('image-spectrum-cutoff').hidden,false);
+  assert.equal(output.clears,clears,'Rank editing cleared the previous image');
+  assert.equal(page.get('image-spectrum').children.filter(bar=>bar.className==='retained').length,rank);
+  assert.equal(page.get('image-spectrum-cutoff-label').textContent,`k = ${rank}`);
+  assert.equal(page.get('image-output-panel').attributes['aria-busy'],'true');
+  assert.match(page.get('image-output-state').textContent,/Updating to rank .*showing previous rank/);
+  assert.equal(page.get('image-metrics').textContent,'');
   page.deliver('image',imageResult(rank));
+  assert.equal(page.get('image-output-panel').attributes['aria-busy'],'false');
+  assert.equal(page.get('image-output-state').textContent,`Showing rank ${rank}.`);
   const bars=page.get('image-spectrum').children,rows=page.get('image-spectrum-values').children;
   assert.equal(bars.length,24);assert.equal(bars.filter(bar=>bar.className==='retained').length,rank);
   assert.equal(rows.filter(row=>row.children[2].textContent==='Retained').length,rank);
@@ -107,4 +119,30 @@ test('blank-image spectra stay finite and editing clears outdated spectrum evide
  page.get('image-preset').value='blank';page.get('image-preset').onchange();
  assert.equal(page.get('image-spectrum').children.length,0);assert.equal(page.get('image-spectrum-values').children.length,0);
  assert.equal(page.get('image-spectrum-cutoff').hidden,true);assert.match(page.get('image-spectrum-caption').textContent,/Calculating singular values/);
+});
+
+test('old pixel results cannot repopulate the spectrum after a new image or rank selection',()=>{
+ const page=playground();page.deliver('image',imageResult(6));
+ page.get('image-rank').value=3;page.get('image-rank').oninput();const old=page.request('image');
+ page.get('image-preset').value='waves';page.get('image-preset').onchange();
+ page.get('image-rank').value=9;page.get('image-rank').oninput();
+ const paints=page.get('image-output').ctx.paints;page.respond(old,{result:imageResult(3)});
+ assert.equal(page.get('image-output').ctx.paints,paints);assert.equal(page.get('image-spectrum').children.length,0);
+ assert.equal(page.get('image-output-state').textContent,'Updating reconstruction…');
+ page.deliver('image',imageResult(9));assert.equal(page.get('image-output-state').textContent,'Showing rank 9.');
+});
+
+test('rank update errors and timeouts label preserved output, while pixel edits discard it',()=>{
+ for(const failure of ['message','worker','timeout']){
+  const page=playground();page.deliver('image',imageResult(6));
+  page.get('image-rank').value=1;page.get('image-rank').oninput();const pending=page.request('image');
+  if(failure==='message')page.respond(pending,{error:'SVD failed'});else if(failure==='worker')pending.worker.onerror();else page.timeout();
+  assert.equal(page.get('image-output-panel').attributes['aria-busy'],'false',failure);
+  assert.equal(page.get('image-output-state').textContent,'Update failed; showing previous rank 6.',failure);
+  assert.equal(page.get('image-spectrum').children.length,24);
+  page.respond(pending,{result:imageResult(1)});assert.match(page.get('image-output-state').textContent,/Update failed/);
+  page.get('image-preset').value='blank';page.get('image-preset').onchange();
+  assert.equal(page.get('image-spectrum').children.length,0);assert.equal(page.get('image-output-state').textContent,'Updating reconstruction…');
+  page.deliver('image',imageResult(1));assert.equal(page.get('image-output-state').textContent,'Showing rank 1.');
+ }
 });
