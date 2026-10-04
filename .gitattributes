@@ -6,3 +6,8 @@
 *.json text eol=lf
 *.yml text eol=lf
 *.md text eol=lf
+
+# Preserve published measurement bytes across checkout platforms.
+benchmarks/reports/** -text
+experiments/machine-code-dot/results/** -text
+experiments/matmul-locality/results/** -text

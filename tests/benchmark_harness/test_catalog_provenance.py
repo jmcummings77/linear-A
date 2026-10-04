@@ -4,8 +4,10 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "benchmarks"))
+import compare
 from check_catalog import validate_catalog
 from compare import select_public
 
@@ -41,6 +43,35 @@ class CatalogProvenanceTests(unittest.TestCase):
         self.write_catalog()
         self.catalog.write_text('<h1>Restyled</h1>' + self.catalog.read_text())
         validate_catalog(self.root)
+
+    def test_published_paths_are_independent_of_validator_username_and_checkout(self):
+        command = ["dotnet", "build", "benchmarks/dotnet/Runner.csproj",
+                   "--output", ".build/c/runner"]
+        self.report["implementations"][0]["build_commands"] = [command]
+        self.source.write_text(json.dumps(self.report))
+        for snapshot in self.snapshots:
+            snapshot["data"]["implementations"][0]["build_commands"] = [command]
+        self.write_catalog()
+
+        # These usernames collide with a public source filename or language ID.
+        # Verification must not reinterpret either as the current host's identity.
+        hosts = (("/Users/runner", "/Users/runner/projects/linear-A"),
+                 ("/home/runner", "/home/runner/work/linear-A/linear-A"),
+                 ("/home/c", "/home/c/linear-A"))
+        for home, checkout in hosts:
+            with self.subTest(home=home), \
+                 patch("publication.Path.home", return_value=Path(home)), \
+                 patch.object(compare, "ROOT", Path(checkout)):
+                validate_catalog(self.root)
+                compare.render([("Baseline", self.report), ("Candidate", self.report)],
+                               self.catalog, published=True)
+                validate_catalog(self.root)
+                encoded = self.catalog.read_text().split(
+                    '<script id="snapshots" type="application/json">', 1)[1].split('</script>', 1)[0]
+                rendered = json.loads(encoded)[0]["data"]
+                self.assertEqual(rendered["implementations"][0]["id"], "c")
+                self.assertEqual(rendered["implementations"][0]["build_commands"], [command])
+                self.assertEqual(rendered["results"], self.snapshots[0]["data"]["results"])
 
     def test_altered_measurements_or_provenance_cannot_bypass_report_gate(self):
         original = copy.deepcopy(self.snapshots)

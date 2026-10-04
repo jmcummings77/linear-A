@@ -50,7 +50,7 @@ def validate_catalog(repo_root):
     if not isinstance(snapshots, list) or not 2 <= len(snapshots) <= 30:
         raise ValueError("comparison catalog must contain 2–30 snapshots")
 
-    reports = [select_public(json.loads(source.read_text(encoding="utf-8")))
+    reports = [select_public(json.loads(source.read_text(encoding="utf-8")), published=True)
                for source in sorted((repo_root / "benchmarks/reports").glob("*/results.json"))]
     for index, snapshot in enumerate(snapshots):
         if not isinstance(snapshot, dict) or snapshot.get("data") not in reports:
