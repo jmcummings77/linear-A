@@ -38,7 +38,7 @@ function report(data=fixture()){
   const document={getElementById:get,createElement:tag=>new Element(tag),createTextNode:text=>{const node=new Element('#text');node.textContent=text;return node;},addEventListener(type,handler){if(!listeners.has(type))listeners.set(type,[]);listeners.get(type).push(handler);}};
   const el=(tag,text,cls)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
   const addOption=(select,value,text)=>{const option=el('option',text);option.value=value;select.append(option);};
-  addOption(get('timing-scale'),'linear','Linear bars');addOption(get('timing-scale'),'log','Logarithmic dots');
+  addOption(get('timing-scale'),'auto','Auto · adapt to data');addOption(get('timing-scale'),'linear','Linear bars');addOption(get('timing-scale'),'log','Logarithmic dots');
   const context={data,passed:data.implementations.filter(x=>x.status==='passed'),valid:data.results.filter(x=>x.status==='passed'),names:Object.fromEntries(data.implementations.map(x=>[x.id,x.name])),$:get,el,addOption,time:n=>`${n.toFixed(1)} ns`,speed:n=>n.toFixed(2),document};
   vm.runInNewContext(source,context);
   const checkboxes=()=>get('timing-language-options').querySelectorAll('input');
@@ -152,4 +152,57 @@ test('logarithmic view handles equal and zero medians explicitly with no nonfini
   assert.doesNotMatch(page.get('chart').textContent,/NaN|Infinity/);
   assert.equal(page.get('operation').options[0].textContent,'Matrix multiplication');
   assert.match(page.get('timing-workload').textContent,/Matrix multiplication · 8 × 8/);
+});
+
+test('auto defaults to linear below a 100× positive median spread and logarithmic at the threshold',()=>{
+  for(const [largest,logarithmic] of [[999,false],[1000,true],[1001,true]]){
+    const data=fixture();data.results=[timing('csharp','multiply',8,10),timing('rust','multiply',8,largest)];
+    // A large sample envelope must not trigger auto when the medians span less than 100×.
+    data.results[0].min_ns=1;
+    const page=report(data);
+    assert.equal(page.get('timing-scale').value,'auto');
+    assert.equal(Boolean(page.rows()[0].querySelector('.timing-dot')),logarithmic);
+    assert.match(page.get('chart-note').textContent,logarithmic?/auto chose logarithmic dots \(positive medians span ≥100×\)/:/auto chose linear bars from zero/);
+    assert.equal(JSON.stringify(page.data),page.original);
+  }
+});
+
+test('auto adapts to visible languages and workloads without replacing the selected scale',()=>{
+  const data=fixture();data.results[2]=timing('python','multiply',8,2000);
+  const page=report(data);assert.ok(page.rows()[0].querySelector('.timing-dot'));
+  page.language('python',false);assert.deepEqual(page.widths(),['50%','100%']);assert.match(page.get('chart-note').textContent,/auto chose linear bars/);
+  page.language('python',true);assert.ok(page.rows()[0].querySelector('.timing-dot'));
+  page.choose('size','16');assert.deepEqual(page.widths(),['10%','20%','100%']);
+  page.choose('size','8');assert.ok(page.rows()[0].querySelector('.timing-dot'));
+  page.choose('operation','transpose');assert.deepEqual(page.widths(),['20%','100%']);
+  assert.equal(page.get('timing-scale').value,'auto');assert.equal(JSON.stringify(page.data),page.original);
+});
+
+test('explicit linear and log choices survive changes regardless of the automatic recommendation',()=>{
+  const data=fixture();data.results[2]=timing('python','multiply',8,2000);
+  const page=report(data);page.choose('timing-scale','linear');assert.deepEqual(page.widths(),['0.5%','1%','100%']);
+  page.language('python',false);page.language('python',true);page.choose('size','16');page.choose('size','8');
+  assert.equal(page.get('timing-scale').value,'linear');assert.deepEqual(page.widths(),['0.5%','1%','100%']);
+  assert.doesNotMatch(page.get('chart-note').textContent,/auto chose/);
+  page.choose('timing-scale','log');page.language('python',false);page.choose('operation','transpose');
+  assert.equal(page.get('timing-scale').value,'log');assert.ok(page.rows()[0].querySelector('.timing-dot'));
+  assert.match(page.get('chart-note').textContent,/logarithmic dots/);assert.doesNotMatch(page.get('chart-note').textContent,/auto chose/);
+  page.choose('timing-scale','auto');assert.deepEqual(page.widths(),['100%']);
+  assert.equal(JSON.stringify(page.data),page.original);
+});
+
+test('auto ignores zero medians for its spread and handles equal, single, and empty selections',()=>{
+  for(const medians of [[0,0,0],[0,10,10],[0,0,10],[0,10,1000]]){
+    const data=fixture();data.results=['csharp','rust','python'].map((id,i)=>timing(id,'multiply',8,medians[i]));
+    const page=report(data),logarithmic=medians[2]===1000;
+    assert.equal(Boolean(page.rows()[1].querySelector('.timing-dot')),logarithmic);
+    if(logarithmic)assert.match(page.rows()[0].textContent,/Zero is not on a log scale/);
+    else assert.ok(page.widths().every(width=>Number.isFinite(Number.parseFloat(width))));
+    assert.doesNotMatch(page.get('chart').textContent+page.get('timing-axis').textContent,/NaN|Infinity/);
+    page.click('timing-language-none');assert.deepEqual(page.rows(),[]);assert.equal(page.get('chart-note').textContent,'');
+    assert.equal(page.get('timing-axis').children.length,0);assert.equal(page.get('timing-scale').value,'auto');
+    assert.equal(JSON.stringify(page.data),page.original);
+  }
+  const data=fixture();data.results=[];const empty=report(data);
+  assert.deepEqual(empty.rows(),[]);assert.equal(empty.get('chart-note').textContent,'');assert.equal(empty.get('timing-scale').value,'auto');
 });

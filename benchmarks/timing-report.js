@@ -87,7 +87,10 @@
       return;
     }
     const max = Math.max(...rows.map(row => row.median_ns));
-    const logarithmic = $('timing-scale').value === 'log';
+    const requestedScale = $('timing-scale').value;
+    const positiveMedians = rows.map(row => row.median_ns).filter(value => Number.isFinite(value) && value > 0);
+    const wideMedianSpread = positiveMedians.length > 1 && Math.max(...positiveMedians) / Math.min(...positiveMedians) >= 100;
+    const logarithmic = requestedScale === 'log' || (requestedScale === 'auto' && wideMedianSpread);
     const positive = rows.flatMap(row => [row.min_ns, row.median_ns, row.max_ns]).filter(value => Number.isFinite(value) && value > 0);
     const low = positive.length ? Math.log10(Math.min(...positive)) : 0;
     const high = positive.length ? Math.log10(Math.max(...positive)) : 1;
@@ -130,7 +133,8 @@
     } else labels.append(el('span', '0'), el('span', time(max)));
     $('timing-axis').append(labels);
     const sampleCounts = [...new Set(rows.map(row => row.samples.length))].sort((a, b) => a - b);
-    $('chart-note').textContent = `${rows.length}/${matching.length} implementations shown · ${logarithmic ? 'logarithmic dots; whiskers show observed min–max' : 'linear bars from zero'} · scale fits shown results · ${sampleCounts.join('–')} samples per implementation · ratio = baseline median / implementation median · output allocation included`;
+    const scaleNote = `${requestedScale === 'auto' ? 'auto chose ' : ''}${logarithmic ? 'logarithmic dots' : 'linear bars from zero'}${requestedScale === 'auto' && logarithmic ? ' (positive medians span ≥100×)' : ''}${logarithmic ? '; whiskers show observed min–max' : ''}`;
+    $('chart-note').textContent = `${rows.length}/${matching.length} implementations shown · ${scaleNote} · scale fits shown results · ${sampleCounts.join('–')} samples per implementation · ratio = baseline median / implementation median · output allocation included`;
     const header = el('tr');
     for (const title of ['Implementation', 'Iterations / sample', 'Median', 'MAD', 'Range', 'Samples']) header.append(el('th', title));
     $('samples').append(header);

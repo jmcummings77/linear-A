@@ -3,10 +3,10 @@ import test from 'node:test';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../benchmarks/sparse-report.mjs',import.meta.url),'utf8');
-function setup(recorded={implementations:[],results:[],machine:{},methodology:{}},live={available:true,worker_source:'worker',capabilities:['gmres','ilu0','rhs_cache']}){
+function setup(recorded={implementations:[],results:[],machine:{},methodology:{}},live={available:true,worker_source:'worker',capabilities:['gmres','ilu0','rhs_cache']},dimensions={width:500,height:340}){
  const elements=new Map(),timers=new Map(),workers=[],animation=[],events={},drawing=[];let tid=0;
  const context=new Proxy({},{get:(o,k)=>o[k]??((...args)=>drawing.push([k,...args]))});
- const element=()=>({value:'',checked:false,disabled:false,textContent:'',children:[],style:{},setAttribute(name,value){this[name]=value;},append(...a){this.children.push(...a);},replaceChildren(){this.children=[];},getBoundingClientRect:()=>({width:500,height:340}),getContext:()=>context});
+ const element=()=>({value:'',checked:false,disabled:false,textContent:'',children:[],style:{},setAttribute(name,value){this[name]=value;},removeAttribute(name){delete this[name];},append(...a){this.children.push(...a);},replaceChildren(){this.children=[];},getBoundingClientRect:()=>dimensions,getContext:()=>context});
  const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
  get('data').textContent=JSON.stringify(recorded);get('live').textContent=JSON.stringify(live);
  get('operation').value='csr_spmv';get('timing-scale').value='linear';
@@ -17,7 +17,7 @@ function setup(recorded={implementations:[],results:[],machine:{},methodology:{}
  vm.runInNewContext(source,sandbox);
  const flush=delay=>{for(const [id,t] of [...timers])if(t.delay===delay){timers.delete(id);t.f();}};
  const ready=()=>{flush(300);workers.at(-1).onmessage({data:{type:'ready',verified:39}});};
- const result=id=>workers.at(-1).onmessage({data:{type:'result',id,result:{size:2,nnz:12,iterations:2,converged:true,reason:'converged',residuals:[10,1,.00001],threshold:.001,iterates:[[0,0,0,0],[1,2,3,4],[2,3,4,5]]}}});
+ const result=(id,overrides={})=>workers.at(-1).onmessage({data:{type:'result',id,result:{size:2,nnz:12,iterations:2,converged:true,reason:'converged',residuals:[10,1,.00001],threshold:.001,iterates:[[0,0,0,0],[1,2,3,4],[2,3,4,5]],...overrides}}});
  return {get,timers,workers,animation,events,drawing,flush,ready,result};
 }
 test('debounce coalesces rapid changes and ignores stale worker results',()=>{
@@ -113,4 +113,45 @@ test('preserved legacy live bundles do not advertise unsupported solver controls
  assert.equal(t.get('solver').value,'cg');assert.equal(t.get('solver').disabled,true);
  assert.equal(t.get('ilu-option').disabled,true);assert.equal(t.get('hot').disabled,true);assert.equal(t.get('capability-note').hidden,false);
  t.ready();assert.equal(t.workers[0].sent.at(-1).config.speed,0);
+});
+
+
+test('guided presets choose supported controls and preserve legacy capability restrictions',()=>{
+ const t=setup();t.get('live-preset').value='ilu';t.get('live-preset').onchange();t.ready();
+ let config=t.workers[0].sent.at(-1).config;assert.equal(config.solver,'gmres');assert.equal(config.ilu,true);assert.equal(config.speed,4);
+ t.get('live-preset').value='diffusion';t.get('live-preset').onchange();t.flush(300);
+ config=t.workers[0].sent.at(-1).config;assert.equal(config.solver,'cg');assert.equal(config.speed,0);assert.equal(config.ilu,false);assert.equal(config.jacobi,true);
+ assert.equal(t.get('restart').disabled,true);
+ t.get('live-preset').value='transport';t.get('live-preset').onchange();t.flush(300);
+ config=t.workers[0].sent.at(-1).config;assert.equal(config.solver,'gmres');assert.equal(config.speed,4);assert.equal(t.get('restart').disabled,false);
+ t.get('grid').value='24';t.get('grid').onchange();assert.equal(t.get('live-preset').value,'custom');
+ const legacy=setup(undefined,{available:true,worker_source:'old worker',fixtures:[{op:'cg'}]});
+ assert.equal(legacy.get('preset-transport').disabled,true);assert.equal(legacy.get('preset-ilu').disabled,true);
+ legacy.get('live-preset').value='transport';legacy.get('live-preset').onchange();legacy.ready();
+ assert.equal(legacy.workers[0].sent.at(-1).config.solver,'cg');assert.equal(legacy.get('hot').disabled,true);
+ const gmres=setup(undefined,{available:true,worker_source:'gmres worker',capabilities:['gmres']});
+ assert.equal(gmres.get('preset-transport').disabled,false);assert.equal(gmres.get('preset-ilu').disabled,true);
+ gmres.get('live-preset').value='ilu';gmres.get('live-preset').onchange();gmres.ready();assert.equal(gmres.workers[0].sent.at(-1).config.ilu,false);
+});
+
+test('scrubbing, playback and table selection expose the same current residual and restart position',()=>{
+ const t=setup();t.ready();t.result(1,{solver:'gmres',estimatedResiduals:[10,.8,.000009],restarts:[1]});
+ assert.equal(t.get('frame-residual').textContent,'1.000e-5');assert.equal(t.get('frame-estimate').textContent,'9.000e-6');assert.equal(t.get('frame-tolerance').textContent,'1.000e-3');
+ assert.equal(t.get('frame-restart').textContent,'1 step after restart 1');
+ const rows=t.get('iteration-rows').children;assert.equal(rows.length,3);assert.equal(rows[2]['aria-current'],'step');
+ t.get('frame').value='1';t.get('frame').oninput();assert.equal(t.get('frame-residual').textContent,'1.000e+0');assert.equal(t.get('frame-estimate').textContent,'8.000e-1');assert.equal(t.get('frame-restart').textContent,'Restart at iteration 1');assert.equal(rows[2]['aria-current'],undefined);assert.equal(rows[1]['aria-current'],'step');
+ rows[0].children[0].children[0].onclick();assert.equal(t.get('frame').value,0);assert.equal(t.get('play').textContent,'Play');assert.equal(t.get('frame-restart').textContent,'Initial guess');
+ t.get('play').onclick();t.animation.shift()(100);t.animation.shift()(8000);assert.equal(t.get('frame').value,1);assert.equal(t.get('frame-residual').textContent,rows[1].children[1].textContent);
+ const cg=setup();cg.ready();cg.result(1);assert.equal(cg.get('frame-estimate').textContent,'Not applicable · CG');assert.equal(cg.get('frame-restart').textContent,'Not used by CG');
+});
+
+test('reuse chart keeps the full plotting width on a narrow screen',()=>{
+ const data=structuredClone(recorded);data.suite='ilu-reuse-v1';data.implementations=data.implementations.slice(0,1);
+ data.results=Object.entries({ilu_setup:100000,gmres_ilu_reused:10000,gmres_ilu_total:110000,gmres_none:100000,gmres_jacobi:30000}).map(([operation,median_ns])=>({...recorded.results[0],operation,median_ns}));
+ const t=setup(data,undefined,{width:280,height:300});
+ assert.equal(t.get('reuse-nav').hidden,false);
+ const bars=t.drawing.filter(([op])=>op==='fillRect');assert.equal(bars.length,4);
+ assert.ok(bars.every(([,x,y,width])=>x===16&&y>=34&&width>0&&width<=248));
+ assert.equal(Math.max(...bars.map(([,x,y,width])=>width)),248);
+ const totals=t.get('reuse-values').children.map(row=>row.textContent);assert.ok(totals.includes('ILU reused: 180 µs'));
 });

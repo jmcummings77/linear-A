@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'benchmarks'))
 import report
+import report_design
 
 
 class Elements(HTMLParser):
@@ -27,6 +28,40 @@ class Elements(HTMLParser):
             self.ids[attrs['id']] = attrs
         if tag == 'a':
             self.links.append(attrs)
+
+
+class DirectoryElements(Elements):
+    def __init__(self):
+        super().__init__()
+        self.cards = []
+        self.current_card = None
+        self.in_metadata = False
+        self.div_families = []
+
+    def handle_starttag(self, tag, attributes):
+        super().handle_starttag(tag, attributes)
+        attrs = dict(attributes)
+        classes = attrs.get('class', '').split()
+        if tag == 'div':
+            family = attrs.get('id') if 'report-family' in classes else (self.div_families[-1] if self.div_families else None)
+            self.div_families.append(family)
+        if tag == 'a' and 'report' in classes:
+            self.current_card = {'href': attrs.get('href'), 'family': self.div_families[-1] if self.div_families else None, 'metadata': ''}
+            self.cards.append(self.current_card)
+        if tag == 'span' and 'run-meta' in classes:
+            self.in_metadata = True
+
+    def handle_endtag(self, tag):
+        if tag == 'div' and self.div_families:
+            self.div_families.pop()
+        if tag == 'span':
+            self.in_metadata = False
+        if tag == 'a':
+            self.current_card = None
+
+    def handle_data(self, text):
+        if self.current_card is not None and self.in_metadata:
+            self.current_card['metadata'] += text
 
 
 class ReportDesignTests(unittest.TestCase):
@@ -126,6 +161,71 @@ class ReportDesignTests(unittest.TestCase):
         self.assertEqual(live, original_live)
         self.assertIn('<style id="report-design">', html)
         self.assertNotRegex(html, r'__(?:REPORT|TIMING|PROFILE|LIVE|ACCURACY|GEOMETRY)[A-Z_]*__')
+
+
+class ReportDirectoryTests(unittest.TestCase):
+    def render(self):
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / 'directory.html'
+            report_design.render_directory(destination)
+            html = destination.read_text()
+        parsed = DirectoryElements()
+        parsed.feed(html)
+        return html, parsed
+
+    def test_every_current_benchmark_card_has_metadata_from_its_own_measurements(self):
+        expected_names = {'latest', 'determinants', 'eigen', 'vectors', 'sparse',
+                          'gmres', 'ilu', 'ordering', 'cholesky', 'amd'}
+        html, parsed = self.render()
+        cards = {card['href'].rstrip('/'): card for card in parsed.cards if card['metadata']}
+        self.assertEqual(set(cards), expected_names)
+        self.assertNotRegex(html, r'__[A-Z_]+_META__')
+        for name in expected_names:
+            with self.subTest(report=name):
+                data = json.loads((report_design.HERE / 'reports' / name / 'results.json').read_text())
+                metadata = cards[name]['metadata']
+                self.assertTrue(metadata.startswith(data['created_at'].split('T')[0] + ' · '))
+                passed_implementations = [item for item in data['implementations'] if item['status'] == 'passed']
+                passed_results = [row for row in data['results'] if row['status'] == 'passed']
+                self.assertIn(f'{len(passed_implementations)} verified implementations', metadata)
+                self.assertTrue(metadata.endswith(f'{len(passed_results)} timing results'))
+
+    def test_directory_navigation_targets_exist_and_solver_cards_follow_the_learning_sequence(self):
+        _, parsed = self.render()  # Parsing also rejects duplicate IDs.
+        for link in parsed.links:
+            href = link.get('href', '')
+            if href.startswith('#'):
+                with self.subTest(anchor=href):
+                    self.assertIn(href[1:], parsed.ids)
+        solver_cards = [card['href'] for card in parsed.cards
+                        if card['family'] == 'sparse-solvers']
+        self.assertEqual(solver_cards, ['sparse/', 'gmres/', 'ilu/'])
+        self.assertIn('ilu/#explore', [link.get('href') for link in parsed.links])
+
+    def test_new_template_marker_discovers_hyphenated_report_and_excludes_unsuccessful_rows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'pages').mkdir()
+            (root / 'reports/future-solver').mkdir(parents=True)
+            (root / 'reports/empty').mkdir()
+            (root / 'pages/template.html').write_text(
+                '<html><head><style></style></head><body>'
+                '<a class="report" href="future-solver/"><span class="run-meta">__FUTURE_SOLVER_META__</span></a>'
+                '<a class="report" href="empty/"><span class="run-meta">__EMPTY_META__</span></a>'
+                '</body></html>')
+            data = {'created_at': '2031-04-05T23:59:00+00:00',
+                    'implementations': [{'status': status} for status in ['passed', 'failed', 'passed', 'unavailable']],
+                    'results': [{'status': status} for status in ['failed', 'passed', 'unavailable', 'passed', 'failed']]}
+            source = root / 'reports/future-solver/results.json'
+            source.write_text(json.dumps(data))
+            (root / 'reports/empty/results.json').write_text('{}')
+            # Styling is independently tested; this fixture exercises discovery and metadata.
+            with patch.object(report_design, 'HERE', root), patch.object(report_design, 'apply_report_design', side_effect=lambda html: html):
+                html, parsed = self.render()
+            self.assertNotRegex(html, r'__[A-Z_]+_META__')
+            self.assertEqual(parsed.cards[0]['metadata'], '2031-04-05 · 2 verified implementations · 2 timing results')
+            self.assertEqual(parsed.cards[1]['metadata'], 'Undated run · 0 verified implementations · 0 timing results')
+            self.assertEqual(json.loads(source.read_text()), data)
 
 
 if __name__ == '__main__':

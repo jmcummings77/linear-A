@@ -3,6 +3,8 @@ const hasIlu=bundle.capabilities?.includes('ilu0')===true;
 const hasGmres=bundle.capabilities?.includes('gmres')||bundle.fixtures?.some(test=>test.op==='gmres');
 if(!hasGmres){$('solver').value='cg';$('solver').disabled=true;$('speed').value='0';for(const id of ['speed','angle','restart'])$(id).disabled=true;}
 $('ilu-option').disabled=!hasIlu;$('hot').disabled=!hasIlu;$('capability-note').hidden=hasIlu;
+$('preset-transport').disabled=!hasGmres;$('preset-ilu').disabled=!hasGmres||!hasIlu;
+$('live-preset').value=hasGmres?'transport':'diffusion';
 const add=(parent,tag,text)=>{const e=document.createElement(tag);e.textContent=text;parent.append(e);return e;};
 const colors=['#31766a','#b95122','#487ab6','#8865a3','#b34f79','#87711f','#2d8292','#8d6046','#6673aa','#986635','#6c7b3d'];
 const darkColors=['#82cbb1','#f1ad75','#94b9ed','#c6a2e7','#eda0bb','#d3bc69','#7cc6d1','#d8ad8f','#b1b9ec','#d9af73','#b6c683'];
@@ -34,7 +36,34 @@ function drawResidual(){const {ctx,w,h}=canvas('residual');if(!current)return;
  if(estimates.length){ctx.strokeStyle='#32a7a0';ctx.setLineDash([6,4]);ctx.beginPath();estimates.forEach((v,i)=>i?ctx.lineTo(px(i),py(v)):ctx.moveTo(px(i),py(v)));ctx.stroke();ctx.setLineDash([]);}
  ctx.strokeStyle=theme().getPropertyValue('--accent');ctx.lineWidth=2;ctx.beginPath();history.forEach((v,i)=>i?ctx.lineTo(px(i),py(v)):ctx.moveTo(px(i),py(v)));ctx.stroke();ctx.beginPath();ctx.arc(px(frame),py(history[frame]),5,0,Math.PI*2);ctx.fillStyle=ctx.strokeStyle;ctx.fill();ctx.lineWidth=1;
 }
-function updateFrame(value){if(!current)return;frame=Math.max(0,Math.min(current.iterates.length-1,value));$('frame').value=frame;$('step').textContent=`Iteration ${frame} / ${current.iterations}`;drawHeat();drawResidual();}
+let iterationViews=[],selectedIterationRow;
+const residualText=value=>Number.isFinite(value)?value===0?'0':value.toExponential(3):'Not recorded';
+function isGmres(){return current?.solver==='gmres'||!!current?.estimatedResiduals?.length;}
+function restartPosition(index){
+ if(!isGmres())return 'Not used by CG';
+ if(index===0)return 'Initial guess';
+ const previous=(current.restarts||[]).filter(step=>step>0&&step<=index).at(-1)||0;
+ return previous===index?`Restart at iteration ${index}`:previous?`${index-previous} step${index-previous===1?'':'s'} after restart ${previous}`:`Initial cycle · step ${index}`;
+}
+function renderIterationTable(){
+ $('iteration-rows').replaceChildren();iterationViews=[];selectedIterationRow=undefined;
+ for(const [index,value] of current.residuals.entries()){
+  const row=add($('iteration-rows'),'tr',''),identity=add(row,'td',''),button=add(identity,'button',String(index));
+  button.type='button';button.setAttribute('aria-label',`Show iteration ${index}`);button.disabled=index>=current.iterates.length;
+  button.onclick=()=>{setPlaying(false);updateFrame(index);};
+  for(const text of [residualText(value),isGmres()?residualText(current.estimatedResiduals?.[index]):'Not applicable',residualText(current.threshold),restartPosition(index)])add(row,'td',text);
+  iterationViews.push(row);
+ }
+}
+function updateFrame(value){
+ if(!current)return;
+ frame=Math.max(0,Math.min(current.iterates.length-1,value));$('frame').value=frame;$('step').textContent=`Iteration ${frame} / ${current.iterations}`;
+ $('frame-residual').textContent=residualText(current.residuals[frame]);
+ $('frame-estimate').textContent=isGmres()?residualText(current.estimatedResiduals?.[frame]):'Not applicable · CG';
+ $('frame-tolerance').textContent=residualText(current.threshold);$('frame-restart').textContent=restartPosition(frame);
+ selectedIterationRow?.removeAttribute('aria-current');selectedIterationRow=iterationViews[frame];selectedIterationRow?.setAttribute('aria-current','step');
+ drawHeat();drawResidual();
+}
 function setPlaying(value){playing=value;$('play').textContent=playing?'Pause':'Play';lastTime=0;}
 function animate(time){if(playing&&current){if(!lastTime)lastTime=time;const duration=15000/Math.max(1,current.iterations);if(time-lastTime>=duration){const next=frame+Math.max(1,Math.floor((time-lastTime)/duration));lastTime=time;if(next>current.iterations){if($('loop').checked)updateFrame(0);else{updateFrame(current.iterations);setPlaying(false);}}else updateFrame(next);}}requestAnimationFrame(animate);}
 requestAnimationFrame(animate);
@@ -51,12 +80,39 @@ function start(){if(worker)return;if(!bundle.available){fail(bundle.reason);retu
  clearTimeout(watchdog);if(m.type==='error'){fail('Solver failed: '+m.message);return;}
  current=m.result;$('status').textContent=current.converged?'Converged: the true residual meets the requested tolerance.':`Stopped: ${current.reason.replaceAll('_',' ')}. The displayed estimate has not converged.`;
  $('stats').replaceChildren();for(const [value,label] of [[current.size**2,'unknowns'],[current.nnz,'nonzero coefficients'],[current.iterations,'accepted iterations'],[(current.restarts||[]).length,'restarts'],...(current.ilu?[[current.reusedFactor?'Reused':current.setupMilliseconds>0?number(current.setupMilliseconds)+' ms':'Below timer resolution','ILU setup'],[current.solveMilliseconds>0?number(current.solveMilliseconds)+' ms':'Below timer resolution','live solve']]:[]),[current.residuals.at(-1).toExponential(2),'final true residual']]){const e=add($('stats'),'div','');e.className='stat';add(e,'strong',value);add(e,'span',label);}
- $('frame').max=current.iterations;$('frame').disabled=false;$('play').disabled=current.iterations===0;setPlaying(false);updateFrame(current.iterations);
+ renderIterationTable();$('frame').max=current.iterations;$('frame').disabled=false;$('play').disabled=current.iterations===0;setPlaying(false);updateFrame(current.iterations);
  };worker.postMessage({type:'init',bundle});}
 function schedule(){sequence++;pending={type:'solve',id:sequence,config:config()};clearTimeout(timer);setPlaying(false);$('play').disabled=true;$('frame').disabled=true;$('status').textContent='Updating solver…';timer=setTimeout(()=>{start();dispatch();},300);}
-function changed(){const cg=$('solver').value==='cg';$('restart').disabled=cg;$('speed').disabled=cg;$('angle').disabled=cg;$('ilu-option').disabled=cg||!hasIlu;if(cg){$('speed').value='0';if($('preconditioner').value==='ilu0')$('preconditioner').value='jacobi';}$('hot-value').textContent=$('hot').value;$('angle-value').textContent=$('angle').value+'°';schedule();}
+const guidedPresets={
+ diffusion:{solver:'cg',preconditioner:'jacobi',grid:'16',restart:'20',diffusivity:'0.2',speed:'0',angle:'30',contrast:'1',limit:'400',hot:'100'},
+ transport:{solver:'gmres',preconditioner:'jacobi',grid:'16',restart:'20',diffusivity:'0.2',speed:'4',angle:'30',contrast:'1',limit:'400',hot:'100'},
+ ilu:{solver:'gmres',preconditioner:'ilu0',grid:'16',restart:'20',diffusivity:'0.2',speed:'4',angle:'30',contrast:'1',limit:'400',hot:'100'}
+};
+const presetNotes={
+ diffusion:'Follow heat diffusion with CG and Jacobi. Scrub the accepted steps to watch the residual change.',
+ transport:'Add directed flow and follow restarted GMRES. Compare preconditioners while keeping the problem fixed.',
+ ilu:'Build an ILU(0) factor, then change the hot boundary under Problem to reuse it for a new right-hand side.',
+ custom:'Custom setup. Adjust the problem or advanced solver settings below the plots.'
+};
+function syncLiveControls(){
+ if(!hasGmres)$('solver').value='cg';
+ const cg=$('solver').value==='cg';$('restart').disabled=cg;$('speed').disabled=cg;$('angle').disabled=cg;$('ilu-option').disabled=cg||!hasIlu;
+ if(cg)$('speed').value='0';
+ if((cg||!hasIlu)&&$('preconditioner').value==='ilu0')$('preconditioner').value='jacobi';
+ $('hot-value').textContent=$('hot').value;$('angle-value').textContent=$('angle').value+'°';
+ $('preset-note').textContent=presetNotes[$('live-preset').value]||presetNotes.custom;
+}
+function changed(){ $('live-preset').value='custom';syncLiveControls();schedule(); }
 for(const id of ['grid','contrast','limit','preconditioner','hot','solver','restart','diffusivity','speed','angle'])$(id).onchange=changed;
 $('angle').oninput=changed;$('hot').oninput=changed;
+$('live-preset').onchange=()=>{
+ const key=$('live-preset').value;
+ if((key==='transport'&&!hasGmres)||(key==='ilu'&&(!hasGmres||!hasIlu))){$('live-preset').value='custom';syncLiveControls();return;}
+ const preset=guidedPresets[key];if(!preset){syncLiveControls();return;}
+ for(const [id,value] of Object.entries(preset))if(!$(id).disabled||['solver','speed','angle','restart'].includes(id))$(id).value=value;
+ syncLiveControls();schedule();
+};
+syncLiveControls();
 function compact(value){
  if(!Number.isFinite(value))return '—';
  if(value===0)return '0';
@@ -175,16 +231,21 @@ function drawReuse(){
  const id=$('reuse-language').value,size=Number($('reuse-grid').value),count=Number($('rhs-count').value)||8;$('rhs-value').textContent=count;
  const rows=new Map(data.results.filter(r=>r.implementation===id&&r.size===size&&r.status==='passed').map(r=>[r.operation,r.median_ns]));
  const {ctx,w,h}=canvas('reuse-chart'),setup=rows.get('ilu_setup'),solve=rows.get('gmres_ilu_reused');
- if(setup===undefined||solve===undefined){$('reuse-note').textContent='No complete measurements for this selection.';return;}
+ if(setup===undefined||solve===undefined){$('reuse-values').replaceChildren();$('reuse-note').textContent='No complete measurements for this selection.';return;}
  const series=[['None',rows.get('gmres_none')*count],['Jacobi',rows.get('gmres_jacobi')*count],['ILU rebuilt',rows.get('gmres_ilu_total')*count],['ILU reused',setup+solve*count]].filter(([,value])=>Number.isFinite(value));
  $('reuse-values').replaceChildren();for(const [label,value] of series)add($('reuse-values'),'li',`${label}: ${duration(value)}`);
- const maximum=Math.max(1,...series.map(s=>s[1])),left=Math.min(180,w*.4),right=w-100;
- series.forEach(([label,value],i)=>{const y=30+i*55;ctx.fillStyle=theme().getPropertyValue('--muted');ctx.textAlign='right';ctx.fillText(label,left-10,y+15);ctx.fillStyle=seriesColor(i);ctx.fillRect(left,y,Math.max(1,(right-left)*value/maximum),24);ctx.textAlign='left';ctx.fillText(duration(value),left+(right-left)*value/maximum+8,y+16);});
+ const maximum=Math.max(1,...series.map(s=>s[1])),compactLayout=w<600,left=compactLayout?16:180,right=w-(compactLayout?16:100);
+ series.forEach(([label,value],i)=>{
+  const y=24+i*(compactLayout?66:55);ctx.fillStyle=theme().getPropertyValue('--muted');
+  if(compactLayout){ctx.textAlign='left';ctx.fillText(label,left,y,w*.5);ctx.textAlign='right';ctx.fillText(duration(value),right,y,w*.4);}
+  else{ctx.textAlign='right';ctx.fillText(label,left-10,y+15);ctx.textAlign='left';ctx.fillText(duration(value),left+(right-left)*value/maximum+8,y+16);}
+  ctx.fillStyle=seriesColor(i);ctx.fillRect(left,y+(compactLayout?10:0),Math.max(1,(right-left)*value/maximum),24);
+ });
  const saving=rows.get('gmres_jacobi')-solve,breakEven=saving>0?Math.floor(setup/saving)+1:null;
  $('reuse-note').textContent=`${count} RHS: setup + ${count} × reused solve. ${breakEven?`Estimated to beat Jacobi after ${breakEven} RHS.`:'These medians do not predict an advantage over Jacobi.'} Setup ${duration(setup)}; reused solve ${duration(solve)}. GC, warmup and workload changes can alter the result.`;
 }
 if(data.suite==='ilu-reuse-v1'){
- $('reuse-section').hidden=false;
+ $('reuse-section').hidden=false;$('reuse-nav').hidden=false;
  for(const impl of data.implementations){const option=add($('reuse-language'),'option',impl.name||impl.id);option.value=impl.id;}
  $('reuse-language').value=data.implementations[0]?.id||'';
  const widths=[...new Set(data.results.map(r=>r.size))].sort((a,b)=>a-b);for(const width of widths){const option=add($('reuse-grid'),'option',String(width));option.value=String(width);}$('reuse-grid').value=String(widths[0]);
