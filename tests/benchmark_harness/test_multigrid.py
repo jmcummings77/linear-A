@@ -49,3 +49,10 @@ class MultigridReportTests(unittest.TestCase):
   self.assertEqual(json.dumps(live,sort_keys=True),runtime)
   self.assertIn('multigrid',live['capabilities'])
   self.assertEqual(len(live['fixtures']),277)
+
+class MultigridCaptureTests(unittest.TestCase):
+ def test_clean_capture_supports_multigrid_without_a_nonexistent_flag(self):
+  from reproduce import checked_arguments
+  from check_provenance import RUNNERS
+  self.assertIn("benchmarks/multigrid_bench.py",RUNNERS)
+  self.assertEqual(checked_arguments("multigrid_bench.py",["--sizes","7"]),["--sizes","7"])
