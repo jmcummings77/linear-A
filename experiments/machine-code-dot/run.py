@@ -120,7 +120,7 @@ def render(result, destination):
     from report_design import apply_report_design
     data = json.dumps(result, allow_nan=False).replace('<', '\\u003c').replace('&', '\\u0026')
     template = (ROOT / 'report.html').read_text()
-    replacements = {'__DATA__': data, '__NAMES__': json.dumps(LABELS)}
+    replacements = {'__DATA__': data, '__NAMES__': json.dumps(LABELS), '__SCRIPT__': (ROOT / 'report.mjs').read_text()}
     page = re.sub('|'.join(replacements), lambda match: replacements[match[0]], template)
     Path(destination).write_text(apply_report_design(page))
 

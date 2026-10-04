@@ -187,7 +187,14 @@ class ReportDirectoryTests(unittest.TestCase):
                 self.assertTrue(metadata.startswith(data['created_at'].split('T')[0] + ' · '))
                 passed_implementations = [item for item in data['implementations'] if item['status'] == 'passed']
                 passed_results = [row for row in data['results'] if row['status'] == 'passed']
-                self.assertIn(f'{len(passed_implementations)} verified implementations', metadata)
+                if name == 'determinants':
+                    ports = {item['name'].split(' / ')[0] for item in passed_implementations}
+                    self.assertIn(f'{len(passed_implementations)} verified algorithm variants across {len(ports)} ports', metadata)
+                elif name == 'amd':
+                    ports = [item for item in passed_implementations if item['id'] != 'suitesparse']
+                    self.assertIn(f'{len(ports)} verified ports + SuiteSparse reference', metadata)
+                else:
+                    self.assertIn(f'{len(passed_implementations)} verified implementations', metadata)
                 self.assertTrue(metadata.endswith(f'{len(passed_results)} timing results'))
 
     def test_directory_navigation_targets_exist_and_solver_cards_follow_the_learning_sequence(self):
@@ -199,8 +206,21 @@ class ReportDirectoryTests(unittest.TestCase):
                     self.assertIn(href[1:], parsed.ids)
         solver_cards = [card['href'] for card in parsed.cards
                         if card['family'] == 'sparse-solvers']
-        self.assertEqual(solver_cards, ['sparse/', 'gmres/', 'ilu/'])
-        self.assertIn('ilu/#explore', [link.get('href') for link in parsed.links])
+        self.assertEqual(solver_cards, ['sparse/', 'gmres/', 'ilu/', 'ic0/'])
+        for target in ['ilu/#explore', 'ic0/#explore', 'amd/#explore']:
+            self.assertIn(target, [link.get('href') for link in parsed.links])
+
+    def test_directory_counts_distinguish_verified_variants_and_reference_results(self):
+        data = {'implementations': [
+            {'id': 'c', 'name': 'C / Auto', 'status': 'passed'},
+            {'id': 'c-lu', 'name': 'C / LU', 'status': 'passed'},
+            {'id': 'rust', 'name': 'Rust / Auto', 'status': 'passed'},
+            {'id': 'python', 'name': 'Python / Auto', 'status': 'failed'}]}
+        self.assertEqual(report_design.implementation_summary('determinants', data),
+                         '3 verified algorithm variants across 2 ports')
+        data['implementations'].append({'id': 'suitesparse', 'status': 'passed'})
+        self.assertEqual(report_design.implementation_summary('amd', data),
+                         '3 verified ports + SuiteSparse reference')
 
     def test_new_template_marker_discovers_hyphenated_report_and_excludes_unsuccessful_rows(self):
         with tempfile.TemporaryDirectory() as directory:
