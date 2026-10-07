@@ -5,6 +5,13 @@ collection into small, independently checkable numerical examples. It uses the
 existing Python numerical kernels and adds cross-port conformance fixtures.
 It does not implement a new solver or the paper's large graph construction.
 
+[Open the HTML report](https://jmcummings77.github.io/linear-A/nonnormal-gmres/) ·
+[Saved offline report](results/index.html) · [Captured data](results/results.json)
+
+The report presents the results, lets you inspect residual histories by restart
+length and right preconditioner, and explains the numerical-range and graph
+checks. It is self-contained and works offline.
+
 ## Run the convergence experiment
 
 Python 3.9+ and the standard library are sufficient, from the repository root:
@@ -15,16 +22,29 @@ python3 experiments/nonnormal-gmres/run.py --verify-only
 python3 -m unittest discover -s tests/benchmark_harness -p 'test_nonnormal_gmres.py' -v
 ```
 
-The default local output is `.build/nonnormal-gmres/RESULTS.md` with all captured
-iterates, true and projected residuals, restart boundaries, analytic envelopes,
-inputs and source hashes in `results.json`. Use `--output PATH` for a separate
+The default local output is `.build/nonnormal-gmres/`: open `index.html` for the
+interactive report or `RESULTS.md` for its text companion. All captured iterates,
+true and projected residuals, restart boundaries, analytic envelopes, inputs
+and source hashes are in `results.json`. Use `--output PATH` for a separate
 run and `--limit 2` to compare the first two steps. The limit is bounded to 2–100
 and defaults to 24. Verification-only mode writes no report.
 
 These are convergence diagnostics, with no timings or language ranking.
 The generated report records the actual source revision and dirty state. A
-source hash does not archive uncommitted files; these local outputs are not
-publishable clean-source benchmark captures.
+source hash does not archive uncommitted files. To replace the published report,
+commit the source and start from a clean checkout, then capture the study in a
+fresh clone:
+
+```sh
+python3 benchmarks/reproduce.py --runner nonnormal-gmres \
+  --output .build/publishable/nonnormal-gmres -- --limit 24
+```
+
+Review the capture, replace the contents of `experiments/nonnormal-gmres/results/`
+with the complete capture including `provenance.json`, and run
+`python3 benchmarks/check_provenance.py`. The saved provenance records the source
+commit, Git tree, invocation, and artifact hashes. Local development runs with
+working changes remain separate from this published capture.
 
 ## Same eigenvalues, different GMRES behavior
 

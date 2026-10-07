@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Check nonnormal GMRES trajectories against small independent analytic oracles."""
 import argparse
+import datetime
+import platform
 from fractions import Fraction
 import hashlib
 import json
@@ -10,10 +12,12 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / 'ports/python'))
 from gmres import gmres
 from matrix import Matrix
 from sparse import CSRMatrix
+from graph_report import graph_diagnostics
 
 COUPLINGS = (0.0, 0.25, 0.75, 2.0, 4.0)
 EPSILON = sys.float_info.epsilon
@@ -126,7 +130,8 @@ def trajectory(s, restart, jacobi, limit=24):
 
 
 def source_record():
-    paths = ['experiments/nonnormal-gmres/run.py', 'ports/python/gmres.py',
+    paths = ['experiments/nonnormal-gmres/run.py', 'experiments/nonnormal-gmres/graph_report.py',
+             'benchmarks/graph_reference.py', 'ports/python/gmres.py',
              'ports/python/sparse.py', 'ports/python/matrix.py',
              'ports/python/svd.py', 'ports/python/general_eigen.py']
     hashes = {path: hashlib.sha256((ROOT/path).read_bytes()).hexdigest() for path in paths}
@@ -139,7 +144,7 @@ def source_record():
     status = git('status', '--porcelain')
     return dict(revision=git('rev-parse', 'HEAD'), dirty=None if status is None else bool(status),
                 files_sha256=hashes,
-                note='Local diagnostic run; hashes do not archive uncommitted source. No timings or publication capture.')
+                note='Convergence diagnostics with no timings. Individual hashes do not archive uncommitted source; published captures also require provenance.json.')
 
 
 def experiment(limit=24):
@@ -155,9 +160,14 @@ def experiment(limit=24):
             require_close(a['true_residual'], b['true_residual'],
                           max(a['rounding_allowance'], b['rounding_allowance']),
                           'equivalent preconditioned residual history')
+    source = source_record()
     return dict(schema_version=1, suite='nonnormal-gmres-v1', implementation='python',
+                created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                revision=source['revision'], dirty=source['dirty'],
+                runtime=dict(python=platform.python_version(), system=platform.system(),
+                             architecture=platform.machine()), graphs=graph_diagnostics(),
                 numeric_type='IEEE 754 binary64', max_iterations=limit,
-                rtol=1e-10, source=source_record(), polynomials=polynomials, runs=runs)
+                rtol=1e-10, source=source, polynomials=polynomials, runs=runs)
 
 
 def render_markdown(data):
@@ -166,7 +176,7 @@ def render_markdown(data):
              'All effective matrices B = [[1, 2s], [0, 1]] have eigenvalues 1, 1. '
              'Their numerical ranges are disks centered at 1 with radius |s|. '
              'The SVD independently checks ||I-B||₂ = 2|s|, attaining the Crouzeix constant for nonzero s.', '',
-             '| s | SVD norm of I−B | Supremum of |1−z| on W(B) |',
+             '| s | SVD norm of I−B | Supremum of ∣1−z∣ on W(B) |',
              '| --- | ---: | ---: |']
     for row in data['polynomials']:
         lines.append('| %g | %.6g | %.6g |' %
@@ -201,15 +211,23 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT/'.build/nonnormal-gmres')
     parser.add_argument('--limit', type=int, default=24)
+    parser.add_argument('--render-only', type=Path, help='Restyle saved results.json without running solvers')
     parser.add_argument('--verify-only', action='store_true')
     args = parser.parse_args()
     if not 2 <= args.limit <= 100:
         parser.error('--limit must be from 2 through 100')
+    if args.render_only:
+        from report import render_html
+        data = json.loads(args.render_only.read_text())
+        args.render_only.with_name('index.html').write_text(render_html(data))
+        return 0
     data = experiment(args.limit)
     if not args.verify_only:
         args.output.mkdir(parents=True, exist_ok=True)
         (args.output/'results.json').write_text(json.dumps(data, indent=2, allow_nan=False)+'\n')
         (args.output/'RESULTS.md').write_text(render_markdown(data))
+        from report import render_html
+        (args.output/'index.html').write_text(render_html(data))
     print('Passed %d polynomial checks and %d GMRES trajectories.' %
           (len(data['polynomials']), len(data['runs'])))
     return 0

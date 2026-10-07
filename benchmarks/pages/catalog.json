@@ -17,8 +17,8 @@
     },
     {
       "id": "studies",
-      "label": "Optimization studies",
-      "description": "Focused experiments with their own workloads and measurement boundaries."
+      "label": "Controlled experiments",
+      "description": "Focused experiments in numerical behavior and performance, with explicit checks and limits."
     },
     {
       "id": "applications",
@@ -211,6 +211,22 @@
         "results": "amd/#results",
         "demo": "amd/#explore",
         "evidence": "amd/#method-section"
+      }
+    },
+    {
+      "id": "nonnormal-gmres",
+      "title": "Nonnormal GMRES",
+      "group": "studies",
+      "kind": "study",
+      "questions": {
+        "results": "Why can matrices with the same eigenvalues give different GMRES convergence?",
+        "demo": "How do restart length and right preconditioning change the residual?",
+        "evidence": "Which exact checks, numerical-range bounds, and graph spectra support the experiment?"
+      },
+      "links": {
+        "results": "nonnormal-gmres/#results",
+        "demo": "nonnormal-gmres/#explore",
+        "evidence": "nonnormal-gmres/#method"
       }
     },
     {

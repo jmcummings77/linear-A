@@ -168,7 +168,7 @@ class ProvenanceGateTests(unittest.TestCase):
         self.assert_rejected("missing valid provenance")
 
     def test_experiment_publication_is_checked_with_the_same_gate(self):
-        for name in ("machine-code-dot", "matmul-locality"):
+        for name in ("machine-code-dot", "matmul-locality", "nonnormal-gmres"):
             with self.subTest(experiment=name):
                 previous = self.report
                 experiment = self.root / "experiments" / name / "results"
@@ -245,7 +245,8 @@ class ProvenanceGateTests(unittest.TestCase):
     def test_experiment_commands_reject_private_paths_and_nonmeasurement_modes(self):
         for experiment, options in (
                 ("machine-code-dot", ("--dotnet=/private/tools/dotnet", "--dot", "--julia", "--jul")),
-                ("matmul-locality", ("--verify-only", "--ver", "--sanitize", "--san"))):
+                ("matmul-locality", ("--verify-only", "--ver", "--sanitize", "--san")),
+                ("nonnormal-gmres", ("--verify-only", "--ver", "--render-only=old.json", "--out=elsewhere"))):
             for option in options:
                 with self.subTest(experiment=experiment, option=option):
                     self.provenance["command"] = ["python3", "experiments/" + experiment + "/run.py",

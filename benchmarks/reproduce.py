@@ -2,6 +2,7 @@
 """Capture publishable benchmarks from a clean commit in a fresh local clone."""
 import argparse
 import json
+import math
 from pathlib import Path
 import platform
 import shutil
@@ -41,8 +42,166 @@ def checked_arguments(runner, arguments):
     return arguments
 
 
+def validate_nonnormal_completion(data):
+    """Require the complete bounded diagnostic family and its captured evidence."""
+    def require(condition, detail):
+        if not condition:
+            raise ValueError('Nonnormal GMRES experiment: ' + detail)
+
+    def finite(value):
+        try:
+            return type(value) in (int, float) and math.isfinite(value)
+        except OverflowError:
+            return False
+
+    def vector(value, length):
+        return isinstance(value, list) and len(value) == length and all(map(finite, value))
+
+    def close(actual, expected, tolerance=1e-12):
+        return finite(actual) and abs(actual - expected) <= tolerance
+
+    couplings = {0.0, 0.25, 0.75, 2.0, 4.0}
+    limit = data.get('max_iterations')
+    require(type(data.get('schema_version')) is int and data['schema_version'] == 1
+            and data.get('suite') == 'nonnormal-gmres-v1'
+            and data.get('implementation') == 'python', 'unexpected result schema')
+    require(type(limit) is int and 2 <= limit <= 100 and data.get('rtol') == 1e-10,
+            'invalid solver limits')
+    polynomials, runs = data.get('polynomials'), data.get('runs')
+    require(isinstance(polynomials, list) and len(polynomials) == 5,
+            'all five polynomial checks are required')
+    seen = set()
+    for row in polynomials:
+        require(isinstance(row, dict) and finite(row.get('s')) and row['s'] in couplings,
+                'invalid polynomial coupling')
+        strength = row['s']
+        require(strength not in seen, 'duplicate polynomial coupling')
+        seen.add(strength)
+        require(row.get('effective_matrix') == [1.0, 2*strength, 0.0, 1.0]
+                and row.get('eigenvalues') == [1.0, 1.0]
+                and row.get('numerical_range_center') == [1.0, 0.0]
+                and row.get('numerical_range_radius') == abs(strength)
+                and row.get('polynomial') == '1-z'
+                and close(row.get('polynomial_norm'), 2*abs(strength))
+                and row.get('polynomial_supremum') == abs(strength)
+                and row.get('crouzeix_bound') == 2*abs(strength)
+                and row.get('annihilating_polynomial') == '(1-z)^2'
+                and row.get('squared_polynomial') == [0.0]*4,
+                'incomplete or inconsistent polynomial evidence')
+    require(isinstance(runs, list) and len(runs) == 20, 'all twenty trajectories are required')
+    seen = set()
+    for row in runs:
+        require(isinstance(row, dict) and finite(row.get('s')) and row['s'] in couplings
+                and type(row.get('restart')) is int and row['restart'] in (1, 2)
+                and type(row.get('right_jacobi')) is bool, 'invalid trajectory combination')
+        strength, restart, jacobi = row['s'], row['restart'], row['right_jacobi']
+        key = strength, restart, jacobi
+        require(key not in seen, 'duplicate trajectory combination')
+        seen.add(key)
+        diagonal = 8.0 if jacobi else 1.0
+        require(row.get('matrix') == [1.0, 2*strength*diagonal, 0.0, diagonal]
+                and row.get('rhs') == [0.0, 1.0]
+                and row.get('effective_matrix') == [1.0, 2*strength, 0.0, 1.0]
+                and row.get('exact_solution') == [-2*strength, 1/diagonal],
+                'inconsistent original or preconditioned system')
+        iterations, reason, history = row.get('iterations'), row.get('reason'), row.get('history')
+        require(type(iterations) is int and 1 <= iterations <= limit
+                and reason in ('converged', 'iteration_limit', 'stagnation'), 'invalid termination record')
+        require(reason != 'iteration_limit' or iterations == limit, 'incomplete limited trajectory')
+        require(restart != 2 or (reason == 'converged' and iterations <= 2),
+                'restart two must solve the bounded system')
+        require(row.get('restarts') == list(range(restart, iterations, restart)),
+                'incomplete restart boundaries')
+        require(isinstance(history, list) and len(history) == iterations + 1,
+                'incomplete trajectory history')
+        for index, frame in enumerate(history):
+            require(isinstance(frame, dict) and type(frame.get('iteration')) is int
+                    and frame['iteration'] == index and vector(frame.get('x'), 2),
+                    'invalid captured iterate')
+            cycle = ((index - 1)//restart)*restart if index else 0
+            require(type(frame.get('cycle_start')) is int and frame['cycle_start'] == cycle
+                    and type(frame.get('local_step')) is int and frame['local_step'] == index - cycle,
+                    'invalid cycle position')
+            for name in ('true_residual', 'estimated_residual', 'cycle_envelope', 'rounding_allowance'):
+                require(finite(frame.get(name)) and frame[name] >= 0, 'invalid ' + name)
+            x, y = frame['x']
+            scale = 1 + abs(x) + abs(2*strength*diagonal*y) + abs(diagonal*y)
+            allowance = 256*sys.float_info.epsilon*scale
+            require(finite(allowance) and close(frame['rounding_allowance'], allowance,
+                                               8*sys.float_info.epsilon*allowance),
+                    'incorrect rounding allowance')
+            residual = math.hypot(-x - 2*strength*diagonal*y, 1 - diagonal*y)
+            factor = min(1.0, 2*abs(strength)**(index - cycle)) if index else 1.0
+            envelope = history[cycle]['true_residual']*factor
+            require(close(frame['true_residual'], residual, allowance)
+                    and close(frame['cycle_envelope'], envelope, allowance)
+                    and residual <= envelope + allowance, 'inconsistent residual or cycle envelope')
+        require(history[0]['x'] == [0.0, 0.0]
+                and history[0]['true_residual'] == history[0]['estimated_residual'] == 1.0,
+                'invalid initial state')
+        final = history[-1]
+        require(reason != 'converged' or final['true_residual'] <= 1e-10 + final['rounding_allowance'],
+                'false convergence')
+
+
+    graphs = data.get('graphs')
+    require(isinstance(graphs, dict) and type(graphs.get('schema_version')) is int
+            and graphs['schema_version'] == 1 and graphs.get('suite') == 'shifted-graph-diagnostics-v1'
+            and type(graphs.get('max_iterations')) is int and graphs['max_iterations'] == 2000,
+            'missing or invalid graph diagnostics')
+    expected_graphs = {'petersen': 10, 'triangular-prism': 6, 'prism-8': 16,
+                       'prism-16': 32, 'prism-32': 64}
+    cases = graphs.get('cases')
+    require(isinstance(cases, list) and len(cases) == len(expected_graphs),
+            'all five graph cases are required')
+    seen = set()
+    for case in cases:
+        require(isinstance(case, dict) and isinstance(case.get('id'), str)
+                and case['id'] in expected_graphs and case['id'] not in seen,
+                'invalid or duplicate graph case')
+        seen.add(case['id'])
+        n = expected_graphs[case['id']]
+        require(type(case.get('n')) is int and case['n'] == n, 'invalid graph size')
+        solves = case.get('solves')
+        require(isinstance(solves, list) and len(solves) == 2, 'both graph solves are required')
+        solvers = set()
+        for solve in solves:
+            require(isinstance(solve, dict) and isinstance(solve.get('solver'), str)
+                    and solve['solver'] in ('cg', 'cg_jacobi') and solve['solver'] not in solvers,
+                    'invalid or duplicate graph solver')
+            solvers.add(solve['solver'])
+            require(type(solve.get('jacobi')) is bool
+                    and solve['jacobi'] == (solve['solver'] == 'cg_jacobi')
+                    and solve.get('converged') is True and solve.get('reason') == 'converged',
+                    'graph solves must converge')
+            iterations, history = solve.get('iterations'), solve.get('history')
+            require(type(iterations) is int and 0 <= iterations <= graphs['max_iterations']
+                    and isinstance(history, list) and len(history) == iterations + 1
+                    and vector(solve.get('residuals'), iterations + 1) and vector(solve.get('x'), n),
+                    'incomplete graph solve history')
+            for name in ('true_residual', 'relative_true_residual', 'solution_error',
+                         'relative_solution_error', 'stopping_threshold', 'rounding_allowance'):
+                require(finite(solve.get(name)) and solve[name] >= 0, 'invalid graph ' + name)
+            for index, frame in enumerate(history):
+                require(isinstance(frame, dict) and type(frame.get('iteration')) is int
+                        and frame['iteration'] == index, 'invalid graph history index')
+                for name in ('true_residual', 'solver_residual', 'solution_error', 'rounding_allowance'):
+                    require(finite(frame.get(name)) and frame[name] >= 0, 'invalid graph history ' + name)
+                require(solve['residuals'][index] == frame['true_residual'],
+                        'inconsistent graph residual history')
+            final = history[-1]
+            require(all(solve[name] == final[name] for name in
+                        ('true_residual', 'solution_error', 'rounding_allowance')),
+                    'inconsistent final graph diagnostics')
+            require(solve['true_residual'] <= solve['stopping_threshold'] + solve['rounding_allowance'],
+                    'graph solve reports false convergence')
+
+
 def validate_completion(data, runner):
     """Each harness fails differently; require its completed verification record."""
+    if runner == 'nonnormal-gmres':
+        validate_nonnormal_completion(data)
+        return
     if runner == 'machine-code-dot':
         # This experiment raises on any build, checksum or timing failure. It
         # writes the final report only after every implementation is measured.
