@@ -6,7 +6,7 @@ import {checkSparse} from '../../benchmarks/sparse-checks.mjs';
 import {diffusionGrid,solveHeat} from '../../benchmarks/sparse-heat.mjs';
 const api=await createMatrixAPI();
 const fixtures=JSON.parse(execFileSync('python3',['-c','import sys,json;sys.path.insert(0,"benchmarks");from sparse_reference import fixtures;print(json.dumps(fixtures()))'],{encoding:'utf8'}));
-test('WASM passes all sparse fixtures including captured true residuals',()=>assert.equal(checkSparse(api,fixtures),39));
+test('WASM passes all sparse fixtures including captured true residuals',()=>assert.equal(checkSparse(api,fixtures),fixtures.length));
 test('CSR owns snapshots and rejects disposed use',()=>{
  const rp=[0,1],ci=[0],v=[2],a=new api.CSRMatrix(1,1,rp,ci,v);rp[1]=0;ci[0]=1;v[0]=99;
  assert.deepEqual(Array.from(a.matvec([3])),[6]);const result=a.conjugateGradient([6],{capture:true});

@@ -74,20 +74,42 @@ def measure(implementation, case, iterations):
     return sample
 
 
-def benchmark(implementations, sizes, samples):
+def benchmark_cases(size, workload='diffusion'):
+    """Build one workload before timing, with independent graph RHS assembly."""
+    if workload == 'diffusion':
+        a = diffusion(size, 2)
+        truth = [1.] * a['rows']
+        product = multiply(a, truth)
+        metadata = dict(contrast=2)
+    elif workload == 'prism':
+        from graph_reference import prism_graph, shifted_laplacian, manufactured_solution, graph_product
+        n, edges = prism_graph(size)
+        a = shifted_laplacian(n, edges)
+        truth = manufactured_solution(n)
+        product = graph_product(n, edges, truth)
+        metadata = dict(problem='shifted-prism')
+    else:
+        raise ValueError('unknown sparse workload')
+    cases = []
+    for operation, op, jacobi in [('dense_spmv', 'dense', 0), ('csr_spmv', 'spmv', 0), ('cg', 'cg', 0), ('cg_jacobi', 'cg', 1)]:
+        case = dict(a=a, b=product if op == 'cg' else truth, op=op,
+                    expected=truth if op == 'cg' else product, reason='converged',
+                    options=dict(rtol=1e-10, atol=0, limit=2000, jacobi=jacobi, capture=0))
+        cases.append((operation, case, metadata))
+    return cases
+
+
+def benchmark(implementations, sizes, samples, workload='diffusion'):
     results = []
     rng = random.Random(2026)
     for size in sizes:
-        a = diffusion(size, 2)
-        n, nnz = a['rows'], len(a['values'])
-        for operation, op, jacobi in [('dense_spmv', 'dense', 0), ('csr_spmv', 'spmv', 0), ('cg', 'cg', 0), ('cg_jacobi', 'cg', 1)]:
-            case = dict(a=a, b=multiply(a, [1.] * n) if op == 'cg' else [1.] * n,
-                        op=op, expected=[1.] * n if op == 'cg' else multiply(a, [1.] * n), reason='converged',
-                        options=dict(rtol=1e-10, atol=0, limit=2000, jacobi=jacobi, capture=0))
+        for operation, case, metadata in benchmark_cases(size, workload):
+            a, op = case['a'], case['op']
+            n, nnz = a['rows'], len(a['values'])
             rows = []
             for impl in implementations:
                 row = dict(implementation=impl['id'], operation=operation, size=size, unknowns=n, nnz=nnz,
-                           logical_dense_bytes=8*n*n, logical_csr_bytes=16*nnz+8*(n+1), contrast=2, samples=[], status='passed')
+                           logical_dense_bytes=8*n*n, logical_csr_bytes=16*nnz+8*(n+1), **metadata, samples=[], status='passed')
                 try:
                     args, data = protocol(case)
                     checked = run.execute(impl['runner'] + args, stdin=data, env=impl['env'], timeout=120)
@@ -143,12 +165,19 @@ def render(data, destination, *, live_override=None, published=False):
     # One pass: embedded source/data cannot introduce replacement markers.
     import re
     replacements = {'DATA': json_for_html(data), 'LIVE': json_for_html(live), 'SCRIPT': (HERE / 'sparse-report.mjs').read_text()}
+    if data.get('suite') == 'sparse-prism-v1':
+        template = template.replace('<title>Sparse solvers · linear-A</title>', '<title>Shifted graph Laplacians · linear-A</title>').replace('Saved benchmark / Sparse systems', 'Saved benchmark / shifted prism graphs').replace('<h1>Sparse systems</h1>', '<h1>Shifted graph Laplacians</h1>')
+        template = template.replace('Fewer entries. Less work. Compare sparse matrix operations across languages, then explore how an iterative solver reaches equilibrium.', 'Compare sparse products and CG on classical prism graphs with known adjacency spectra. These scalable controls are not a Ramanujan graph family.')
+        template = template.replace('Grid width s means s² unknowns.', 'Cycle length m means 2m graph vertices and unknowns.').replace('Grid / unknowns', 'Cycle length / unknowns')
+        template = template.replace('Start with a guided setup, then compare how solvers converge. These live calculations do not change the saved measurements.', 'This separate grid diffusion and flow example illustrates solver iterates; it does not run the saved prism graph workload or change its measurements.')
+        replacements['SCRIPT'] = replacements['SCRIPT'].replace('${row.size} × ${row.size} / ${number(row.unknowns)}', '${row.size} per cycle / ${number(row.unknowns)}').replace('Number of unknowns · grid width²', 'Number of unknowns · twice the cycle length').replace('grid sizes measured', 'cycle lengths measured')
     if data.get('suite') == 'gmres-transport-v1':
         template = template.replace('<title>Sparse solvers · linear-A</title>', '<title>Restarted GMRES · linear-A</title>').replace('Saved benchmark / Sparse systems', 'Saved benchmark / restarted GMRES').replace('<h1>Sparse systems</h1>', '<h1>Restarted GMRES</h1>').replace('Fewer entries. Less work. Compare sparse matrix operations across languages, then explore how an iterative solver reaches equilibrium.', 'Compare restart lengths, runtime and workspace across eleven implementations. Explore how GMRES solves a nonsymmetric flow and diffusion system.')
     if data.get('suite') == 'ilu-reuse-v1':
         template=template.replace('<title>Sparse solvers · linear-A</title>','<title>ILU(0) and solver reuse · linear-A</title>').replace('Saved benchmark / Sparse systems','Saved benchmark / ILU(0)').replace('<h1>Sparse systems</h1>','<h1>ILU(0) setup &amp; reuse</h1>').replace('Fewer entries. Less work. Compare sparse matrix operations across languages, then explore how an iterative solver reaches equilibrium.','Prepare once. Solve again. Compare ILU(0) setup, repeated GMRES solves and one-shot costs across eleven ports. Explore when stronger preconditioning pays off.')
-    report_kind = {'gmres-transport-v1': 'gmres', 'ilu-reuse-v1': 'ilu'}.get(data.get('suite'), 'sparse')
-    template = template.replace(f'data-report="{report_kind}"', f'data-report="{report_kind}" aria-current="page"')
+    report_kind = {'gmres-transport-v1': 'gmres', 'ilu-reuse-v1': 'ilu', 'sparse-prism-v1': None}.get(data.get('suite'), 'sparse')
+    if report_kind is not None:
+        template = template.replace(f'data-report="{report_kind}"', f'data-report="{report_kind}" aria-current="page"')
     html = re.sub(r'@@(DATA|LIVE|SCRIPT)@@', lambda m: replacements[m[1]], template)
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -161,15 +190,19 @@ def main():
     parser.add_argument('--verify-only', action='store_true')
     parser.add_argument('--require-all', action='store_true')
     parser.add_argument('--languages', nargs='+', choices=list(run.NAMES), default=list(run.NAMES))
-    parser.add_argument('--sizes', nargs='+', type=int, default=[8, 16, 24])
+    parser.add_argument('--workload', choices=['diffusion', 'prism'], default='diffusion', help='diffusion grids (default), or shifted classical prism graph Laplacians')
+    parser.add_argument('--sizes', nargs='+', type=int, default=[8, 16, 24], help='grid widths for diffusion; vertices per cycle for prisms (2*size total vertices)')
     parser.add_argument('--samples', type=int, default=3)
-    parser.add_argument('--output', type=Path, default=HERE / 'reports/sparse')
+    parser.add_argument('--output', type=Path, help='output directory (default: reports/sparse for diffusion, reports/sparse-prism for prisms)')
     parser.add_argument('--render-only', type=Path)
     args = parser.parse_args()
     if args.render_only:
         render(json.loads(args.render_only.read_text()), args.render_only.with_name('index.html'))
         return 0
-    if not 1 <= args.samples <= 100 or any(s < 2 or s > 64 for s in args.sizes): parser.error('samples must be 1–100; grid sizes 2–64')
+    args.output = args.output or HERE / ('reports/sparse' if args.workload == 'diffusion' else 'reports/sparse-prism')
+    lower, upper = (2, 64) if args.workload == 'diffusion' else (3, 2048)
+    if not 1 <= args.samples <= 100 or any(s < lower or s > upper for s in args.sizes):
+        parser.error('samples must be 1–100; %s sizes %d–%d' % (args.workload, lower, upper))
     started = time.perf_counter()
     implementations = []
     for name in args.languages:
@@ -184,19 +217,24 @@ def main():
         for check in impl.get('checks', []):
             if not check['passed']: print(check, flush=True)
     available = [i for i in implementations if i['status'] == 'passed']
-    results = [] if args.verify_only else benchmark(available, args.sizes, args.samples)
+    results = [] if args.verify_only else benchmark(available, args.sizes, args.samples, args.workload)
     failed = not available or any(i['status'] == 'failed' or (args.require_all and i['status'] == 'unavailable') for i in implementations) or any(r['status'] != 'passed' for r in results)
     if not args.verify_only:
+        matrix_layout = 'Canonical CSR; 5-point SPD diffusion, conductivity 1–100, grids with zero Dirichlet boundaries.'
+        workload_limits = ''
+        if args.workload == 'prism':
+            matrix_layout = 'Canonical CSR; A = (3 + 1/4) I - H for classical prism adjacency H = adjacency(C_m square K_2), with 2m vertices and four stored entries per row. Size is m, the number of vertices per cycle. Adjacency eigenvalues are 2*cos(2*pi*k/m) +/- 1; these controls are not a scalable Ramanujan family. RHS is assembled independently from edge differences of a deterministic nonconstant dyadic solution.'
+            workload_limits = ' The shift 1/4 makes the full Laplacian SPD, including its constant mode. Jacobi is scalar scaling here and offers no exact-arithmetic condition improvement. The live grid example is separate from these saved graph workloads. Graph construction is excluded from timing.'
         data = dict(schema_version=1, created_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                     revision=run.require(['git','rev-parse','HEAD']).strip(), dirty=bool(run.require(['git','status','--porcelain']).strip()),
-                    source_sha256=run.fingerprint(), suite='sparse-diffusion-v1', seed=2026, total_seconds=time.perf_counter()-started,
+                    source_sha256=run.fingerprint(), suite='sparse-diffusion-v1' if args.workload == 'diffusion' else 'sparse-prism-v1', seed=2026, total_seconds=time.perf_counter()-started,
                     machine=dict(os=platform.system(), release=platform.release(), architecture=platform.machine(), logical_cpus=os.cpu_count()),
-                    methodology=dict(numeric_type='IEEE 754 binary64', matrix_layout='Canonical CSR; 5-point SPD diffusion, conductivity 1–100, grids with zero Dirichlet boundaries.',
+                    methodology=dict(numeric_type='IEEE 754 binary64', matrix_layout=matrix_layout,
                         timing='In-process timers include validation, allocation and checksum. Exclude process startup, parsing, CSR construction, dense conversion, compilation and serialization.',
                         warmup='Three calls before every timed batch; one calibration batch excluded. Target 20 ms per batch, capped at 10,000 calls. Julia warms the identical checksum loop before timing.',
                         sampling='Fresh process per batch; serial, seeded shuffled port order per sample round; median and MAD.',
                         profiles='No profiles collected for this suite.',
-                        limitations='Small single-threaded workloads compare these implementations, not languages in isolation. JIT, GC, compiler, scheduling and copying costs differ. Logical storage uses float64 values and 64-bit indices; excludes objects, allocator overhead, vectors and solver workspace; it is not measured process memory. CG starts at zero, rtol=1e-10, atol=0, limit=2000; true residual recomputed each step (two sparse products). Both CG variants solve the same system; iteration counts may differ. No claim of monotone residuals.'),
+                        limitations='Small single-threaded workloads compare these implementations, not languages in isolation. JIT, GC, compiler, scheduling and copying costs differ. Logical storage uses float64 values and 64-bit indices; excludes objects, allocator overhead, vectors and solver workspace; it is not measured process memory. CG starts at zero, rtol=1e-10, atol=0, limit=2000; true residual recomputed each step (two sparse products). Both CG variants solve the same system; iteration counts may differ. No claim of monotone residuals.' + workload_limits),
                     implementations=implementations, results=results, profiles=[])
         data = PublicSanitizer().report(data)
         args.output.mkdir(parents=True, exist_ok=True)

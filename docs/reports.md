@@ -42,6 +42,10 @@ supported inputs, stopping rules, and numerical limits.
 
 ## Controlled experiments
 
+- The [nonnormal GMRES experiment](../experiments/nonnormal-gmres/README.md)
+  compares restart lengths on matrices with the same eigenvalues, using exact
+  projection checks and numerical-range bounds. Its companion graph fixtures
+  and selectable prism workload expand the sparse comparisons.
 - The [machine-code dot-product experiment](../experiments/machine-code-dot/README.md)
   compares a manually encoded 36-byte ARM64 function with scalar implementations.
   It is independent of the matrix API benchmarks.

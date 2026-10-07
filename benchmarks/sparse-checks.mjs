@@ -67,6 +67,14 @@ export function checkSparse(api,cases) {
         const expected=[635/425,508/425];assert(close(r.iterates[1],expected),`${test.name}: first projection`);
         assert(Math.abs(residual(expected)-r.estimatedResiduals[1])<1e-12,`${test.name}: projected residual`);
       }
+      if(test.analytic_steps){
+        const expected=test.analytic_steps;
+        assert(r.residuals.length===expected.residuals.length,`${test.name}: analytic iteration count`);
+        // Match the Python oracle's tolerance for these unit-RHS 2x2 cases,
+        // including zero components and cancellation at the exact solution.
+        r.iterates.forEach((frame,i)=>assert(norm(frame.map((value,j)=>value-expected.iterates[i][j]))<=2e-12*Math.max(1,norm(expected.iterates[i])),`${test.name}: analytic iterate`));
+        for(const history of [r.residuals,r.estimatedResiduals])assert(history.every((value,i)=>Math.abs(value-expected.residuals[i])<=2e-12),`${test.name}: analytic residual history`);
+      }
     }
 
   }
