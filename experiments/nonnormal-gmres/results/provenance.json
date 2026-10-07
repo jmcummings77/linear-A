@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "capture_method": "clean-checkout-v1",
+  "revision": "3c581d3c188e6039f6798fafc91579eb60fc8cfc",
+  "source_tree": "7245c52722710d985657e08924ce3b26d7dd9df4",
+  "command": [
+    "python3",
+    "experiments/nonnormal-gmres/run.py",
+    "--limit",
+    "24",
+    "--output",
+    "<output>"
+  ],
+  "python_version": "3.14.6",
+  "artifacts": {
+    "RESULTS.md": "89a1ca93c2ddf37745de4c0a79c00c86fd4db57356f66bdb48771c34ce9638f4",
+    "results.json": "6efddd6fc999e84a859f285abf0e205a26542b48db8e4fd118aa6ad150b15215"
+  }
+}
