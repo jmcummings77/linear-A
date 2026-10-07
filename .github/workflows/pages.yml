@@ -12,6 +12,7 @@ on:
       - 'benchmarks/legacy-results.json'
       - 'experiments/machine-code-dot/results/**'
       - 'experiments/matmul-locality/results/**'
+      - 'experiments/nonnormal-gmres/results/**'
       - 'applications/index.html'
       - 'benchmarks/comparison/index.html'
   workflow_dispatch:
@@ -49,6 +50,7 @@ jobs:
           cp benchmarks/pages/index.html .build/pages/index.html
           cp -R experiments/machine-code-dot/results .build/pages/machine-code-dot
           cp -R experiments/matmul-locality/results .build/pages/matmul-locality
+          cp -R experiments/nonnormal-gmres/results .build/pages/nonnormal-gmres
           mkdir -p .build/pages/applications
           cp applications/index.html .build/pages/applications/index.html
           mkdir -p .build/pages/compare

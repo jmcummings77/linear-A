@@ -219,6 +219,16 @@ class ReportDirectoryTests(unittest.TestCase):
         for target in ['ilu/#explore', 'ic0/#explore', 'amd/#explore']:
             self.assertIn(target, [link.get('href') for link in parsed.links])
 
+    def test_nonnormal_gmres_is_a_study_with_three_reader_destinations(self):
+        html, parsed = self.render()
+        cards = [card for card in parsed.cards if card['href'] == 'nonnormal-gmres/']
+        self.assertEqual(len(cards), 1)
+        self.assertEqual(cards[0]['family'], 'studies')
+        self.assertEqual(cards[0]['metadata'], '')  # Convergence evidence has no timing count.
+        self.assertIn('Controlled experiments', html)
+        for target in ('results', 'explore', 'method'):
+            self.assertIn(f'nonnormal-gmres/#{target}', [link.get('href') for link in parsed.links])
+
     def test_directory_counts_distinguish_verified_variants_and_reference_results(self):
         data = {'implementations': [
             {'id': 'c', 'name': 'C / Auto', 'status': 'passed'},

@@ -1,4 +1,5 @@
 """Publication captures measure a fresh, stable committed source tree."""
+import copy
 import json
 from pathlib import Path
 import subprocess
@@ -158,6 +159,105 @@ class CaptureTests(unittest.TestCase):
                     reproduce.capture(self.output, runner=name, root=self.root)
                 self.assertFalse(self.output.exists())
 
+    def nonnormal_data(self):
+        output = self.directory / 'diagnostic-input'
+        script = Path(__file__).resolve().parents[2] / 'experiments/nonnormal-gmres/run.py'
+        subprocess.run([sys.executable, str(script), '--output', str(output)],
+                       check=True, capture_output=True, text=True)
+        return json.loads((output / 'results.json').read_text())
+
+    def test_nonnormal_capture_preserves_complete_diagnostics_from_clean_source(self):
+        data = self.nonnormal_data()
+        self.install_experiment('nonnormal-gmres', data)
+        manifest = reproduce.capture(self.output, runner='nonnormal-gmres', root=self.root)
+        saved = json.loads((self.output / 'results.json').read_text())
+        self.assertEqual(manifest['command'],
+                         ['python3', 'experiments/nonnormal-gmres/run.py', '--output', '<output>'])
+        self.assertEqual(saved['runs'], data['runs'])
+        self.assertEqual(saved['polynomials'], data['polynomials'])
+        self.assertEqual(saved['graphs'], data['graphs'])
+        self.assertEqual(saved['revision'], self.git('rev-parse', 'HEAD'))
+        self.assertIs(saved['dirty'], False)
+
+    def test_nonnormal_incomplete_capture_is_not_promoted(self):
+        data = self.nonnormal_data()
+        data['runs'].pop()
+        self.install_experiment('nonnormal-gmres', data)
+        with self.assertRaisesRegex(ValueError, 'all twenty trajectories'):
+            reproduce.capture(self.output, runner='nonnormal-gmres', root=self.root)
+        self.assertFalse(self.output.exists())
+
+    def test_nonnormal_completion_rejects_missing_combinations_and_damaged_evidence(self):
+        complete = self.nonnormal_data()
+        changes = {
+            'missing polynomial': lambda data: data['polynomials'].pop(),
+            'duplicate polynomial': lambda data: data['polynomials'].__setitem__(1, data['polynomials'][0]),
+            'damaged polynomial': lambda data: data['polynomials'][1].__setitem__('polynomial_norm', 0),
+            'duplicate trajectory': lambda data: data['runs'].__setitem__(1, data['runs'][0]),
+            'Boolean restart': lambda data: data['runs'][0].__setitem__('restart', True),
+            'integer Jacobi': lambda data: data['runs'][0].__setitem__('right_jacobi', 0),
+            'missing history': lambda data: data['runs'][0]['history'].pop(),
+            'incorrect index': lambda data: data['runs'][0]['history'][0].__setitem__('iteration', 1),
+            'wrong preconditioned matrix': lambda data: data['runs'][1]['matrix'].__setitem__(3, 1),
+            'nonfinite residual': lambda data: data['runs'][0]['history'][1].__setitem__('true_residual', float('nan')),
+            'negative estimate': lambda data: data['runs'][0]['history'][1].__setitem__('estimated_residual', -1),
+            'nonfinite iterate': lambda data: data['runs'][0]['history'][1]['x'].__setitem__(1, float('inf')),
+            'false residual': lambda data: data['runs'][4]['history'][1].__setitem__('true_residual', 0),
+            'wrong cycle': lambda data: data['runs'][4]['history'][1].__setitem__('cycle_start', 1),
+            'missing restart': lambda data: data['runs'][4].__setitem__('restarts', []),
+            'enlarged envelope': lambda data: data['runs'][4]['history'][1].__setitem__('cycle_envelope', 1e6),
+            'enlarged allowance': lambda data: data['runs'][4]['history'][1].__setitem__('rounding_allowance', 1),
+            'premature iteration limit': lambda data: data['runs'][0].__setitem__('reason', 'iteration_limit'),
+            'failed annihilator': lambda data: data['runs'][18].__setitem__('reason', 'stagnation'),
+            'false convergence': lambda data: data['runs'][16].__setitem__('reason', 'converged'),
+        }
+        reproduce.validate_completion(complete, 'nonnormal-gmres')
+        for label, change in changes.items():
+            with self.subTest(label=label):
+                data = copy.deepcopy(complete)
+                change(data)
+                with self.assertRaisesRegex(ValueError, 'Nonnormal GMRES experiment'):
+                    reproduce.validate_completion(data, 'nonnormal-gmres')
+
+    def test_nonnormal_capture_without_complete_graphs_is_not_promoted(self):
+        data = self.nonnormal_data()
+        data['graphs']['cases'].pop()
+        self.install_experiment('nonnormal-gmres', data)
+        with self.assertRaisesRegex(ValueError, 'all five graph cases'):
+            reproduce.capture(self.output, runner='nonnormal-gmres', root=self.root)
+        self.assertFalse(self.output.exists())
+
+    def test_nonnormal_capture_rejects_failed_or_incomplete_graph_solves(self):
+        complete = self.nonnormal_data()
+        cases = lambda data: data['graphs']['cases']
+        solve = lambda data: cases(data)[0]['solves'][0]
+        changes = {
+            'missing diagnostics': lambda data: data.pop('graphs'),
+            'duplicate graph': lambda data: cases(data).__setitem__(1, cases(data)[0]),
+            'wrong graph': lambda data: cases(data)[0].__setitem__('id', 'unknown'),
+            'missing solve': lambda data: cases(data)[0]['solves'].pop(),
+            'duplicate solver': lambda data: cases(data)[0]['solves'].__setitem__(1, solve(data)),
+            'failed solve': lambda data: solve(data).__setitem__('converged', False),
+            'wrong stop reason': lambda data: solve(data).__setitem__('reason', 'iteration_limit'),
+            'missing history': lambda data: solve(data)['history'].pop(),
+            'nonfinite final residual': lambda data: solve(data).__setitem__('true_residual', float('inf')),
+            'nonfinite relative residual': lambda data: solve(data).__setitem__('relative_true_residual', float('nan')),
+            'nonfinite history': lambda data: solve(data)['history'][0].__setitem__('solver_residual', float('inf')),
+            'negative threshold': lambda data: solve(data).__setitem__('stopping_threshold', -1),
+            'inconsistent final residual': lambda data: solve(data).__setitem__('true_residual', 1),
+            'false convergence': lambda data: solve(data).update(stopping_threshold=0, rounding_allowance=0),
+        }
+        for label, change in changes.items():
+            with self.subTest(label=label):
+                data = copy.deepcopy(complete)
+                change(data)
+                if label == 'false convergence':
+                    solve(data)['true_residual'] = 1
+                    solve(data)['residuals'][-1] = 1
+                    solve(data)['history'][-1].update(true_residual=1, rounding_allowance=0)
+                with self.assertRaisesRegex(ValueError, 'Nonnormal GMRES experiment'):
+                    reproduce.validate_completion(data, 'nonnormal-gmres')
+
     def test_experiment_options_cannot_reuse_builds_or_render_existing_data(self):
         for runner in reproduce.EXPERIMENT_RUNNERS:
             for option in ('--no-build', '--no-b', '--output=elsewhere', '--render=old.json', '--rend'):
@@ -166,6 +266,10 @@ class CaptureTests(unittest.TestCase):
         for option in ('--verify-only', '--verify', '--sanitize', '--san'):
             with self.subTest(option=option), self.assertRaises(ValueError):
                 reproduce.checked_arguments('matmul-locality', [option])
+        for option in ('--verify-only', '--ver', '--render-only=old.json', '--rend', '--out=elsewhere'):
+            with self.subTest(option=option), self.assertRaises(ValueError):
+                reproduce.checked_arguments('nonnormal-gmres', [option])
+        self.assertEqual(reproduce.checked_arguments('nonnormal-gmres', ['--limit', '2']), ['--limit', '2'])
         for option in ('--dotnet=/private/tools/dotnet', '--dot', '--julia', '--jul'):
             with self.subTest(option=option), self.assertRaises(ValueError):
                 reproduce.checked_arguments('machine-code-dot', [option])

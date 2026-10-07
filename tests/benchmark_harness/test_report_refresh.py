@@ -33,7 +33,8 @@ class PublishedReportRefreshTests(unittest.TestCase):
              patch.object(sparse, 'live_bundle', side_effect=AssertionError('Must retain saved runtime')):
             destination = Path(directory)
             for relative in ('benchmarks/reports', 'experiments/matmul-locality/results',
-                             'experiments/machine-code-dot/results'):
+                             'experiments/machine-code-dot/results',
+                             'experiments/nonnormal-gmres/results'):
                 shutil.copytree(ROOT / relative, destination / relative)
             for relative in ('applications/index.html', 'benchmarks/comparison/index.html'):
                 target = destination / relative
@@ -43,7 +44,8 @@ class PublishedReportRefreshTests(unittest.TestCase):
             modules = {relative: refresh_reports.module(name, relative) for name, relative in (
                 ('refresh_applications', 'applications/build.py'),
                 ('refresh_locality', 'experiments/matmul-locality/run.py'),
-                ('refresh_dot', 'experiments/machine-code-dot/run.py'))}
+                ('refresh_dot', 'experiments/machine-code-dot/run.py'),
+                ('refresh_nonnormal_gmres', 'experiments/nonnormal-gmres/report.py'))}
             with patch.object(refresh_reports, 'ROOT', destination), \
                  patch.object(refresh_reports, 'module', side_effect=lambda name, relative: modules[relative]), \
                  patch.object(refresh_reports, 'render_directory', side_effect=lambda:
@@ -52,6 +54,31 @@ class PublishedReportRefreshTests(unittest.TestCase):
                 # refresh() asserts exact equality of all embedded data and
                 # executable bundles and unchanged measurement file hashes.
                 refresh_reports.refresh()
+
+    def test_preview_preserves_complete_study_captures_and_landing_page(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'source'
+            destination = Path(directory) / 'preview'
+            files = {
+                'benchmarks/pages/index.html': 'report directory',
+                'benchmarks/reports/sparse/index.html': 'sparse report',
+                'applications/index.html': 'applications',
+                'benchmarks/comparison/index.html': 'comparison',
+            }
+            for name in ('matmul-locality', 'machine-code-dot', 'nonnormal-gmres'):
+                for filename in ('index.html', 'results.json', 'provenance.json'):
+                    files[f'experiments/{name}/results/{filename}'] = f'{name}: {filename}\n'
+            for relative, content in files.items():
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content)
+            with patch.object(refresh_reports, 'ROOT', root):
+                refresh_reports.assemble_preview(destination)
+            for filename in ('index.html', 'results.json', 'provenance.json'):
+                self.assertEqual((destination / 'nonnormal-gmres' / filename).read_bytes(),
+                                 (root / 'experiments/nonnormal-gmres/results' / filename).read_bytes())
+            self.assertEqual((destination / 'index.html').read_text(), 'report directory')
+            self.assertEqual((destination / 'sparse/index.html').read_text(), 'sparse report')
 
     def test_fresh_inputs_keep_host_sanitization_even_with_a_saved_runtime(self):
         data = {'schema_version': 1, 'machine': {}, 'methodology': {},

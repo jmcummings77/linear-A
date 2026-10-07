@@ -11,3 +11,4 @@
 benchmarks/reports/** -text
 experiments/machine-code-dot/results/** -text
 experiments/matmul-locality/results/** -text
+experiments/nonnormal-gmres/results/** -text

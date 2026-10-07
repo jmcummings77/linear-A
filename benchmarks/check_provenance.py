@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPERIMENT_RUNNERS = {
     "machine-code-dot": "experiments/machine-code-dot/run.py",
     "matmul-locality": "experiments/matmul-locality/run.py",
+    "nonnormal-gmres": "experiments/nonnormal-gmres/run.py",
 }
 RUNNERS = frozenset({
     "benchmarks/run.py", "benchmarks/determinants.py", "benchmarks/sparse.py",
@@ -110,6 +111,8 @@ def forbidden_options(runner):
         flags += ("--dotnet", "--julia")
     elif runner == EXPERIMENT_RUNNERS["matmul-locality"]:
         flags += ("--verify-only", "--sanitize")
+    elif runner == EXPERIMENT_RUNNERS["nonnormal-gmres"]:
+        flags += ("--verify-only",)
     return flags
 
 

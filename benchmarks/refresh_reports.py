@@ -19,6 +19,7 @@ import multigrid_bench
 from report_design import render_directory
 
 ROOT = Path(__file__).resolve().parents[1]
+STUDIES = ('matmul-locality', 'machine-code-dot', 'nonnormal-gmres')
 
 
 def embedded(path, identity):
@@ -86,19 +87,23 @@ def refresh():
     snapshots = embedded(path, 'snapshots')
     compare.render([(item['label'], item['data']) for item in snapshots], path, published=True)
     assert embedded(path, 'snapshots') == snapshots
-    for name in ('matmul-locality', 'machine-code-dot'):
+    for name in STUDIES:
         directory = ROOT / 'experiments' / name / 'results'
-        study = module(name.replace('-', '_'), f'experiments/{name}/run.py')
         data = json.loads((directory / 'results.json').read_text())
-        if name == 'matmul-locality':
-            study.render(data, directory, published=True)
+        if name == 'nonnormal-gmres':
+            study = module('nonnormal_gmres_report_refresh', 'experiments/nonnormal-gmres/report.py')
+            (directory / 'index.html').write_text(study.render_html(data))
         else:
-            study.render(data, directory / 'index.html')
+            study = module(name.replace('-', '_'), f'experiments/{name}/run.py')
+            if name == 'matmul-locality':
+                study.render(data, directory, published=True)
+            else:
+                study.render(data, directory / 'index.html')
         assert embedded(directory / 'index.html', 'data') == data
     render_directory()
     if before != measurements():
         raise AssertionError('A measurement JSON file changed during presentation refresh')
-    print(f'Refreshed {count + 5} HTML pages. Measurement files and embedded live bundles are unchanged.')
+    print(f'Refreshed {count + len(STUDIES) + 3} HTML pages. Measurement files and embedded live bundles are unchanged.')
 
 
 def assemble_preview(destination):
@@ -106,7 +111,7 @@ def assemble_preview(destination):
     destination.mkdir(parents=True, exist_ok=True)
     shutil.copytree(ROOT / 'benchmarks/reports', destination, dirs_exist_ok=True)
     shutil.copy2(ROOT / 'benchmarks/pages/index.html', destination / 'index.html')
-    for name in ('matmul-locality', 'machine-code-dot'):
+    for name in STUDIES:
         shutil.copytree(ROOT / 'experiments' / name / 'results', destination / name, dirs_exist_ok=True)
     for name, source in [('applications', 'applications/index.html'), ('compare', 'benchmarks/comparison/index.html')]:
         (destination / name).mkdir(exist_ok=True)
