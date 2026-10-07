@@ -6,8 +6,8 @@ import unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'benchmarks'))
-from gmres_reference import fixtures,check_result,dense_solve,transport
-from sparse_reference import multiply,protocol
+from gmres_reference import fixtures,check_result,dense_solve,transport,unpack
+from sparse_reference import multiply,protocol,norm
 from publication import PublicSanitizer
 
 class GmresTests(unittest.TestCase):
@@ -28,6 +28,45 @@ class GmresTests(unittest.TestCase):
         with self.assertRaises(AssertionError):check_result(bad,case)
         bad=copy.deepcopy(actual);bad['values'][3]=0
         with self.assertRaises(AssertionError):check_result(bad,case)
+    def test_shifted_jordan_matches_worked_example_and_right_preconditioning(self):
+        cases={case['name']:case for case in fixtures()}
+        for jacobi in [0,1]:
+            case=cases['GMRES shifted Jordan s=0.25 restart 1 Jacobi %d'%jacobi]
+            result=check_result(self.packed(case),case)
+            diagonal=8 if jacobi else 1
+            self.assertAlmostEqual(result['iterates'][1][0],0,places=12)
+            self.assertAlmostEqual(result['iterates'][1][1]*diagonal,4/5,places=12)
+            self.assertAlmostEqual(result['x'][0],-32/65,places=12)
+            self.assertAlmostEqual(result['x'][1]*diagonal,68/65,places=12)
+            self.assertAlmostEqual(result['residuals'][1],1/(5**.5),places=12)
+            self.assertAlmostEqual(result['residuals'][2],13**.5/65,places=12)
+            self.assertEqual(result['restarts'],[1])
+        normal=cases['GMRES same spectrum normal identity']
+        jordan=cases['GMRES shifted Jordan s=0.25 restart 2 Jacobi 0']
+        self.assertEqual(check_result(self.packed(normal),normal)['iterations'],1)
+        self.assertEqual(check_result(self.packed(jordan),jordan)['iterations'],2)
+    def test_analytic_oracle_rejects_consistent_but_wrong_intermediate_iterate(self):
+        for jacobi in [0,1]:
+            case=next(case for case in fixtures() if case['name']=='GMRES shifted Jordan s=1 restart 2 Jacobi %d'%jacobi)
+            actual=self.packed(case);n=case['a']['rows'];length=int(actual['values'][2])
+            result=unpack(actual,n,True)
+            frame=list(result['iterates'][1]);frame[1]*=2
+            value=norm([b-y for b,y in zip(case['b'],multiply(case['a'],frame))])
+            bad=copy.deepcopy(actual)
+            # Keep the actual/estimated histories consistent with the corrupted
+            # captured frame. Residual consistency alone cannot reject this.
+            bad['values'][3+n+1]=value
+            bad['values'][3+n+length+1]=value
+            first_frame=len(bad['values'])-n*length+n
+            bad['values'][first_frame:first_frame+n]=frame
+            with self.assertRaisesRegex(AssertionError,'incorrect analytic iterate'):
+                check_result(bad,case)
+    def test_analytic_oracle_rejects_wrong_noninitial_residual_estimate(self):
+        case=next(case for case in fixtures() if case['name']=='GMRES shifted Jordan s=4 restart 1 Jacobi 0')
+        bad=copy.deepcopy(self.packed(case));n=case['a']['rows'];length=int(bad['values'][2])
+        bad['values'][3+n+length+1]*=.5
+        with self.assertRaisesRegex(AssertionError,'incorrect analytic residual history'):
+            check_result(bad,case)
     def test_independent_pivoted_lu_on_nonsymmetric_transport(self):
         a=transport(3,1,.2,4,30);expected=[float(i+1) for i in range(9)]
         result=dense_solve(a,multiply(a,expected))

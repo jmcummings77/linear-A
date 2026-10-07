@@ -52,6 +52,8 @@ def fixtures():
     for contrast in [0,2]:
         mat=diffusion(4,contrast);truth=[math.sin(i+1) for i in range(16)];rhs=multiply(mat,truth)
         for jacobi in [0,1]:add('diffusion contrast %s Jacobi %s'%(contrast,jacobi),mat,rhs,expected=truth,jacobi=jacobi,limit=200)
+    from graph_reference import fixtures as graph_fixtures
+    cases.extend(graph_fixtures())
     return cases
 
 def protocol(case,iterations=0):

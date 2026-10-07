@@ -42,8 +42,9 @@ def dense_solve(a,b):
 
 def fixtures():
     cases=[]
-    def add(name,a,b,expected=None,reason='converged',invalid=False,**options):
+    def add(name,a,b,expected=None,reason='converged',invalid=False,analytic_steps=None,**options):
         cases.append(dict(name='GMRES '+name,a=a,b=b,op='gmres',expected=expected,reason=reason,invalid=invalid,
+                          analytic_steps=analytic_steps,
                           options={**dict(restart=3,rtol=1e-10,atol=0,limit=100,jacobi=0,capture=1),**options}))
     a=dense_csr([[3,1],[0,2]])
     add('nonsymmetric analytic',a,[5,4],expected=[1,2])
@@ -77,6 +78,35 @@ def fixtures():
             reference=dense_solve(a,b)
             assert max(abs(x-y) for x,y in zip(reference,truth))<1e-12
             add('transport restart %d Jacobi %d'%(restart,jacobi),a,b,expected=reference,restart=restart,jacobi=jacobi,limit=300)
+
+    # B = I + s*N, N = [[0,2],[0,0]], has the same eigenvalues as I,
+    # but for b=e2 the one-step least-squares solution is e2/(1+4*s*s).
+    # These closed forms exercise nonnormality without depending on an eigensolver
+    # or another GMRES implementation. A = B*diag(1,8) recovers B under right Jacobi.
+    add('same spectrum normal identity',dense_csr([[1,0],[0,1]]),[0,1],expected=[0,1],
+        restart=2,limit=2,analytic_steps=dict(iterates=[[0,0],[0,1]],residuals=[1,0]))
+    for strength in [.25,1,4]:
+        coupling=2*strength;denominator=1+coupling*coupling
+        second_denominator=coupling**4-coupling*coupling+1
+        first_residual=coupling/math.sqrt(denominator)
+        # For s=1/4: x1=(0,4/5), r1=(-2/5,1/5). Restarting gives
+        # x2=(-32/65,68/65), r2=(-2/65,-3/65), whereas GMRES(2) solves exactly.
+        restarted_second=[-coupling/(denominator*second_denominator),
+                          (1+coupling*coupling/second_denominator)/denominator]
+        restarted_residual=coupling**4/(denominator*math.sqrt(second_denominator))
+        for jacobi in [0,1]:
+            diagonal=8 if jacobi else 1
+            matrix=dense_csr([[1,coupling*diagonal],[0,diagonal]])
+            first=[0,1/(denominator*diagonal)]
+            solution=[-coupling,1/diagonal]
+            for restart in [1,2]:
+                final=([restarted_second[0],restarted_second[1]/diagonal]
+                       if restart==1 else solution)
+                final_residual=restarted_residual if restart==1 else 0
+                add('shifted Jordan s=%g restart %d Jacobi %d'%(strength,restart,jacobi),
+                    matrix,[0,1],expected=final,reason='iteration_limit' if restart==1 else 'converged',
+                    restart=restart,jacobi=jacobi,limit=2,
+                    analytic_steps=dict(iterates=[[0,0],first,final],residuals=[1,first_residual,final_residual]))
     return cases
 
 
@@ -112,4 +142,13 @@ def check_result(actual,case):
         expected=[635/425,508/425]
         assert all(abs(x-y)<1e-12 for x,y in zip(r['iterates'][1],expected))
         assert abs(r['estimated_residuals'][1]-residual(expected))<1e-12
+    if case.get('analytic_steps') is not None:
+        expected=case['analytic_steps']
+        assert length==len(expected['residuals']),'incorrect analytic iteration count'
+        # These unit-RHS 2x2 cases are well scaled. An absolute floor allows
+        # rounding in zero components and cancellation at the exact solution.
+        for frame,reference in zip(r['iterates'],expected['iterates']):
+            assert norm([x-y for x,y in zip(frame,reference)])<=2e-12*max(1,norm(reference)), 'incorrect analytic iterate'
+        for history in [r['residuals'],r['estimated_residuals']]:
+            assert all(abs(value-reference)<=2e-12 for value,reference in zip(history,expected['residuals'])), 'incorrect analytic residual history'
     return r
